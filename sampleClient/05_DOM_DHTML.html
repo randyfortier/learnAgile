@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>DOM and DHTML - CSCI 3230u</title>
+
+        <link href="images/uoit_logo_icon_32.ico" rel="icon" type="image/x-icon"/>
+        <link href="images/uoit_logo_icon_32.ico" rel="shortcut icon" type="image/x-icon"/>
+
+        <meta name="description" content="A lecture on DOM and DHTML" />
+		<meta name="author" content="Randy J. Fortier" />
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui" />
+
+		<link rel="stylesheet" href="css/reveal.css" />
+		<link rel="stylesheet" href="css/theme/black.css" id="theme" />
+
+		<!-- Printing and PDF exports -->
+		<script>
+			// generating PDFs and printable documents
+            var link = document.createElement('link');
+			link.rel = 'stylesheet';
+			link.type = 'text/css';
+			//link.href = window.location.search.match(/print-pdf/gi) ? 'css/print/pdf.css' : 'css/print/paper.css';
+            
+            // code syntax highlighting
+			link.href = window.location.search.match(/print-pdf/gi) ? 'lib/css/printable.css' : 'lib/css/zenburn.css';
+			document.getElementsByTagName('head')[0].appendChild(link);
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+
+		<div class="reveal">
+
+			<div class="slides">
+
+				<section data-background="images/UOIT_background1.png"
+                         data-background-size="70%"
+				         data-transition="fad"
+                         class="title">
+					<h1 style="margin-left: 342px">DOM and DHTML</h1>
+					<h3 style="margin-left: 342px">Modifying Web Pages</h3>
+					<p style="margin-left: 342px">
+						<small>
+                            Randy J. Fortier<br />
+                            <a href="mailto:randy.fortier@uoit.ca">randy.fortier@uoit.ca</a><br />
+                            <a href="http://twitter.com/randy_fortier">@randy_fortier</a>
+                        </small>
+					</p>
+				</section>
+
+				<section data-transition='fade'>
+					<h2>Outline</h2>
+					<ul>
+                        <li>Document Object Model (DOM)</li>
+                        <li>Manipulating the DOM with JavaScript (DHTML)
+                            <ul>
+                                <li>Accessing DOM objects</li>
+                                <li>DOM object properties</li>
+                                <li>Modifying DOM objects</li>
+                            </ul>
+                        </li>
+					</ul>
+				</section>
+
+                <section data-transition="fade">
+                    <section data-background="images/UOIT_background1.png"
+                             data-background-size="70%"
+                             data-transition="fade"
+                             class="title">
+                        <h1 style="margin-left: 342px">DOM and DHTML</h1>
+                        <h3 style="margin-left: 342px">The Document Object Model</h3>
+                    </section>
+
+                    <section data-transition='fade'>
+                        <h2>The Document Object Model (DOM)</h2>
+                        <ul>
+                            <li>Basically, a DOM is a parse tree
+                                <ul>
+                                    <li>The browser builds a DOM from the HTML and CSS files for each page</li>
+                                    <li>You can create a DOM from any XML file, but HTML is the most common</li>
+                                </ul>
+                            </li>
+                            <li>A DOM is a hierarchical data structure
+                                <ul>
+                                    <li>Elements (tags)</li>
+                                    <li>Attributes</li>
+                                    <li>Attribute values</li>
+                                    <li>Text content</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </section>
+                    
+                    <section data-transition='fade'>
+                        <h2>XML File</h2>
+                        <ul>
+                            <li>Let's examine the DOM of this XML file:</li>
+                        </ul>
+                        <pre><code class="hljs xml" data-trim contenteditable>
+&lt;inventory&gt;
+   &lt;item quantity="1">Hammer&lt;/item&gt;
+   &lt;item quantity="21">Nut&lt;/item&gt;
+   &lt;item quantity="30">Bolt&lt;/item&gt;
+&lt;/inventory&gt;
+                        </code></pre>
+                    </section>
+                    
+                    <section data-transition='fade'>
+                        <h2>XML File</h2>
+                        <ul>
+                            <li>Let's examine the DOM of this XML file:</li>
+                        </ul>
+                        <img src="images/05_DOM_DHTML/xml_dom.png" alt="The DOM of the XML file" />
+                    </section>
+                    
+                    <section data-transition='fade'>
+                        <h2>HTML File</h2>
+                        <ul>
+                            <li>Let's examine the DOM of this HTML file:</li>
+                        </ul>
+                        <pre><code class="hljs xml" data-trim contenteditable>
+&lt;html&gt;
+   &lt;head&gt;
+      &lt;title&gt;Title&lt;/title&gt;
+   &lt;/head&gt;
+   &lt;body&gt;
+      &lt;div class="abc"&gt;Content1&lt;/div&gt;
+      &lt;p style="def"&gt;Content2&lt;/div&gt;
+   &lt;/body&gt;
+&lt;/html&gt;
+
+                        </code></pre>
+                    </section>
+                    
+                    <section data-transition='fade'>
+                        <h2>HTML File</h2>
+                        <ul>
+                            <li>Let's examine the DOM of this HTML file:</li>
+                        </ul>
+                        <img src="images/05_DOM_DHTML/html_dom.png" alt="The DOM of the HTML file" />
+                    </section>
+                </section>
+
+                <section data-transition="fade">
+                    <section data-background="images/UOIT_background2.png"
+                             data-background-size="70%"
+                             data-transition="fade"
+                             class="title">
+                        <h1 style="margin-left: 342px">DOM and DHTML</h1>
+                        <h3 style="margin-left: 342px">Dynamic HTML</h3>
+                    </section>
+                    
+                    <section data-transition='fade'>
+                        <h2>Dynamic HTML (DHTML)</h2>
+                        <ul>
+                            <li>Obtaining DOM objects:</li>
+                        </ul>
+                        <pre><code class="hljs javascript" data-trim contenteditable>
+window.onload = function() {
+   var div = document.getElementById("myDiv");
+   var divChild = div.getElementById("myP");
+   var allPs = document.getElementsByTagName("p");
+   var firstName = document.querySelector("#firstName"); // id
+   var comments = document.querySelectorAll(".comment"); // CSS class
+   var rows = document.querySelectorAll("tr");           // element name
+   var even = rows.querySelectorAll(":nth-child(2n)");   // pseudoclass
+};
+                        </code></pre>
+                    </section>
+                    
+                    <section data-transition='fade'>
+                        <h2>Dynamic HTML (DHTML)</h2>
+                        <ul>
+                            <li>DOM object properties about the element:</li>
+                        </ul>
+                        <pre><code class="hljs javascript" data-trim contenteditable>
+window.onload = function() {
+   var div = document.getElementById("myDiv");
+   console.log(div.id);           // the unique ID for the element
+   console.log(div.innerHTML);    // the content of the element, as HTML
+   console.log(div.nodeName);     // the name of the HTML element (e.g. div)
+   console.log(div.className);    // the CSS class(es) assigned to the element
+   console.log(div.style);        // a dictionary with all the CSS properties for this element 
+                                  // (e.g. element.style.backgroundColor)
+   console.log(div.clientWidth); 
+   console.log(div.clientHeight); // the screen dimensions of this element
+};
+                        </code></pre>
+                    </section>
+                    
+                    <section data-transition='fade'>
+                        <h2>Dynamic HTML (DHTML)</h2>
+                        <ul>
+                            <li>DOM object properties about the element's children:</li>
+                        </ul>
+                        <pre><code class="hljs javascript" data-trim contenteditable>
+window.onload = function() {
+   var div = document.getElementById("myDiv");
+   console.log(div.childNodes); // a NodeList of children
+   console.log(div.firstChild);
+   console.log(div.lastChild);
+   div.removeChild(div.lastChild);
+   div.replaceChild(newNode, div.lastChild));
+};
+                        </code></pre>
+                    </section>
+                    
+                    <section data-transition='fade'>
+                        <h2>Dynamic HTML (DHTML)</h2>
+                        <ul>
+                            <li>DOM object properties about the element's other relationships:</li>
+                        </ul>
+                        <pre><code class="hljs javascript" data-trim contenteditable>
+window.onload = function() {
+   var div = document.getElementById("myDiv");
+   console.log(div.parentNode);      // parent node of this element
+   console.log(div.nextSibling);     // next child with the same parent
+   console.log(div.previousSibling); // prev child with the same parent
+};
+                        </code></pre>
+                    </section>
+                    
+                    <section data-transition='fade'>
+                        <h2>Dynamic HTML (DHTML)</h2>
+                        <ul>
+                            <li>Attribute names and values:</li>
+                        </ul>
+                        <pre><code class="hljs javascript" data-trim contenteditable>
+window.onload = function() {
+   var img = document.getElementById("logo");
+   var attrib = img.getAttribute("alt");
+   console.log(attrib.name + ": " + attrib.value);
+};
+                        </code></pre>
+                    </section>
+                    
+                    <section data-transition='fade'>
+                        <h2>Dynamic HTML (DHTML)</h2>
+                        <ul>
+                            <li>Modifying DOM elements:</li>
+                        </ul>
+                        <pre><code class="hljs javascript" data-trim contenteditable>
+var div1 = document.getElementById("div1");
+div1.innerHTML = 'Hi from JavaScript';
+
+var div2 = document.getElementById("div2");
+div2.innerHTML = '<p>Dynamic paragraph</p>';
+
+var div3 = document.getElementById("div3");
+div3.style.color = '#ff0000';
+div3.style.width = '300px';
+                        </code></pre>
+                    </section>
+                    
+                    <section data-transition='fade'>
+                        <h2>Dynamic HTML (DHTML)</h2>
+                        <ul>
+                            <li>CSS Style attributes
+                                <ul>
+                                    <li>Many CSS properties have dashes:
+                                        <ul>
+                                            <li><span class="code">border-radius: 10px;</span></li>
+                                            <li><span class="code">margin-left: 0;</span></li>
+                                        </ul>
+                                    </li>
+                                    <li>This is invalid syntax, so camel case instead:
+                                        <ul>
+                                            <li><span class="code">div.style.borderRadius = '10px';</span></li>
+                                            <li><span class="code">div.style.marginLeft = '0';</span></li>
+                                        </ul>
+                                    </li>                                    
+                                </ul>
+                            </li>
+                        </ul>
+                    </section>
+                </section>
+                
+				<section>
+					<h2>Wrap-Up</h2>
+					<ul>
+                        <li>In this section, we learned about:
+                            <ul>
+                                <li>DOM
+                                    <ul>
+                                        <li>XML</li>
+                                        <li>HTML</li>
+                                    </ul>
+                                </li>
+                                <li>Accessing DOM objects in JavaScript</li>
+                                <li>DOM object attributes</li>
+                                <li>Modifying DOM objects</li>
+                            </ul>
+                        </li>
+					</ul>
+				</section>
+
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.js"></script>
+
+		<script>
+
+			// Full list of configuration options available at:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+				menu: { // Menu works best with font-awesome installed: sudo apt-get install fonts-font-awesome
+					themes: false,
+					transitions: false,
+					markers: true,
+					hideMissingTitles: true,
+					custom: [
+				            { title: 'Plugins', icon: '<i class="fa fa-external-link"></i>', src: 'toc.html' },
+				            { title: 'About', icon: '<i class="fa fa-info"></i>', src: 'about.html' }
+				        ]
+				},
+                transition: 'convex', // none/fade/slide/convex/concave/zoom
+
+				// Optional reveal.js plugins
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true },
+					{ src: 'plugin/notes/notes.js', async: true },
+                    { src: 'plugin/chalkboard/chalkboard.js'},
+                    { src: 'plugin/menu/menu.js'}
+				],
+				chalkboard: { // font-awesome.min.css must be available
+					src: "chalkboard/chalkboard.json",
+					toggleChalkboardButton: { left: "80px" },
+					toggleNotesButton: { left: "130px" },
+//					theme: "whiteboard",
+//					background: [ 'rgba(127,127,127,.1)' , 'reveal.js-plugins/chalkboard/img/whiteboard.png' ],
+//					pen: [ 'plugin/chalkboard/img/boardmarker.png' , 'plugin/chalkboard/img/boardmarker.png' ],
+//				        color: [ 'rgba(0,119,255,1)', 'rgba(0,119,255,0.5)' ],
+//				        draw: [ (RevealChalkboard) ?  RevealChalkboard.drawWithPen : null , (RevealChalkboard) ? RevealChalkboard.drawWithPen : null ],
+				},
+				keyboard: {
+				    67: function() { RevealChalkboard.toggleNotesCanvas() },	// toggle chalkboard when 'c' is pressed
+				    66: function() { RevealChalkboard.toggleChalkboard() },	// toggle chalkboard when 'b' is pressed
+				    46: function() { RevealChalkboard.clear() },	// clear chalkboard when 'DEL' is pressed
+				     8: function() { RevealChalkboard.reset() },	// reset all chalkboard data when 'BACKSPACE' is pressed
+				    68: function() { RevealChalkboard.download() },	// downlad chalkboard drawing when 'd' is pressed
+				},
+            });
+
+		</script>
+		<script src="js/uoit.js"></script>
+
+	</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "Students",
+  "value": 100,
+  "children": [
+    {"name": "Math", "value": 15},
+    {"name": "Bio", "value": 70},
+    {"name": "Chem", "value": 70},
+    {"name": "CS", "value": 80},
+    {"name": "For", "value": 85},
+    {"name": "LSci", "value": 25},
+    {"name": "Phys", "value": 25}
+  ]
+}

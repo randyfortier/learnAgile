@@ -1,0 +1,189 @@
+<html>
+  <head>
+    <title>WebForums: Search</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.css">
+    <script src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
+    <script src="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.js"></script>
+	<style type="text/css">
+	  .registrationForm {
+	    width: 80%;
+	    float: left;
+		margin-left: 1em;
+	  }
+	  .registrationForm input[type="text"] {
+	    width: 350px;
+	  }
+	  .registrationForm a[data-role="button"] {
+	    width: 500px;
+	  }
+	  label {
+	    float: left;
+		width: 150px;
+	  }
+	  table {
+	    border-collapse: collapse;
+		border-radius: 5px;
+	  }
+	  th,td {
+	    border: 1px solid black;
+		padding: 0.5em;
+	  }
+	</style>
+	
+	<script type="text/javascript">
+	  $(document).ready(function() {
+        $('a[data-role=tab]').click(function() {
+		  $(this).siblings().each(function() {
+		  });
+		  $(this).addClass('');
+		});
+	  });
+	</script>
+  </head>
+  <body>
+    <div data-role="page" data-theme="c" id="register">
+      <header data-role="header">
+        <div data-role="navbar" id="navbar">
+          <ul>
+            <li><a href="#register" class="ui-btn-active" data-icon="plus" data-role="tab" data-tab-class="tab1">Register</a></li>
+            <li><a href="#browse" data-role="tab" data-icon="search" data-tab-class="tab2">Browse</a></li>
+            <li><a href="#contact" data-role="tab" data-icon="info" data-tab-class="tab3">Contact Us</a></li>
+          </ul>
+        </div>
+      </header>
+      <section data-role="content">
+	    <div class="registrationForm">
+	      <h2>Sign Up</h2>
+		  <label for="fname">First name:</label>
+          <input type="text" name="fname" id="fname" value="" data-mini="true" />
+	      
+		  <div data-role="fieldcontain">
+            <fieldset data-role="controlgroup" data-type="horizontal">
+              <label>Date of Birth:</label>
+            
+              <label for="select-choice-month">Month</label>
+              <select name="select-choice-month" id="select-choice-month">
+                <option value="jan">January</option>
+                <option value="feb">February</option>
+                <option value="mar">March</option>
+                <option value="apr">April</option>
+              </select>
+    
+              <label for="select-choice-day">Day</label>
+              <select name="select-choice-day" id="select-choice-day">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+              </select>
+    
+              <label for="select-choice-year">Year</label>
+              <select name="select-choice-year" id="select-choice-year">
+                <option value="2005">2013</option>
+                <option value="2004">2012</option>
+              </select>
+            </fieldset>
+	      </div>
+		  
+		  <a href="#" data-role="button" data-icon="check">Register</a>
+		</div>
+      </section>
+      <footer data-role="footer" data-position="fixed">
+        <h2>Copyright &copy; WebForum Inc.</h2>
+		<a href="#login" data-rel="dialog" data-transition="pop" data-role="button">Log In</a>
+      </footer>
+	</div>
+    <div data-role="page" data-theme="c" id="browse">
+      <header data-role="header">
+        <div data-role="navbar" id="navbar">
+          <ul>
+            <li><a href="#register" data-icon="plus" data-role="tab" data-tab-class="tab1">Register</a></li>
+            <li><a href="#browse" class="ui-btn-active" data-role="tab" data-icon="search" data-tab-class="tab2">Browse</a></li>
+            <li><a href="#contact" data-role="tab" data-icon="info" data-tab-class="tab3">Contact Us</a></li>
+          </ul>
+        </div>
+      </header>
+      <section data-role="content">
+	    <h2>Browse</h2>
+		<table>
+		  <tr>
+		    <th>Service Id</th>
+		    <th>Name</th>
+		    <th>Price</th>
+		  </tr>
+		  <tr>
+		    <td>11347</td>
+		    <td>Virtualized Server - 10GB</td>
+		    <td>$29.99/month</td>
+		  </tr>
+		  <tr>
+		    <td>11348</td>
+		    <td>Virtualized Server - 50GB</td>
+		    <td>$34.99/month</td>
+		  </tr>
+		  <tr>
+		    <td>11357</td>
+		    <td>Dedicated Server - 100GB</td>
+		    <td>$119.99/month</td>
+		  </tr>
+		  <tr>
+		    <td>11358</td>
+		    <td>Dedicated Server - Unlimited</td>
+		    <td>$134.99/month</td>
+		  </tr>
+		</table>
+      </section>
+      <footer data-role="footer" data-position="fixed">
+        <h2>Copyright &copy; WebForum Inc.</h2>
+		<a href="#login" data-rel="dialog" data-transition="pop" data-role="button">Log In</a>
+      </footer>
+	</div>
+    <div data-role="page" data-theme="c" id="contact">
+      <header data-role="header">
+        <div data-role="navbar" id="navbar">
+          <ul>
+            <li><a href="#register" data-icon="plus" data-role="tab" data-tab-class="tab1">Register</a></li>
+            <li><a href="#browse" data-role="tab" data-icon="search" data-tab-class="tab2">Browse</a></li>
+            <li><a href="#contact" class="ui-btn-active" data-role="tab" data-icon="info" data-tab-class="tab3">Contact Us</a></li>
+          </ul>
+        </div>
+      </header>
+      <section data-role="content">
+		<h2>Phone</h2>
+        <p>888-555-1234</p>
+
+		<h2>E-Mail</h2>
+        <p>sales@webform.com</p>
+
+		<h2>Address</h2>
+        <p>
+		  <div>Rockefeller Center, Unit #5108</div>
+		  <div>30 Rockefeller Plaza</div>
+		  <div>New York, New York</div>
+		  <div>10111</div>
+		</p>
+      </section>
+      <footer data-role="footer" data-position="fixed">
+        <h2>Copyright &copy; WebForum Inc.</h2>
+		<a href="#login" data-rel="dialog" data-transition="pop" data-role="button">Log In</a>
+      </footer>
+	</div>
+    <div data-role="page" data-theme="c" id="login">
+      <header data-role="header">
+	    <h2>Log In</h2>
+      </header>
+      <section data-role="content">
+		<label for="username">Username:</label>
+        <input type="text" name="username" id="username" value="" data-mini="true" />
+		
+		<label for="password">Password:</label>
+        <input type="password" name="password" id="password" value="" data-mini="true" />
+	    
+		<a href="#handleLogin" data-role="button">Log In</a>
+      </section>
+      <footer data-role="footer" data-position="fixed">
+        <h2>Copyright &copy; WebForum Inc.</h2>
+      </footer>
+	</div>
+  </body>
+</html>

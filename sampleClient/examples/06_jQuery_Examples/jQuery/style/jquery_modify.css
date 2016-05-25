@@ -1,0 +1,10 @@
+#bigDiv {
+	background: lightBlue;
+	border: 1px solid darkBlue;
+	padding: 5px;
+}
+.wrapper {
+	padding: 5px;
+	background: #ffff90;
+	border: 1px solid #b0b030;
+}

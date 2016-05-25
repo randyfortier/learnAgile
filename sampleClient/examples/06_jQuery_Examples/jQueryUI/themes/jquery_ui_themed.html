@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>jQuery UI Examples</title>
+  		<!--<link type="text/css" rel="stylesheet" href="http://code.jquery.com/ui/1.9.2/themes/base/jquery-ui.css" />-->
+  		<link type="text/css" rel="stylesheet" href="style/cupertino/jquery-ui-1.9.2.custom.css" />
+  		<link type="text/css" rel="stylesheet" href="style/jquery_ui_example.css"/>
+  		<script src="http://code.jquery.com/jquery-latest.js"></script>
+  		<script src="http://code.jquery.com/ui/1.9.2/jquery-ui.js"></script>
+		<script type="text/javascript" src="scripts/jquery_ui_example.js"></script>
+	</head>
+	<body>
+		<!-- buttons and dialogs -->
+		<div id="virusWarningDialog" title="Virus Alert!">
+			<div>Your system is infected with a horrible virus! We'll install a bunch of spyware to 'fix' it for you.  Click 'Cancel' to avoid the spyware.  Please ignore the 'x' button at the top right.</div>
+			<div><button>Go ahead, install!</button></div>
+		</div>
+		
+		<!-- menu -->
+		<div id="wrapper">
+		  <ul id="navigationMenu">
+			<li><a href="#">About</a></li>
+			<li>
+			  <a href="#">Our Projects</a>
+			  <ul>
+				<li><a href="#">Spysoft</a></li>
+				<li><a href="#">CookieMuncher</a></li>
+				<li><a href="#">Keylogger</a></li>
+			  </ul>
+			</li>
+			<li>
+			  <a href="#">Contact Us</a>
+			  <ul>
+				<li><a href="#">Location</a></li>
+				<li><a href="#">Directions</a></li>
+				<li><a href="#">Who we are</a></li>
+			  </ul>
+			</li>
+		  </ul>
+		</div>
+		  
+		  <!-- tab panel -->
+		  <div id="mainTabPanel">
+			<ul>
+			  <li><a href="#tabs-1">Widgets</a></li>
+			  <li><a href="#tabs-2">Effects</a></li>
+			  <li><a href="#tabs-3">Interactivity</a></li>
+			</ul>
+			<div id="tabs-1" class="tabPane">
+			  <div id="accordion">
+				<h3>Form Fields</h3>
+				<div>
+				  <!-- progress bars, date pickers, autocompletes, sliders, spinners, and tooltips -->
+				  <div><label for="dateOfBirth">When were you born?</label><input type="text" id="dateOfBirth" title="Your date of birth helps us target you in our vicious ad campaign." /></div>
+				  <div><label for="ccNum">Credit card #:</label><input type="password" name="ccNum" id="ccNum" title="We promise to use your credit card number strictly for fraudulent purposes." /></div>
+				  <div><label for="province">Province:</label><input type="text" name="province" id="province" title="We need this so that our satellite tracking system can monitor you." /></div>
+				  <div><label for="spamVolume">Requested spam volume:</label><input id="spamVolume" name="spamVolume" title="We are going to completely ignore this field, but it is required." /></div>
+				  <div><label>Hatred for ads:</label><span id="adHatred" title="Please choose between extreme (left) and severe (right)."></span> </div>
+				</div>
+				<h3>Miscellaneous</h3>
+				<div>
+				  <div id="clickingText">Click this text 50 times.  Do it!!!</div>
+				  <div id="progress" title="Probability of having to start over:  less than 1 in 10"></div>
+				</div>
+			  </div>  
+			</div>
+			<div id="tabs-2" class="tabPane">
+			  <div id="blind" class="box">Effect - blind</div>
+			  <div id="bounce" class="box">Effect - bounce</div>
+			  <div id="clip" class="box">Effect - clip</div>
+			  <div id="drop" class="box">Effect - drop</div>
+			  <div id="explode" class="box">Effect - explode</div>
+			  <div id="fade" class="box">Effect - fade</div>
+			  <div id="fold" class="box">Effect - fold</div>
+			  <div id="highlight" class="box">Effect - highlight</div>
+			  <div id="puff" class="box">Effect - puff</div>
+			  <div id="pulsate" class="box">Effect - pulsate</div>
+			  <div id="scale" class="box">Effect - scale</div>
+			  <div id="shake" class="box">Effect - shake</div>
+			  <div id="size" class="box">Effect - size</div>
+			  <div id="slide" class="box">Effect - slide</div>
+			  <div id="colourAnim" class="box">Effect - colour animation</div>
+			</div>
+			<div id="tabs-3" class="tabPane">
+     			<div id="draggable"></div>
+				<div id="droppable"></div>
+				<div id="resizable"></div>
+				<ol id="selectable">
+				  <li class="ui-widget-content">Cheese</li>
+				  <li class="ui-widget-content">Mushrooms</li>
+				  <li class="ui-widget-content">Green Pepper</li>
+				  <li class="ui-widget-content">Onion</li>
+				  <li class="ui-widget-content">Olives</li>
+				</ol>
+		        <div id="results"></div>
+			</div>
+		  </div>
+		
+	</body>
+</html>
+

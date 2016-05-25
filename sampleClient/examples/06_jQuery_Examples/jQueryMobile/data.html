@@ -1,0 +1,99 @@
+<html>
+  <head>
+    <title>WebForums: Search</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.css">
+    <script src="http://code.jquery.com/jquery-1.8.2.min.js"></script>
+    <script src="http://code.jquery.com/mobile/1.2.0/jquery.mobile-1.2.0.min.js"></script>
+	<style type="text/css">
+	  .searchForm {
+	    width: 17%;
+		float: left;
+	  }
+	  .registrationForm {
+	    width: 80%;
+	    float: left;
+		margin-left: 1em;
+	  }
+	  .registrationForm input[type="text"] {
+	    width: 350px;
+	  }
+	  .registrationForm a[data-role="button"] {
+	    width: 500px;
+	  }
+	  label {
+	    float: left;
+		width: 150px;
+	  }
+	</style>
+  </head>
+  <body>
+    <div data-role="page" data-theme="a">
+      <header data-role="header">
+        <h1>Search Forums</h1>
+        <input type="search" name="search-mini" id="search-mini" value="" data-mini="true" />
+      </header>
+      <section data-role="content">
+	    <div class="searchForm" data-role="collapsible">
+		  <h2>Search</h2>
+          <ul data-role="listview" data-inset="true" data-filter="true">
+            <li><a href="#">CSS</a></li>
+            <li><a href="#">HTML</a></li>
+            <li><a href="#">HTML5</a></li>
+            <li><a href="#">JavaScript</a></li>
+            <li><a href="#">jQuery</a></li>
+            <li><a href="#">jQuery Mobile</a></li>
+            <li><a href="#">jQuery UI</a></li>
+            <li><a href="#">PHP</a></li>
+            <li><a href="#">Security</a></li>
+            <li><a href="#">SQL Injection</a></li>
+          </ul>
+          <form>
+            <label for="maxResults">Maximum search results:</label>
+            <input type="range" name="maxResults" id="maxResults" value="25" min="0" max="50" />
+  		    <a href="#" data-role="button" data-icon="search">Search</a>
+          </form>
+		</div>
+	    <div class="registrationForm">
+	      <h2>Sign Up</h2>
+		  
+		  <label for="fname">First name:</label>
+          <input type="text" name="fname" id="fname" value="" data-mini="true" />
+	      
+		  <div data-role="fieldcontain">
+            <fieldset data-role="controlgroup" data-type="horizontal">
+              <label>Date of Birth:</label>
+            
+              <label for="select-choice-month">Month</label>
+              <select name="select-choice-month" id="select-choice-month">
+                <option value="jan">January</option>
+                <option value="feb">February</option>
+                <option value="mar">March</option>
+                <option value="apr">April</option>
+              </select>
+    
+              <label for="select-choice-day">Day</label>
+              <select name="select-choice-day" id="select-choice-day">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+              </select>
+    
+              <label for="select-choice-year">Year</label>
+              <select name="select-choice-year" id="select-choice-year">
+                <option value="2005">2013</option>
+                <option value="2004">2012</option>
+              </select>
+            </fieldset>
+	      </div>
+		  
+		  <a href="#" data-role="button" data-icon="check">Register</a>
+
+		</div>
+      </section>
+      <footer data-role="footer" data-position="fixed">
+        <h2>Copyright &copy; WebForum Inc.</h2>
+      </footer>
+	</div>
+  </body>
+</html>

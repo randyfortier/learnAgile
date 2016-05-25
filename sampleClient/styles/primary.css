@@ -1,0 +1,88 @@
+.jumbotron {
+    background-color: #0077CB;
+    color: white;
+}
+.jumbotron h1 {
+    font-size: 300%;
+    margin-top: 0;
+    margin-bottom: 0;
+}
+.logoText {
+    font-family: 'Caveat';
+}
+body {
+    padding-top: 50px;
+    font-family: Montserrat;
+}
+
+span.code {
+    font-family: monospace;
+    font-size: 80%;
+}
+
+.smaller li {
+    font-size: 75%;
+}
+
+h1,h2,h3,h4,h5,h6 {
+    font-family: 'Caveat';
+    margin-top: 30px;
+    margin-bottom: 20px;
+}
+
+thead {
+    background: #ededed;
+}
+
+/* footer */
+footer.info {
+    float: none;
+    clear: both;
+    background-color: #404040;
+    width: 100%;
+    margin-right: 0;
+    color: #9d9d9d;
+    height: auto;
+    overflow: hidden;
+    margin-top: 50px;
+}
+footer.info li a {
+	margin: 0;
+	padding: 0;
+}
+footer h3 {
+    font-size: 150%;
+    font-weight: normal;
+    margin-left: 20px;
+}
+footer p {
+    font-size: 90%;
+}
+footer section ul {
+    list-style: none;
+    margin-left: 0;
+    padding-left: 0;
+}
+footer section ul li {
+    margin-left: 0;
+    padding-left: 0;
+    display: inline-block;
+    margin-left: 15px;
+    margin-right: 15px;
+}
+footer section img {
+    width: 40px;
+}
+footer.copyright {
+    background-color: #404040;
+    color: #9d9d9d;
+    font-size: 80%;
+    font-family: 'Caveat';
+    text-align: center;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    margin-top: 0;
+    margin-right: 0;
+    width: 100%;
+	height: 100%;
+}
