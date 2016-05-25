@@ -1,0 +1,1 @@
+document.getElementById('theme').setAttribute('href','css/theme/uoit.css');
