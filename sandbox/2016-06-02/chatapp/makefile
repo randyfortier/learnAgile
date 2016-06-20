@@ -1,2 +1,2 @@
 run: 
-	node chat.js
+	node app.js

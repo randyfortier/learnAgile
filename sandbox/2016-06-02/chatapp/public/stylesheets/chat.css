@@ -41,3 +41,7 @@ form button {
 #messages li:nth-child(odd) {
 	background: #eee; 
 }
+
+#username {
+	display: none;
+}
