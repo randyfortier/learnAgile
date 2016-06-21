@@ -17,23 +17,27 @@ app.set('views', __dirname + '/views');
 app.set('view engine', 'pug');
 
 
-app.get('/', function(req, res){
-	res.sendFile(__dirname + '/views/login.html');
+//login screen, has a simple input screen
+app.get('/', function(request, response){
+	response.render('login');
 });
 
-app.post('/login', function(request, response) {
+
+//loaded the chat window with the username inputed
+app.post('/chat', function(request, response) {
 	var username = request.body.username;
 	response.render('chat', {username: username});
 });
 
+//relays messages for each user to all users
 io.on('connection', function(socket){
-	socket.emit('set id', "User"+ userid++);
-
   	socket.on('chat message', function(msg){
     	io.emit('chat message', msg);
   	});
 });
 
-http.listen(3000, function(){
+
+//opens a connection, used this because of Socket.io
+http.listen(app.get('port'), function(){
 	console.log('listening on *:3000');
 });

@@ -7,12 +7,14 @@ html
 			 href="/stylesheets/chat.css")
 
 		script(src="https://cdn.socket.io/socket.io-1.4.5.js")
-		script(src="http://code.jquery.com/jquery-1.11.1.js")
+		script(src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js")
 		script(src="/javascripts/chat.js")
 
+		script.
+			 var username = "#{username}";
+
 	body
-		label(id="username") #{username}
 		ul(id="messages")
-		form(action="#")
+		form
 			input(id="m", autocomplete="off")
 			button Send
