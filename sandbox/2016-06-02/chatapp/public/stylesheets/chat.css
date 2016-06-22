@@ -31,7 +31,7 @@ form button {
 #messages { 
 	list-style-type: none; 
 	margin: 0; 
-	padding: 0; 
+	padding: 0px 0px 40px 0px; 
 }
 
 #messages li { 
@@ -40,8 +40,4 @@ form button {
 
 #messages li:nth-child(odd) {
 	background: #eee; 
-}
-
-#username {
-	display: none;
 }

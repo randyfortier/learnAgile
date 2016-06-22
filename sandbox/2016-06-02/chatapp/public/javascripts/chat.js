@@ -1,27 +1,39 @@
-console.log("Run");
-
 var socket = io();
 var userid = "";
 
+//scrolls the page down to the bottom to show the recent messages
+function ScrollPage()
+{
+	$('html, body').animate({ scrollTop: $(document).height()}, 1000);
+}
+
 $(document).ready(function()
 {
+	//check for username if none, have username error
 	if(!username)
 		userid = "error";
 	else
 		userid = username;	
-	console.log(userid);
+	
 
+	//when the form is submitted, send the message to the server
 	$('form').submit(function(){
-		socket.emit('chat message',  userid + ": " + $('#m').val());
+		socket.emit('chat message',  userid, $('#m').val());
 		$('#m').val('');
 		return false;
 	});
 
-	socket.on('chat message', function(msg){
+	//when receving anymessage from users, add to the list and scrool the page down
+	socket.on('all-message', function(msg){
 		$('#messages').append($('<li>').text(msg));
+		ScrollPage();
+		// $('#messages:nth-child(n)').scrollTop();
 	});
 
+	//when first connection, update the current page with the last 50 messages.
+	socket.on('recent-messages', function(recent){
+		for(var cnt = 49; cnt >= 0; cnt--)
+			$('#messages').append($('<li>').text(recent[cnt].user + ": " + recent[cnt].message));
+		ScrollPage();
+	});
 });
-console.log("Finish");
-
-
