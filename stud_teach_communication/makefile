@@ -1,0 +1,2 @@
+run:
+	node app.js
