@@ -50,5 +50,5 @@ io.on('connection', function(socket){
 
 //listen for a connection
 http.listen(app.get('port'), function(){
-    console.log('Server started. Listening at *:3000');
+    console.log('Server started. Listening at *:' + app.get('port'));
 });

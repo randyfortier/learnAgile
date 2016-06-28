@@ -14,13 +14,14 @@ The ultimate goal is to provide a better learning experience for the student.  T
 
 ## Components
 
-### Instructor Client
+### Client
 
-This client is a web application that shows the presentation, as well as some representation of the classroom analytic data, updated in real time.
+#### Instructor Mode
+When in instructor mode, the client is a web application that shows the presentation.  The client will also show some representation of the classroom analytic data, updated in real time.
 
-### Student Client
+#### Student Mode
 
-This client is a web application that shows the presentation, and allows students to tag (e.g. I like this topic, This is hard, This will be on the test) each topic of the lecture.
+When in student mode, this client is a web application that shows the presentation, and allows students to tag (e.g. I like this topic, This is hard, This will be on the test) each topic of the lecture.
 
 ### Server
 
