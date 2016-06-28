@@ -1,6 +1,5 @@
 var express = require('express');
 var session = require('express-session');
-var uuid = require('node-uuid');
 var bodyParser = require("body-parser");
 app = express();
 var http = require('http').Server(app);
@@ -46,8 +45,6 @@ app.set('view engine', 'pug');
 //login screen, has a simple input screen
 app.get('/', function(request, response){
 	response.render('login');
-	console.log("login page called");
-
 });
 
 //loaded the chat window with the username inputed

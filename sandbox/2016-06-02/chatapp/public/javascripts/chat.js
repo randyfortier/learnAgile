@@ -15,7 +15,6 @@ $(document).ready(function()
 	else
 		userid = username;	
 	
-
 	//when the form is submitted, send the message to the server
 	$('form').submit(function(){
 		socket.emit('chat message',  userid, $('#m').val());
@@ -27,13 +26,12 @@ $(document).ready(function()
 	socket.on('all-message', function(msg){
 		$('#messages').append($('<li>').text(msg));
 		ScrollPage();
-		// $('#messages:nth-child(n)').scrollTop();
 	});
 
 	//when first connection, update the current page with the last 50 messages.
 	socket.on('recent-messages', function(recent){
-		for(var cnt = 49; cnt >= 0; cnt--)
-			$('#messages').append($('<li>').text(recent[cnt].user + ": " + recent[cnt].message));
+		for(var messagecnt = 49; messagecnt >= 0; cnt--)
+			$('#messages').append($('<li>').text(recent[messagecnt].user + ": " + recent[messagecnt].message));
 		ScrollPage();
 	});
 });
