@@ -1,20 +1,20 @@
 var socket = io();
 
-var tagSidebar = null;
+var tagSidebar = $('<div id="sidebar"></div>');;
+//NOTE: when adding sidebar, height at 100% only matches the height of the text on the screen
+//adjusts that when adding to a new slide
 
-$(document).ready(function(){
+/*$(document).ready(function(){
     /* called right at the begin, before the presentation is loaded
      * i tried reveal's event "ready", but it was called after "slidechange" when loading any but the first page
      * i want to have the side bar set up before slidechage is called because i want to be able to remove the need for
      * checking for null for the sidebar
-     */
+     
 
     //add the the vertical bar, left side of the screen
     tagSidebar = $('<div id="sidebar"></div>');
 
-    //NOTE: when adding sidebar, height at 100% only matches the height of the text on the screen
-    //adjusts that when adding to a new slide
-});
+});*/
 
 
 //moves to the slide that the server send, to the teachers slide
@@ -74,6 +74,8 @@ function bulidFeedbackTag(slide, xml)
     tag.append(yes);
     tag.append(no);
     
+    //adjust the size and location of the box. use this instend of css file because
+    //this can be changed dynamically 
     tag.css({
         'height': '150',
         'width': '100', 

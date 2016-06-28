@@ -4,9 +4,10 @@
   "private": true,
   "dependencies": {
     "body-parser": "^1.15.1",
+    "chart.js": "^2.1.6",
     "express": "~4.13.1",
-    "socket.io": "^1.4.6",
     "express-session": "^1.13.0",
-    "pug": "^2.0.0-beta3"
+    "pug": "^2.0.0-beta3",
+    "socket.io": "^1.4.6"
   }
 }

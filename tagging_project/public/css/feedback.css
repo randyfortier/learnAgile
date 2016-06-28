@@ -31,3 +31,12 @@
 	padding: 5px;
 }
 
+
+#student_chart {
+	width: 400;
+	height: 400;
+	position: fixed;
+	background-color: red;
+	border:1px solid #000000;
+	left: 80%;
+}
