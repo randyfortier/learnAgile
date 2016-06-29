@@ -31,6 +31,13 @@
 	padding: 5px;
 }
 
+.good {
+	background-color: green;
+}
+
+.bad {
+	background-color: red;
+}
 
 #student_chart {
 	width: 400;
