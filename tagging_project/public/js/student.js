@@ -4,13 +4,10 @@ var tagSidebar = $('<div id="sidebar"></div>');
 //NOTE: when adding sidebar, height at 100% only matches the height of the text on the screen
 //adjusts that when adding to a new slide, fixed in the removeNaddsidebar function
 
-
 //moves to the slide that the server send, to the teachers slide
 socket.on('student-moveslide', function(indexies){
     Reveal.slide(indexies[0], indexies[1], 0);
 });
-
-
 
 Reveal.addEventListener( 'slidechanged', function( event ) {
     //easier access to the current slide variable
@@ -23,7 +20,6 @@ Reveal.addEventListener( 'slidechanged', function( event ) {
     //check if there is xml in the current slide
     parseXML(slide);
 });
-
 
 function parseXML(slide)
 {
