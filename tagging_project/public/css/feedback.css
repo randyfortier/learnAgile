@@ -46,7 +46,7 @@
 	background-color: red;
 	border:1px solid #000000;
 	left: 80%;
-	
+
 	/*remove to show the chart*/
 	display: none;
 }
@@ -58,6 +58,18 @@
 	position: fixed;
 	left: 0px;
 	top: 0px;
+
+	color: white;
+	font-size: 28px;
+}
+
+#remove_tag {
+	background-color: red;
+	width: 100px;
+	height: 75px;
+	position: fixed;
+	left: 0px;
+	top: 76px;
 
 	color: white;
 	font-size: 28px;

@@ -90,11 +90,58 @@ io.use(function(socket, next){
     sessionMiddleware(socket.request, socket.request.res, next);
 });
 
+
+
 //array for users that are connected
 var Users = []
+var isTagAlive = false;
+var live_tag_data = null;
+
+//check if the user is in the Users array if not then add them
+function addToUsers(session, search)
+{
+    //find if the users already exists
+    var user = Users.find(search);
+
+    //if users doesn't exist in the array already, add them
+    if(!user){
+        Users.push({id: session.userid, count: 1});
+    }
+    else //else increase the number connection they have
+        user.count++;
+}
+
+//remove a user from the Users array, use the "search" function to find and remove them
+function removeUser(search)
+{
+    //find the user, and decrease the number of connection they have
+    user = Users.find(search);
+    user.count--;
+    //if this is the last connection for that user, then remove them from the list
+    if(user.count === 0)
+        Users.splice(Users.indexOf(Users.find(search)), 1);
+}
+
+//send the tag data the students
+function sendTag(session, tag_data)
+{
+    io.to(session.lecture).emit('student_tag_data', tag_data);
+}
+
+//you lose the tag if you reload the page or load the page after the tag sent
+//save the tag data and if the tag is alive send that tag data to the currently 
+//loading user
+function isTagAvaiable(session)
+{
+    //if alive send tag data
+    if(isTagAlive)
+    {
+        sendTag(session, live_tag_data);
+    }
+}
+
 //setup teacher controlling slide 
 io.on('connection', function(socket){
-    // console.log(socket.request.session);
     var session = socket.request.session;
 
     //if there is no userid then don't allow any functionality
@@ -106,19 +153,15 @@ io.on('connection', function(socket){
         return index.id === session.userid;
     };
 
-    //find if the users already exists
-    var user = Users.find(search);
-
-    //if users doesn't exist in the array already, add them
-    if(!user){
-        Users.push({id: session.userid, count: 1});
-    }
-    else //else increase the number connection they have
-        user.count++;
+    //add to Users
+    addToUsers(session, search);
 
     //send user to right room
     // in this room it is easier to send a message to all students
     socket.join(session.lecture);/*can have a functoin call back for any error*/
+
+    //check if there is a tag aviable
+    isTagAvaiable(session);
 
     //if the instructor move there slide, the send a siginal to the student to have
     //there slide move
@@ -128,31 +171,27 @@ io.on('connection', function(socket){
     
     //recieve tag data
     socket.on('instructor_tag_data', function(tag_data){
-        console.log(tag_data);
-        // io.to(session.lecture).emit('student_tag_data', tag_data);
+        isTagAlive = true;
+        live_tag_data = tag_data;
+        sendTag(session, tag_data);
     });
 
+    //remove the student's tag
+    socket.on('remove_tag', function(){
+        isTagAlive = false;
+        live_tag_data = null;
+        io.to(session.lecture).emit('remove_tag');
+    });
 
     //when disconnecting for the server, check if the user can be removed
     socket.on('disconnect', function(){
         //remove the user for the room
         socket.leave(session.lecture);
 
-        //find the user, and decrease the number of connection they have
-        user = Users.find(search);
-        user.count--;
-        //if this is the last connection for that user, then remove them from the list
-        if(user.count === 0)
-            removeUser(search);
+        //check if the user is to be removed
+        removeUser(search);
     });
 });
-
-
-//remove a user from the Users array, use the "search" function to find and remove them
-function removeUser(search)
-{
-    Users.splice(Users.indexOf(Users.find(search)), 1);
-}
 
 //listen for a connection
 http.listen(app.get('port'), function(){

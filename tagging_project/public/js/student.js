@@ -17,26 +17,23 @@ Reveal.addEventListener( 'slidechanged', function( event ) {
     //add the sidebar to the slide
     removeNAddSidebar(slide, [$('.slides').height(), slide.offsetTop]);
 
-    //check if there is xml in the current slide
-    parseXML(slide);
 });
 
-function parseXML(slide)
-{
-    //2a, if there is a class called "feeback" in the current slide, add a tag box
-    //remove the interaction box form the previous slide
-    $('#tag').remove();
 
-    //testing for xml input
-    var rawxml = $(slide).find('.feedback');
-    
-    //use !== 0 beacuse find returns a empty array
-    if(rawxml.length !== 0)
-    {
-        //NOTE: have script be type='text/xml', also parseXML didn't work and gave error
-        bulidFeedbackTag(slide, $(rawxml[0]).text());
-    }
-}
+//function to remove the tag when the instructor wants
+socket.on('remove_tag', function(){
+    //remove the interaction box
+    $('#tag').remove();
+});
+
+socket.on('student_tag_data', function(tag_data){
+    //change the slide to the same on as the instructors, the get the current slide
+    Reveal.slide(tag_data.slide_index[0], tag_data.slide_index[1]);
+    var slide = Reveal.getCurrentSlide();
+
+    //bulid the tag and place it on the slide
+    bulidFeedbackTag(slide, tag_data.title, tag_data.yes, tag_data.no);
+});
 
 function removeNAddSidebar(slide, adjustvalues = [])
 {
@@ -52,12 +49,12 @@ function removeNAddSidebar(slide, adjustvalues = [])
     $(slide).prepend(tagSidebar);
 }
 
-function bulidFeedbackTag(slide, xml)
+function bulidFeedbackTag(slide, t_title, t_yes, t_no)
 {
     //retrive the values for the xml script and place them into tags
-    var title = $('<h3 id="tag_title"></h3>').text($(xml).find('title').text());
-    var yes = $('<div id="tag_good"></div>').text($(xml).find('positive').text());
-    var no = $('<div id="tag_bad"></div>').text($(xml).find('negative').text());
+    var title = $('<h3 id="tag_title"></h3>').text(t_title);
+    var yes = $('<div id="tag_good"></div>').text(t_yes);
+    var no = $('<div id="tag_bad"></div>').text(t_no);
 
     //setup the main tag, then add all the elements from above
     var tag = $('<div id="tag"> </div>');
