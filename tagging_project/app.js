@@ -100,6 +100,7 @@ io.on('connection', function(socket){
     //if there is no userid then don't allow any functionality
     if(!session.userid)
         return;
+    
     //function for searching for the connected user in the Users array
     var search = function (index){
         return index.id === session.userid;
@@ -115,14 +116,28 @@ io.on('connection', function(socket){
     else //else increase the number connection they have
         user.count++;
 
+    //send user to right room
+    // in this room it is easier to send a message to all students
+    socket.join(session.lecture);/*can have a functoin call back for any error*/
+
     //if the instructor move there slide, the send a siginal to the student to have
     //there slide move
     socket.on('instructor-moveslide', function(indexies){
         io.emit('student-moveslide', indexies);
     });
     
+    //recieve tag data
+    socket.on('instructor_tag_data', function(tag_data){
+        console.log(tag_data);
+        // io.to(session.lecture).emit('student_tag_data', tag_data);
+    });
+
+
     //when disconnecting for the server, check if the user can be removed
     socket.on('disconnect', function(){
+        //remove the user for the room
+        socket.leave(session.lecture);
+
         //find the user, and decrease the number of connection they have
         user = Users.find(search);
         user.count--;
@@ -131,6 +146,7 @@ io.on('connection', function(socket){
             removeUser(search);
     });
 });
+
 
 //remove a user from the Users array, use the "search" function to find and remove them
 function removeUser(search)

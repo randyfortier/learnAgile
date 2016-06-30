@@ -2,7 +2,7 @@ var socket = io();
 
 //set up the canvas, its id and its size
 var pieChartHTML = $('<canvas id="student_chart" width="200" height="200"></canvas>');
-
+var SendTagButton = $('<div id="send_tag">Send Tag</div>');
 //three variable to repersent the number of people that understand the content, down understand the content, and the amount of unanswerd tags
 var understand = 300;
 var dontunderstand = 50;
@@ -27,6 +27,9 @@ Reveal.addEventListener( 'slidechanged', function( event ) {
 
     //move the chart to the current slide and move the chart to the top left corner
     moveChart(slide, slide.offsetTop + 50);
+
+    //move the button that send the tag data to the student
+    moveButton(slide);
 });
 
 Reveal.addEventListener('ready', function(event){
@@ -97,6 +100,49 @@ function moveChart(slide, top = 0)
 
 	//add the chart to the current slide
 	$(slide).prepend(pieChartHTML);
+}
+
+//move the button from one slide to the next, independent from which was the last slide
+function moveButton(slide)
+{
+	//remove old send_tag button
+	$('#send_tag').remove();
+
+    //check for xml data
+    var rawxml = $(slide).find('.feedback');
+    
+    //use !== 0 beacuse find returns a empty array
+    //if !0 then there is a tag there
+    if(rawxml.length !== 0)
+    {
+        //NOTE: have script be type='text/xml', also parseXML didn't work and gave error
+        //add the buuton to the screen and update the onclick method with the tag data and index of slide
+        $(slide).prepend(SendTagButton);
+        $('#send_tag').click(sendTagButton_click);
+    }
+}
+
+//retrives the data form the xml, puts it in json format and sends it to the server
+function sendTagButton_click(event)
+{
+	//get the xml and the index for which slide has the tag
+	var xml = $(Reveal.getCurrentSlide()).find('.feedback').text();
+	var indices =  Reveal.getIndices();
+	var index = [indices.h, indices.v];
+
+	//get the data from the tag
+	var title = $(xml).find('title').text();
+    var yes = $(xml).find('positive').text();
+    var no = $(xml).find('negative').text();
+
+    //send to the server the tag data, and the index of the slide
+    var tag_data = {
+    	'title': title,
+    	'on': yes,
+    	'off': no,
+    	'slide_index': index
+    };
+    socket.emit('instructor_tag_data', tag_data);
 }
 
 //timer for constantly updating the pie graph
