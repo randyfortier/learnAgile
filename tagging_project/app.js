@@ -58,7 +58,8 @@ app.get('/', function(request, response){
 
 app.post('/lecture', function(request, response){
     //if there is no id in the session data go back to the the login screen
-    if(!request.session.userid)
+    var session = request.session;
+    if(!session.userid)
     {
         response.redirect('/');
         return;
@@ -67,7 +68,7 @@ app.post('/lecture', function(request, response){
     var isStudent = request.body.isStudent;
 
     //have the calls specific lecture slide, add the current lecture slide uuid.v4 number to the session data
-    request.session.lecture = '35e202f2-4b5d-43b3-be1e-926c299c10a7';
+    session.lecture = '35e202f2-4b5d-43b3-be1e-926c299c10a7';
 
     //check if the request is for a instructor or student
     if(isStudent === "true")
@@ -106,9 +107,13 @@ function addToUsers(session, search)
     //if users doesn't exist in the array already, add them
     if(!user){
         Users.push({id: session.userid, count: 1});
+        return Users[Users.length - 1];
     }
     else //else increase the number connection they have
+    {
         user.count++;
+        return user;
+    }
 }
 
 //remove a user from the Users array, use the "search" function to find and remove them
@@ -181,6 +186,10 @@ io.on('connection', function(socket){
         isTagAlive = false;
         live_tag_data = null;
         io.to(session.lecture).emit('remove_tag');
+    });
+
+    socket.on('student_response', function(response_data){
+        console.log(response_data);
     });
 
     //when disconnecting for the server, check if the user can be removed

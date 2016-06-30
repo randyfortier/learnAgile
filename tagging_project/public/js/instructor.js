@@ -141,6 +141,8 @@ function removeTagButton_click()
 //retrives the data form the xml, puts it in json format and sends it to the server
 function sendTagButton_click()
 {
+	if(isTagAlive)
+		return;
 	//get the xml and the index for which slide has the tag
 	var xml = $(Reveal.getCurrentSlide()).find('.feedback').text();
 	var indices =  Reveal.getIndices();

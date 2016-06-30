@@ -19,7 +19,6 @@ Reveal.addEventListener( 'slidechanged', function( event ) {
 
 });
 
-
 //function to remove the tag when the instructor wants
 socket.on('remove_tag', function(){
     //remove the interaction box
@@ -91,22 +90,26 @@ function tag_click(event)
     var indexID = slideIndices.h +'_'+ slideIndices.v;//text for the id of the div
     var current = "";
     var other = ""
+    var response = -1;
 
     //check to see if the id of the click ite is 'tag_good' which is the "i understand" portion of the tag
     if($(clicked).attr('id') === 'tag_good')
     {
         current = 'good';
         other = 'bad';
+        response = 1;
     }
     else if($(clicked).attr('id') === 'tag_bad')//check fi tag is 'tag_bad' which is the "i don't understand" portion of the tag
     {
         current = 'bad';
         other = 'good';
+        response = 0;
     }
     else
     {
         //if neiter is click then remove the item
         $('#slide_'+indexID).remove();
+        sendTagResponse(indexLocation, response);        
         return;
     }
 
@@ -120,6 +123,18 @@ function tag_click(event)
         $(exists[0]).removeClass(other);
         $(exists[0]).addClass(current);
     }
+
+    sendTagResponse(indexLocation, response);
+}
+
+
+function sendTagResponse(indexLocation, response)
+{
+    socket.emit('student_response', {
+        title: $('#tag_title').text(),
+        index: indexLocation,
+        response: response
+    });
 }
 
 //template for the sidebar's items
