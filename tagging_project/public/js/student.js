@@ -95,26 +95,33 @@ function tag_click(event)
     //check to see if the id of the click ite is 'tag_good' which is the "i understand" portion of the tag
     if($(clicked).attr('id') === 'tag_good')
     {
+        //set current to good and other to bad, for the color change 
         current = 'good';
         other = 'bad';
+        //send to the server 1 when there is a good respose
         response = 1;
     }
     else if($(clicked).attr('id') === 'tag_bad')//check fi tag is 'tag_bad' which is the "i don't understand" portion of the tag
     {
+        //set current to bad and other to good, for the color change
         current = 'bad';
         other = 'good';
+        //send to the server 0 when it is a bad response
         response = 0;
     }
     else
     {
         //if neiter is click then remove the item
         $('#slide_'+indexID).remove();
+        //send to the server -1 when the result is unknown
         sendTagResponse(indexLocation, response);        
         return;
     }
 
+    //check if there is already a item in sidebar
     var exists = $(sidebar).find('#slide_'+indexID);
     if(exists.length === 0){
+        //if there isn't already an item in the sidebar, add it with the right type
         $(sidebar).append(bulidSidebarIcon(indexID, current, indexLocation));
     }
     else
@@ -124,12 +131,15 @@ function tag_click(event)
         $(exists[0]).addClass(current);
     }
 
+    //send the response data to the server, with the response number based on 
+    //which button is pressed
     sendTagResponse(indexLocation, response);
 }
 
 
 function sendTagResponse(indexLocation, response)
 {
+    //emit to the server, the title of the tag, the slide index, and which tag state they are in
     socket.emit('student_response', {
         title: $('#tag_title').text(),
         index: indexLocation,

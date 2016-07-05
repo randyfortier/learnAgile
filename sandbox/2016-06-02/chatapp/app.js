@@ -76,6 +76,8 @@ app.post('/chat', function(request, response) {
 
 //relays messages for each user to all users
 io.on('connection', function(socket){
+
+	console.log("logged in");
   	socket.on('chat message', function(user, msg){
   		//add message to database
   		var newMessage = new MessageDB({user: user, message: msg, sent: new Date()});
@@ -83,13 +85,13 @@ io.on('connection', function(socket){
   			if(error)
   				console.log("Unable to Save Message from: " + user + ". Message: " + msg);
   		});
-
+  		console.log(user + ": " + msg);
   		//emit the message recieved to all users that are connected
     	io.emit('all-message', user + ": " + msg);
   	});
 
   	//when first connected, send the last 50 messages to the user.
-	MessageDB.find({}).sort({sent: -1}).limit(50).then(function(results){		
+	MessageDB.find({}).sort({sent: -1}).limit(50).then(function(results){
 		socket.emit('recent-messages', results);
 	});
 

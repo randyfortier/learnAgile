@@ -30,8 +30,8 @@ $(document).ready(function()
 
 	//when first connection, update the current page with the last 50 messages.
 	socket.on('recent-messages', function(recent){
-		for(var messagecnt = 49; messagecnt >= 0; cnt--)
-			$('#messages').append($('<li>').text(recent[messagecnt].user + ": " + recent[messagecnt].message));
+		for(var messagecnt = recent.length -1; messagecnt >= 0; messagecnt--)
+			$('#messages').append($('<li>').text(recent[messagecnt]['user'] + ": " + recent[messagecnt].message));
 		ScrollPage();
 	});
 });

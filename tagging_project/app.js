@@ -5,6 +5,21 @@ var uuid = require('node-uuid');
 var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
+var mongoose = require('mongoose');
+
+//setup server for saving the response data
+mongoose.connect('localhost:27017/tagging');
+var Schema = mongoose.Schema;
+
+//schema for the response from student on the tags
+var student_response_schema = new Schema({
+    lecture: String,
+    studentid: String,
+    tag_title: String,
+    slide_index: String,
+    response: Number
+},{collection: 'response'});
+var studentDB = mongoose.model('student_response', student_response_schema);
 
 //be able to parse post data
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -148,7 +163,7 @@ function isTagAvaiable(session)
 //setup teacher controlling slide 
 io.on('connection', function(socket){
     var session = socket.request.session;
-
+    var lecture = session.lecture;
     //if there is no userid then don't allow any functionality
     if(!session.userid)
         return;
@@ -163,7 +178,7 @@ io.on('connection', function(socket){
 
     //send user to right room
     // in this room it is easier to send a message to all students
-    socket.join(session.lecture);/*can have a functoin call back for any error*/
+    socket.join(lecture);/*can have a functoin call back for any error*/
 
     //check if there is a tag aviable
     isTagAvaiable(session);
@@ -185,11 +200,60 @@ io.on('connection', function(socket){
     socket.on('remove_tag', function(){
         isTagAlive = false;
         live_tag_data = null;
-        io.to(session.lecture).emit('remove_tag');
+        io.to(lecture).emit('remove_tag');
     });
 
+    //return for the student response data
     socket.on('student_response', function(response_data){
         console.log(response_data);
+        
+        //add to the database
+        var title = response_data.title;
+        var slide_index = response_data.index;
+        
+        //setup database item
+        var newResponse = {
+            lecture: lecture,
+            studentid: session.userid,
+            tag_title: title,
+            slide_index: slide_index,
+            response: response_data.response
+        };
+        //setup search item
+        var searchQuery = {
+            lecture: lecture,
+            studentid: session.userid, 
+            tag_title: title, 
+            slide_index: slide_index
+        };
+
+        //search to see if there is already an item with the correct id's
+        studentDB.find(searchQuery).limit(1).then(function(results){
+                //if there is already an item update it
+                if(results.length > 0)
+                {
+                    //update the current response
+                    studentDB.update(searchQuery, newResponse, {multi: false}, function(error, numAffected){
+                        if(error)
+                        {
+                            console.log("Error in updating " + session.userid + "'s account, response was " + response + ", lecture was " + lecture + ", slide number was " + slide_index);
+                        }
+                    });
+                }
+                else//if there isn't already an item, add the item to the database
+                {
+                    //add a new result
+                    var newStudentTag = new studentDB(newResponse);
+                    newStudentTag.save(function(error){
+                        if(error)
+                        {
+                            console.log("Error in adding " + session.userid + "'s account, response was " + response + ", lecture was " + lecture + ", slide number was " + slide_index);
+                        }
+
+                    });
+                }
+            });
+
     });
 
     //when disconnecting for the server, check if the user can be removed
