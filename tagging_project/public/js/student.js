@@ -42,7 +42,7 @@ socket.on('student_tag_data', function(tag_data){
     var indexLocation = slideIndices.h +'.'+ slideIndices.v; //text visiual for the sidebar
     var indexID = slideIndices.h +'_'+ slideIndices.v;
     //check if there is already a item in sidebar
-    if($(sidebar).find('#slide_'+indexID).length !== 0){
+    if($(sidebar).find('#slide_'+indexID).length === 0){
         //get the current slide data and send unknown response
         sendTagResponse(indexLocation, UNKNOWN_RESPONSE);
     }

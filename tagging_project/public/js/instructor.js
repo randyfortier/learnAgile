@@ -2,8 +2,8 @@ var socket = io();
 
 //set up the canvas, its id and its size
 var pieChartHTML = $('<canvas id="student_chart" width="200" height="200"></canvas>');
-var SendTagButton = $('<div id="send_tag">Send Tag</div>');
-var RemoveTagButton = $('<div id="remove_tag">Remove Tag</div>');
+var SendRemoveTagButton = $('<div id="send_remove_tag">Send Tag</div>');
+var send = true;
 
 //three variable to repersent the number of people that understand the content, down understand the content, and the amount of unanswerd tags
 var understand = 300;
@@ -36,6 +36,7 @@ Reveal.addEventListener( 'slidechanged', function( event ) {
     //move the button that send the tag data to the student
     moveButton(slide);
 
+    //if the is a tag that was live then clear it
     if(isTagAlive)
     	removeTagButton_click();
 });
@@ -105,6 +106,9 @@ function moveChart(slide, top = 0)
 	//remove the prevoius chart, if one exists
 	$('#student_chart').remove();
 
+	if ($(slide).find('.feedback').length === 0)
+		return;
+
 	//move the chart up of down based on the "top" variable, it is negetive beacuse the number set throught is the offset that the current slide is from its parent, which is where the top of the slide starts
 	pieChartHTML.css('top', -top);
 
@@ -116,9 +120,8 @@ function moveChart(slide, top = 0)
 function moveButton(slide)
 {
 	//remove old send_tag button
-	$('#send_tag').remove();
-	$('#remove_tag').remove();
-
+	$('#send_remove_tag').remove();
+	
     //check for xml data
     var rawxml = $(slide).find('.feedback');
     
@@ -128,12 +131,18 @@ function moveButton(slide)
     {
         //NOTE: have script be type='text/xml', also parseXML didn't work and gave error
         //add the buuton to the screen and update the onclick method with the tag data and index of slide
-        $(slide).prepend(SendTagButton);
-        $(slide).prepend(RemoveTagButton);
-        $('#send_tag').click(sendTagButton_click);
-        $('#remove_tag').click(removeTagButton_click);
+        $(slide).prepend(SendRemoveTagButton);
     }
 }
+
+function on_click()
+{
+	if(send)
+		sendTagButton_click();
+	else
+		removeTagButton_click();
+}
+
 
 //send a signal to the server to remove the students tags
 function removeTagButton_click()
@@ -141,6 +150,8 @@ function removeTagButton_click()
 	socket.emit('remove_tag');
 	isTagAlive = false;
 	clearTimeout(timer);
+	$(SendRemoveTagButton).text("Send Tag");
+	send = true;
 }
 
 //retrives the data form the xml, puts it in json format and sends it to the server
@@ -171,6 +182,8 @@ function sendTagButton_click()
     socket.emit('instructor_tag_data', tag_data);
     Timer();
     isTagAlive = true;
+    $(SendRemoveTagButton).text("Remove Tag");
+    send = false;
 }
 
 socket.on('chart_update', function(chat_data){
@@ -203,6 +216,7 @@ function timer_tick(){
 
 //initial set the chart and start the timer
 $(document).ready(function(){
-	updatePieChart({understand: understand, dont: dontunderstand, unknown:unknown}, false);
+	// updatePieChart({understand: understand, dont: dontunderstand, unknown:unknown}, false);
 	// Timer();
+	$(SendRemoveTagButton).click(on_click);
 });
