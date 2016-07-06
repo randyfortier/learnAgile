@@ -1,5 +1,10 @@
 var socket = io();
 
+
+var UNKNOWN_RESPONSE = -1;
+var DONTUNDERSTAND_RESPONSE = 0;
+var UNDERSTAND_RESPONSE = 1;
+
 var tagSidebar = $('<div id="sidebar"></div>');
 //NOTE: when adding sidebar, height at 100% only matches the height of the text on the screen
 //adjusts that when adding to a new slide, fixed in the removeNaddsidebar function
@@ -16,7 +21,6 @@ Reveal.addEventListener( 'slidechanged', function( event ) {
     //2b, have a vertical sidebar to show the tags for the 
     //add the sidebar to the slide
     removeNAddSidebar(slide, [$('.slides').height(), slide.offsetTop]);
-
 });
 
 //function to remove the tag when the instructor wants
@@ -32,6 +36,16 @@ socket.on('student_tag_data', function(tag_data){
 
     //bulid the tag and place it on the slide
     bulidFeedbackTag(slide, tag_data.title, tag_data.yes, tag_data.no);
+
+
+    var slideIndices = Reveal.getIndices(); //the slide numbers
+    var indexLocation = slideIndices.h +'.'+ slideIndices.v; //text visiual for the sidebar
+    var indexID = slideIndices.h +'_'+ slideIndices.v;
+    //check if there is already a item in sidebar
+    if($(sidebar).find('#slide_'+indexID).length !== 0){
+        //get the current slide data and send unknown response
+        sendTagResponse(indexLocation, UNKNOWN_RESPONSE);
+    }
 });
 
 function removeNAddSidebar(slide, adjustvalues = [])
@@ -80,6 +94,8 @@ function bulidFeedbackTag(slide, t_title, t_yes, t_no)
     $('#tag_title').click(tag_click); 
 }
 
+
+
 //when the tag item is clicked
 function tag_click(event)
 {
@@ -90,7 +106,7 @@ function tag_click(event)
     var indexID = slideIndices.h +'_'+ slideIndices.v;//text for the id of the div
     var current = "";
     var other = ""
-    var response = -1;
+    var response = UNKNOWN_RESPONSE;
 
     //check to see if the id of the click ite is 'tag_good' which is the "i understand" portion of the tag
     if($(clicked).attr('id') === 'tag_good')
@@ -99,7 +115,7 @@ function tag_click(event)
         current = 'good';
         other = 'bad';
         //send to the server 1 when there is a good respose
-        response = 1;
+        response = UNDERSTAND_RESPONSE;
     }
     else if($(clicked).attr('id') === 'tag_bad')//check fi tag is 'tag_bad' which is the "i don't understand" portion of the tag
     {
@@ -107,7 +123,7 @@ function tag_click(event)
         current = 'bad';
         other = 'good';
         //send to the server 0 when it is a bad response
-        response = 0;
+        response = DONTUNDERSTAND_RESPONSE;
     }
     else
     {
@@ -135,7 +151,6 @@ function tag_click(event)
     //which button is pressed
     sendTagResponse(indexLocation, response);
 }
-
 
 function sendTagResponse(indexLocation, response)
 {

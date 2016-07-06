@@ -4,6 +4,8 @@ run:
 open:
 	sublime app.js views/* public/js/student.js public/js/instructor.js  public/css/feedback.css
 
-test:
+broswer:
 	chrome http://localhost:3000
-	node app.js
+
+broswer2:
+	chrome http://localhost:3000 http://localhost:3000

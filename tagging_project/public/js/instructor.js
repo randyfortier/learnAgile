@@ -21,6 +21,8 @@ var pieChart = null;
 var pieChart = null;
 var isTagAlive = false;
 
+var currentTitle = "";
+
 Reveal.addEventListener( 'slidechanged', function( event ) {
     //easy access to the current slide
     var slide = event.currentSlide;
@@ -47,7 +49,7 @@ Reveal.addEventListener('ready', function(event){
 });
 
 //updates the pie chart with the data in the "data" variable
-function UpdateData(data)
+function updatePieChart(data)
 {
 	//if data is empty then don't do anything
 	if(data.length === 0)
@@ -63,14 +65,16 @@ function UpdateData(data)
 	//the first 3 data points are for the names of the three pieces of the pie
 	data = {
 	    labels: [
-	        data[0],
-	        data[1],
-	        data[2],
+	        "understand", 
+	        "Don't Understand", 
+	        "Unknown"
 	    ],
 	    datasets: [
 	        {
 	        	//the last 3 data points are for the amounts of each piece of the pie
-	            data: [data[3], data[4], data[5]],
+	            data: [(data.understand)?data.understand:0, 
+	            (data.dont)?data.dont:0, 
+	            (data.unknown)?data.unknown:0],
 	            backgroundColor: [
 	                "#FF6384",
 	                "#36A2EB",
@@ -136,6 +140,7 @@ function removeTagButton_click()
 {
 	socket.emit('remove_tag');
 	isTagAlive = false;
+	clearTimeout(timer);
 }
 
 //retrives the data form the xml, puts it in json format and sends it to the server
@@ -153,6 +158,9 @@ function sendTagButton_click()
     var yes = $(xml).find('positive').text();
     var no = $(xml).find('negative').text();
 
+    //set the current title 
+    currentTitle = title;
+
     //send to the server the tag data, and the index of the slide
     var tag_data = {
     	'title': title,
@@ -161,12 +169,19 @@ function sendTagButton_click()
     	'slide_index': index
     };
     socket.emit('instructor_tag_data', tag_data);
+    Timer();
     isTagAlive = true;
 }
 
+socket.on('chart_update', function(chat_data){
+	updatePieChart(chat_data);
+});
+
+/*NOTE: EVERYTHING PAST HERE IS EXTRA, ONLY HERE TO SHOW FUNCTIONALITY*/
+var timer = null;
 //timer for constantly updating the pie graph
 function Timer(){
-	setTimeout(function(){
+	timer = setTimeout(function(){
 		timer_tick();
 		Timer();
 	}, timerSpeed);
@@ -175,12 +190,19 @@ function Timer(){
 //meat of the timer, used to augment the data and update the graph
 //this is to mock an update from the server, making it easier to work with in the future
 function timer_tick(){
-    understand += 50;
-    UpdateData(["understand", "Don't Understand", "Unknown", understand, dontunderstand, unknown]);    
+    // understand += 50;
+    // updatePieChart(["understand", "Don't Understand", "Unknown", understand, dontunderstand, unknown]);    
+    console.log("Tick");
+    var slide = Reveal.getIndices();
+	var index = slide.h + "." + slide.v;
+    socket.emit('get_chart_data', {
+                slide_index : index,
+                tag_title : currentTitle
+            });
 }
 
 //initial set the chart and start the timer
 $(document).ready(function(){
-	UpdateData(["understand", "Don't Understand", "Unknown", understand, dontunderstand, unknown], false);
-	Timer();
+	updatePieChart({understand: understand, dont: dontunderstand, unknown:unknown}, false);
+	// Timer();
 });
