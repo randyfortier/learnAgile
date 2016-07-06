@@ -3,7 +3,7 @@ var socket = io();
 //set up the canvas, its id and its size
 var pieChartHTML = $('<canvas id="student_chart" width="200" height="200"></canvas>');
 var SendRemoveTagButton = $('<div id="send_remove_tag">Send Tag</div>');
-var send = true;
+var sendtag = true;
 
 //three variable to repersent the number of people that understand the content, down understand the content, and the amount of unanswerd tags
 var understand = 300;
@@ -19,7 +19,6 @@ var pieChart = null;
 
 //generate the chart onto the html, based on the mock data
 var pieChart = null;
-var isTagAlive = false;
 
 var currentTitle = "";
 
@@ -37,7 +36,7 @@ Reveal.addEventListener( 'slidechanged', function( event ) {
     moveButton(slide);
 
     //if the is a tag that was live then clear it
-    if(isTagAlive)
+    if(!sendtag)
     	removeTagButton_click();
 });
 
@@ -135,11 +134,13 @@ function moveButton(slide)
     }
 }
 
+
+//when send/remove tag button is click, call the appropriate function
 function on_click()
 {
-	if(send)
+	if(sendtag)//call the send tag function
 		sendTagButton_click();
-	else
+	else//call the remove tag function
 		removeTagButton_click();
 }
 
@@ -147,18 +148,22 @@ function on_click()
 //send a signal to the server to remove the students tags
 function removeTagButton_click()
 {
+	//send the no tag
 	socket.emit('remove_tag');
-	isTagAlive = false;
+	//remove the timer grabing the the chart data
 	clearTimeout(timer);
+	
+	//clear the chart
+	pieChart.destroy();
+
+    //change the name and functionality of the button
 	$(SendRemoveTagButton).text("Send Tag");
-	send = true;
+	sendtag = true;
 }
 
 //retrives the data form the xml, puts it in json format and sends it to the server
 function sendTagButton_click()
 {
-	if(isTagAlive)
-		return;
 	//get the xml and the index for which slide has the tag
 	var xml = $(Reveal.getCurrentSlide()).find('.feedback').text();
 	var indices =  Reveal.getIndices();
@@ -180,43 +185,33 @@ function sendTagButton_click()
     	'slide_index': index
     };
     socket.emit('instructor_tag_data', tag_data);
+
+    //start the timer for grabbing the infromation for the server
     Timer();
-    isTagAlive = true;
+
+    //change the name and functionality of the button
     $(SendRemoveTagButton).text("Remove Tag");
-    send = false;
+    sendtag = false;
 }
 
 socket.on('chart_update', function(chat_data){
 	updatePieChart(chat_data);
 });
 
-/*NOTE: EVERYTHING PAST HERE IS EXTRA, ONLY HERE TO SHOW FUNCTIONALITY*/
 var timer = null;
 //timer for constantly updating the pie graph
 function Timer(){
-	timer = setTimeout(function(){
-		timer_tick();
-		Timer();
-	}, timerSpeed);
-}
-
-//meat of the timer, used to augment the data and update the graph
-//this is to mock an update from the server, making it easier to work with in the future
-function timer_tick(){
-    // understand += 50;
-    // updatePieChart(["understand", "Don't Understand", "Unknown", understand, dontunderstand, unknown]);    
-    console.log("Tick");
-    var slide = Reveal.getIndices();
+	var slide = Reveal.getIndices();
 	var index = slide.h + "." + slide.v;
     socket.emit('get_chart_data', {
                 slide_index : index,
                 tag_title : currentTitle
             });
+	timer = setTimeout(function(){Timer();}, timerSpeed);
 }
 
 //initial set the chart and start the timer
 $(document).ready(function(){
-	// updatePieChart({understand: understand, dont: dontunderstand, unknown:unknown}, false);
-	// Timer();
+	//set the the click functionality for the send/remove tag button
 	$(SendRemoveTagButton).click(on_click);
 });

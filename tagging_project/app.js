@@ -19,10 +19,10 @@ var student_response_schema = new Schema({
     slide_index: String,
     response: Number
 },{collection: 'response'});
-var studentDB = mongoose.model('student_response', student_response_schema);
+var student_ResponseDB = mongoose.model('student_response', student_response_schema);
 
 //array for users that are connected
-var Users = []
+var Users = [];//NOTE: to be replaced by mongoDB table
 var LiveTag = {};
 
 //be able to parse post data
@@ -89,6 +89,7 @@ app.post('/lecture', function(request, response){
         return;
     }
 
+    //set if ther user is an instructor or a student
     session.isInstructor = (request.body.isStudent === "true")? false: true;
 
     //have the calls specific lecture slide, add the current lecture slide uuid.v4 number to the session data
@@ -176,7 +177,6 @@ function removeTag(lecture)
     io.to(lecture).emit('remove_tag');
 }
 
-
 //setup teacher controlling slide 
 io.on('connection', function(socket){
     var session = socket.request.session;
@@ -213,7 +213,8 @@ io.on('connection', function(socket){
         
         //recieve tag data
         socket.on('instructor_tag_data', function(tag_data){
-            LiveTag[session.lecture];
+            //set the current tag data base on the lecture id
+            LiveTag[lecture] = tag_data;
             sendTag(session, tag_data);
         });
 
@@ -233,7 +234,7 @@ io.on('connection', function(socket){
             };
 
             //search for the results
-            studentDB.find(query).select({response: 1}).then(function(results){
+            student_ResponseDB.find(query).select({response: 1}).then(function(results){
                 //for each returned data piece, sort it into 3 catagories, -1, 0, 1
                 var chart_data = {};
                 for (var cnt = 0; cnt < results.length; cnt++)
@@ -281,12 +282,12 @@ io.on('connection', function(socket){
             };
 
             //search to see if there is already an item with the correct id's
-            studentDB.find(searchQuery).limit(1).then(function(results){
+            student_ResponseDB.find(searchQuery).limit(1).then(function(results){
                     //if there is already an item update it
                     if(results.length > 0)
                     {
                         //update the current response
-                        studentDB.update(searchQuery, newResponse, {multi: false}, function(error, numAffected){
+                        student_ResponseDB.update(searchQuery, newResponse, {multi: false}, function(error, numAffected){
                             if(error)
                             {
                                 console.log("Error in updating " + session.userid + "'s account, response was " + response + ", lecture was " + lecture + ", slide number was " + slide_index);
@@ -296,7 +297,7 @@ io.on('connection', function(socket){
                     else//if there isn't already an item, add the item to the database
                     {
                         //add a new result
-                        var newStudentTag = new studentDB(newResponse);
+                        var newStudentTag = new student_ResponseDB(newResponse);
                         newStudentTag.save(function(error){
                             if(error)
                             {

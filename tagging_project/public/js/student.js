@@ -94,8 +94,6 @@ function bulidFeedbackTag(slide, t_title, t_yes, t_no)
     $('#tag_title').click(tag_click); 
 }
 
-
-
 //when the tag item is clicked
 function tag_click(event)
 {
@@ -108,7 +106,7 @@ function tag_click(event)
     var other = ""
     var response = UNKNOWN_RESPONSE;
 
-    //check to see if the id of the click ite is 'tag_good' which is the "i understand" portion of the tag
+    //check to see if the id of the click item is 'tag_good' which is the "i understand" portion of the tag
     if($(clicked).attr('id') === 'tag_good')
     {
         //set current to good and other to bad, for the color change 
@@ -117,7 +115,7 @@ function tag_click(event)
         //send to the server 1 when there is a good respose
         response = UNDERSTAND_RESPONSE;
     }
-    else if($(clicked).attr('id') === 'tag_bad')//check fi tag is 'tag_bad' which is the "i don't understand" portion of the tag
+    else if($(clicked).attr('id') === 'tag_bad')//check if tag is 'tag_bad' which is the "i don't understand" portion of the tag
     {
         //set current to bad and other to good, for the color change
         current = 'bad';
