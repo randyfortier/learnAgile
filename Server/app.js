@@ -14,14 +14,14 @@ mongoose.connect('localhost:27017/tagging');
 var Schema = mongoose.Schema;
 
 //schema for the response from student on the tags
-var student_response_schema = new Schema({
+var student_binary_tag_response_schema = new Schema({
     lecture: String,
     studentid: String,
     tag_title: String,
     slide_index: String,
     response: Number
 },{collection: 'response'});
-var student_ResponseDB = mongoose.model('student_response', student_response_schema);
+var student_binary_ResponseDB = mongoose.model('student_response', student_binary_tag_response_schema);
 
 //array for users that are connected
 var Users = [];//NOTE: to be replaced by mongoDB table
@@ -92,22 +92,12 @@ app.post('/lecture', function(request, response){
     }
 
     //set if ther user is an instructor or a student
-    session.isInstructor = (request.body.isStudent === "true")? false: true;
+    session.isInstructor = (request.body.isInstructor === "true")? true:false;
 
     //have the calls specific lecture slide, add the current lecture slide uuid.v4 number to the session data
     session.lecture = '35e202f2-4b5d-43b3-be1e-926c299c10a7';
 
-    //check if the request is for a instructor or student
-    if(!session.isInstructor)
-    {
-        //return student version
-        response.sendFile( __dirname + '/views/studentLecture.html');
-    }
-    else
-    {
-        //return teacher version
-        response.sendFile( __dirname + '/views/instructorLecture.html');
-    }
+    response.sendFile(__dirname + '/views/Lecture.html');
 });
 
 
@@ -249,6 +239,9 @@ io.on('connection', function(socket){
     //send user to right room
     // in this room it is easier to send a message to all students
     socket.join(lecture);/*can have a function call back for any error*/
+
+    //setup the functionality of the lecture 
+    socket.emit('setup', session.isInstructor);
 
     //use this so the functionality of the instructor is only accessable to the instructor
     /*NOTE: used isInstructor because if it was the oppsite the else statement would be for
