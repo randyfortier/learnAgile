@@ -65,7 +65,7 @@ function updatePieChart(data)
 	//the first 3 data points are for the names of the three pieces of the pie
 	data = {
 	    labels: [
-	        "understand", 
+	        "Understand", 
 	        "Don't Understand", 
 	        "Unknown"
 	    ],
@@ -144,7 +144,6 @@ function on_click()
 		removeTagButton_click();
 }
 
-
 //send a signal to the server to remove the students tags
 function removeTagButton_click()
 {
@@ -195,6 +194,7 @@ function sendTagButton_click()
 }
 
 socket.on('chart_update', function(chat_data){
+	console.log(chart_data);
 	updatePieChart(chat_data);
 });
 

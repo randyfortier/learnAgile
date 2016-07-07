@@ -6,6 +6,8 @@ var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 var mongoose = require('mongoose');
+var bcrypt = require('bcrypt-nodejs');
+
 
 //setup server for saving the response data
 mongoose.connect('localhost:27017/tagging');
@@ -66,7 +68,7 @@ function checkForID(session)
 }
 
 app.get('/lecture', function(request, response){
-    //if there is no id in the session data go back to the the login screen
+    //if there is a get request for lecture, redirect to home screen
     response.redirect('/');
 });
 
@@ -108,6 +110,57 @@ app.post('/lecture', function(request, response){
     }
 });
 
+
+//mongodb login functionality
+
+var userSchema = new Schema({
+    userid: {type: String, 
+              unique: true,
+              index: true},
+    sid: {type: String,
+        unique: true},
+    // fname: String,
+    // lname: String,
+    hashedPassword: String
+}, {collection: 'users'});
+var User = mongoose.model('user', userSchema);
+
+
+function register(session, sid, fname, lname, password)
+{
+    var userid = uuid.v4();
+    var hash = bcrypt.hashSync(password);
+    var userdata = {
+        userid: userid,
+        sid: sid,
+        fname: fname,
+        lname: lname,
+        hashPassword: hash
+    };
+
+    var newUser = new User(userdata);
+
+    newUser.save(function(error){
+        if(error)
+        {
+            console.log("Error in Registering, data: " +  userdata);
+        }
+        else
+        {
+            console.log("User Added: " + userdata);
+            session.userid = userid;
+        }
+    });
+
+}
+
+function login(session, sid, password)
+{
+
+}
+
+
+//Socket.IO Functionality
 
 //this is used to give socket.io access to the session data,
 //i don't know if this is the best practice, but it works, if it isn't 
@@ -247,8 +300,7 @@ io.on('connection', function(socket){
                 
                 //send the data to the instructor
                 socket.emit('chart_update', chart_data);
-                //step 11, spit out the data to the Console
-                console.log(chart_data);
+                
             });
         });
     }
