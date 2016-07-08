@@ -12,7 +12,7 @@ socket.on('setup', function(isInstuctor){
         //generate the chart onto the html, based on the mock data
         var pieChart = null;
 
-        var currentTitle = "";
+        var currentTitle = "Einstein";
 
         Reveal.addEventListener( 'slidechanged', function( event ) {
             //easy access to the current slide
@@ -58,7 +58,7 @@ socket.on('setup', function(isInstuctor){
                 datasets: [
                     {
                         //the last 3 data points are for the amounts of each piece of the pie
-                        server_data: [(server_data.understand)?server_data.understand:0, 
+                        data: [(server_data.understand)?server_data.understand:0, 
                         (server_data.dont)?server_data.dont:0, 
                         (server_data.unknown)?server_data.unknown:0],
                         backgroundColor: [
@@ -113,17 +113,15 @@ socket.on('setup', function(isInstuctor){
             var slide = Reveal.getIndices();
             var index = slide.h + "." + slide.v;
             socket.emit('get_chart_data', {
-                        slide_index : index,
                         tag_title : currentTitle
                     });
             timer = setTimeout(function(){Timer();}, timerSpeed);
         }
 
-        // //initial set the chart and start the timer
-        // $(document).ready(function(){
-        //     //set the the click functionality for the send/remove tag button
-        //     $(SendRemoveTagButton).click(on_click);
-        // });
+        //initial set the chart and start the timer
+        $(document).ready(function(){
+            Timer();
+        });
     }
     else
     {
@@ -153,7 +151,7 @@ socket.on('setup', function(isInstuctor){
             var rawxml = $(slide).find('.binary_tag');
             //use !== 0 beacuse find returns a empty array
             //if !0 then there is a tag there
-            if(rawxml.length !== 0 && !once)
+            if(rawxml.length !== 0)
             {
                 //NOTE: have script be type='text/xml', also parseXML didn't work and gave error
                 //add the buuton to the screen and update the onclick method with the tag data and index of slide

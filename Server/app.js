@@ -55,33 +55,18 @@ var sessionMiddleware = session({
 //use the session data that is above
 app.use(sessionMiddleware);
 
-//check if the users already has a session, if so then do nothing, else 
-//give them a unique code
-function checkForID(session)
+
+function cleanDB()
 {
-    if(!session.userid)
-    {
-        session.userid = uuid.v4();
-    }
+    UserDB.remove({}, function(err) { 
+        console.log('collection removed') 
+    });
 }
+
 
 app.get('/lecture', function(request, response){
     //if there is a get request for lecture, redirect to home screen
-    response.redirect('/');
-});
-
-
-app.get('/', function(request, response){
-    //check if there already is a userid in the session data
-    checkForID(request.session);
-
-    //load the login page
-    response.render('login');
-});
-
-
-app.post('/lecture', function(request, response){
-    //if there is no id in the session data go back to the the login screen
+     //if there is no id in the session data go back to the the login screen
     var session = request.session;
     if(!session.userid)
     {
@@ -89,15 +74,52 @@ app.post('/lecture', function(request, response){
         return;
     }
 
-    //set if ther user is an instructor or a student
-    session.isInstructor = (request.body.isInstructor === "true")? true:false;
-
     //have the calls specific lecture slide, add the current lecture slide uuid.v4 number to the session data
     session.lecture = '35e202f2-4b5d-43b3-be1e-926c299c10a7';
 
     response.sendFile(__dirname + '/views/Lecture.html');
 });
 
+app.post('/login', function(request, response){
+    var sid = request.body.username;
+    var password = request.body.password;
+    console.log(sid + ", " + password);
+
+    login(request.session, sid, password, function(){
+        response.redirect('/lecture');
+    });
+});
+
+app.post('/register', function(request, response){
+    var sid = request.body.username;
+    var password = request.body.password;
+
+    if(sid === "" || password === "")
+    {
+        response.redirect('/registerform');
+        return;
+    }
+
+    register(request.session, sid, password, function(){
+        response.redirect('/lecture'); 
+    });
+});
+
+app.get('/registerform', function(request, response){
+    response.render('register');
+});
+
+app.get('/', function(request, response){
+    //check if there already is a userid in the session data
+    // checkForID(request.session);
+    // cleanDB();
+    if(request.session.userid){
+        response.redirect('/lecture');
+        return;
+    }
+    //load the login page
+    response.render('login');
+});
 
 //mongodb login functionality
 
@@ -107,26 +129,26 @@ var userSchema = new Schema({
               index: true},
     sid: {type: String,
         unique: true},
-    // fname: String,
-    // lname: String,
-    hashedPassword: String
+    hashedPassword: String,
+    isInstructor: Boolean
 }, {collection: 'users'});
-var User = mongoose.model('user', userSchema);
+var UserDB = mongoose.model('user', userSchema);
 
 
-function register(session, sid, fname, lname, password)
+function register(session, sid, password, onSuccess, isInstructor) /* fname, lname, */
 {
+    
     var userid = uuid.v4();
     var hash = bcrypt.hashSync(password);
+    console.log(hash);
     var userdata = {
         userid: userid,
         sid: sid,
-        fname: fname,
-        lname: lname,
-        hashPassword: hash
+        hashedPassword: hash,
+        isInstructor: isInstructor || false
     };
 
-    var newUser = new User(userdata);
+    var newUser = new UserDB(userdata);
 
     newUser.save(function(error){
         if(error)
@@ -137,16 +159,34 @@ function register(session, sid, fname, lname, password)
         {
             console.log("User Added: " + userdata);
             session.userid = userid;
+            session.isInstructor = userdata.isInstructor;
+            onSuccess();
         }
     });
-
 }
 
-function login(session, sid, password)
+function login(session, sid, password, onSuccess)
 {
-
+    UserDB.find({sid: sid}).limit(1).then(function(results){
+        if((results.length > 0) && (bcrypt.compareSync(password, results[0].hashedPassword)))
+        {
+            //successful login, contiune with the login
+            session.userid = results[0].userid;
+            session.isInstructor = results[0].isInstructor;
+        }
+        else
+        {
+            //incorect password
+            console.log("Login Attempt: " + sid /*+ " Password: " + password*/);
+        }
+        onSuccess();
+    });
 }
 
+function registerInstructor(session, sid, password, onSuccess)
+{
+    register(session, sid, password, onSuccess, true);
+}
 
 //Socket.IO Functionality
 
@@ -186,23 +226,23 @@ function removeUser(search)
         Users.splice(Users.indexOf(Users.find(search)), 1);
 }
 
-//send the tag data the students
-function sendTag(session, tag_data)
-{
-    io.to(session.lecture).emit('student_tag_data', tag_data);
-}
+// //send the tag data the students
+// function sendTag(session, tag_data)
+// {
+//     io.to(session.lecture).emit('student_tag_data', tag_data);
+// }
 
 //you lose the tag if you reload the page or load the page after the tag sent
 //save the tag data and if the tag is alive send that tag data to the currently 
 //loading user
-function isTagAvaiable(session)
-{
-    //if alive send tag data
-    if(LiveTag[session.lecture])
-    {
-        sendTag(session, LiveTag[session.lecture]);
-    }
-}
+// function isTagAvaiable(session)
+// {
+//     //if alive send tag data
+//     if(LiveTag[session.lecture])
+//     {
+//         sendTag(session, LiveTag[session.lecture]);
+//     }
+// }
 
 function removeProperty(object, oldname, newname)
 {
@@ -212,11 +252,11 @@ function removeProperty(object, oldname, newname)
     }
 }
 
-function removeTag(lecture)
-{
-    delete LiveTag[lecture];
-    io.to(lecture).emit('remove_tag');
-}
+// function removeTag(lecture)
+// {
+//     delete LiveTag[lecture];
+//     io.to(lecture).emit('remove_tag');
+// }
 
 
 //schema for the response from student on the tags
@@ -268,17 +308,17 @@ io.on('connection', function(socket){
             io.to(session.lecture).emit('student-moveslide', indexies);
         });
         
-        //recieve tag data
-        socket.on('instructor_tag_data', function(tag_data){
-            //set the current tag data base on the lecture id
-            LiveTag[lecture] = tag_data;
-            sendTag(session, tag_data);
-        });
+        // //recieve tag data
+        // socket.on('instructor_tag_data', function(tag_data){
+        //     //set the current tag data base on the lecture id
+        //     LiveTag[lecture] = tag_data;
+        //     sendTag(session, tag_data);
+        // });
 
-        //remove the student's tag
-        socket.on('remove_tag', function(){
-            removeTag(lecture);
-        });
+        // //remove the student's tag
+        // socket.on('remove_tag', function(){
+        //     removeTag(lecture);
+        // });
 
         //used to get the real time data for the student
         socket.on('get_chart_data', function(request){
@@ -286,21 +326,21 @@ io.on('connection', function(socket){
             // the right lecture, slide number and tag title
             var query = {
                 lecture : lecture,
-                slide_index : request.slide_index,
                 tag_title : request.tag_title
             };
 
             //search for the results
             student_binary_ResponseDB.find(query).select({response: 1}).then(function(results){
                 //for each returned data piece, sort it into 3 catagories, -1, 0, 1
+                // console.log(results);
                 var chart_data = {};
                 for (var cnt = 0; cnt < results.length; cnt++)
                     chart_data[results[cnt].response] = (chart_data[results[cnt].response] + 1) || 1;
                 
                 //change the progrety so they repersent the data better
-                removeProperty(chart_data, '1', 'understand')
-                removeProperty(chart_data, '0', 'dont')
-                removeProperty(chart_data, '-1', 'unknown')
+                removeProperty(chart_data, '1', 'understand');
+                removeProperty(chart_data, '0', 'dont');
+                removeProperty(chart_data, '-1', 'unknown');
                 
                 //send the data to the instructor
                 socket.emit('chart_update', chart_data);
@@ -313,12 +353,12 @@ io.on('connection', function(socket){
         //holds the functionality that is unique to the student
 
         //check if there is a tag aviable, so to send the tag date to the student
-        isTagAvaiable(session);
+        // isTagAvaiable(session);
 
         //when the student sends a response to the server, update/add that data to the code
         socket.on('student_response', function(response_data){
             console.log(response_data);
-            
+            // return;
 
             //add to the database
             var title = response_data.title;
@@ -370,8 +410,8 @@ io.on('connection', function(socket){
         //remove the user for the room
         socket.leave(session.lecture);
 
-        if(session.isInstructor)
-            removeTag(lecture);
+        // if(session.isInstructor)
+        //     removeTag(lecture);
 
         //check if the user is to be removed
         removeUser(search);
