@@ -59,12 +59,11 @@
 				</section>
 
 				<section data-transition='fade'>
-                    <script class='feedback' type='text/xml'>
-                        <feedback>
-                            <title>test</title>
-                            <positive>true</positive>
-                          <negative>false</negative>
-                        </feedback>
+                    <script class='binary_tag' type='text/xml'>
+                        <tags>
+                            <en title="Einstein">images/Einstein.png</en>
+                            <heart title="Heart">images/Heart.png</heart>
+                        </tags>
                     </script>
 					<h2>Outline</h2>
 					<ul>
@@ -334,6 +333,12 @@ $.ajax("timeToLaunch.php")
                              data-background-size="70%"
                              data-transition="fade"
                              class="title">
+                        <script class='binary_tag' type='text/xml'>
+                            <tags>
+                                <heart title="Heart">images/Heart.png</heart>
+                                <en title="Einstein">images/Einstein.png</en>
+                            </tags>
+                        </script>
                         <h1 style="margin-left: 342px">AJAX, JSON, and XML</h1>
                         <h3 style="margin-left: 342px">JSON</h3>
                     </section>
@@ -726,6 +731,9 @@ $.get('inventory.xml', function(xmlDoc) {
 
 			// Full list of configuration options available at:
 			// https://github.com/hakimel/reveal.js#configuration
+            //variable for following the Instructors slide
+            var follow_Instructors_Slides = false;
+
 			Reveal.initialize({
 				controls: true,
 				progress: true,
@@ -770,6 +778,7 @@ $.get('inventory.xml', function(xmlDoc) {
 				    46: function() { RevealChalkboard.clear() },	// clear chalkboard when 'DEL' is pressed
 				     8: function() { RevealChalkboard.reset() },	// reset all chalkboard data when 'BACKSPACE' is pressed
 				    68: function() { RevealChalkboard.download() },	// downlad chalkboard drawing when 'd' is pressed
+                    70: function() { follow_Instructors_Slides = !follow_Instructors_Slides;}
 				},
             });
 

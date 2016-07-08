@@ -14,28 +14,31 @@
 
 
 #sidebar {
-	background-color: black;
+	background-color: transparent;
 	color: white;
 	position: fixed;
 	left: 100%;
 	border-radius: 5px;
-	font-size: 24px;
 }
 
 .tagged {
-	color: black;
+	position: relative;
 	background-color: white;
 	display:block;
 
 	border-radius: 5px;
-	padding: 5px;
+	width: 50px;
+	height: 50px;
+
+	display: flex;
+	align-items: center;
 }
 
-.good {
+.clicked {
 	background-color: green;
 }
 
-.bad {
+.unclicked {
 	background-color: red;
 }
 

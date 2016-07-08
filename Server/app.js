@@ -1,3 +1,10 @@
+/*
+* Icon's used are for the web here are the links to the direct soruces
+* https://image.spreadshirtmedia.com/image-server/v1/designs/11296257,width=178,height=178,version=1320836481/Smiley-Einstein-Icon-3c.png
+* https://cdn4.iconfinder.com/data/icons/ionicons/512/icon-ios7-heart-128.png
+*
+*/
+
 var express = require('express');
 var session = require('express-session');
 var bodyParser = require("body-parser");
@@ -13,15 +20,6 @@ var bcrypt = require('bcrypt-nodejs');
 mongoose.connect('localhost:27017/tagging');
 var Schema = mongoose.Schema;
 
-//schema for the response from student on the tags
-var student_binary_tag_response_schema = new Schema({
-    lecture: String,
-    studentid: String,
-    tag_title: String,
-    slide_index: String,
-    response: Number
-},{collection: 'response'});
-var student_binary_ResponseDB = mongoose.model('student_response', student_binary_tag_response_schema);
 
 //array for users that are connected
 var Users = [];//NOTE: to be replaced by mongoDB table
@@ -220,6 +218,19 @@ function removeTag(lecture)
     io.to(lecture).emit('remove_tag');
 }
 
+
+//schema for the response from student on the tags
+var student_binary_tag_response_schema = new Schema({
+    lecture: String,
+    studentid: String,
+    tag_title: String,
+    response: Number
+},{collection: 'response'});
+var student_binary_ResponseDB = mongoose.model('student_response', student_binary_tag_response_schema);
+
+
+
+
 //setup teacher controlling slide 
 io.on('connection', function(socket){
     var session = socket.request.session;
@@ -280,7 +291,7 @@ io.on('connection', function(socket){
             };
 
             //search for the results
-            student_ResponseDB.find(query).select({response: 1}).then(function(results){
+            student_binary_ResponseDB.find(query).select({response: 1}).then(function(results){
                 //for each returned data piece, sort it into 3 catagories, -1, 0, 1
                 var chart_data = {};
                 for (var cnt = 0; cnt < results.length; cnt++)
@@ -306,33 +317,33 @@ io.on('connection', function(socket){
 
         //when the student sends a response to the server, update/add that data to the code
         socket.on('student_response', function(response_data){
+            console.log(response_data);
+            
+
             //add to the database
             var title = response_data.title;
-            var slide_index = response_data.index;
-            
+
             //setup database item
             var newResponse = {
                 lecture: lecture,
                 studentid: session.userid,
                 tag_title: title,
-                slide_index: slide_index,
                 response: response_data.response
             };
             //setup search item
             var searchQuery = {
                 lecture: lecture,
                 studentid: session.userid, 
-                tag_title: title, 
-                slide_index: slide_index
+                tag_title: title
             };
 
             //search to see if there is already an item with the correct id's
-            student_ResponseDB.find(searchQuery).limit(1).then(function(results){
+            student_binary_ResponseDB.find(searchQuery).limit(1).then(function(results){
                     //if there is already an item update it
                     if(results.length > 0)
                     {
                         //update the current response
-                        student_ResponseDB.update(searchQuery, newResponse, {multi: false}, function(error, numAffected){
+                        student_binary_ResponseDB.update(searchQuery, newResponse, {multi: false}, function(error, numAffected){
                             if(error)
                             {
                                 console.log("Error in updating " + session.userid + "'s account, response was " + response + ", lecture was " + lecture + ", slide number was " + slide_index);
@@ -342,7 +353,7 @@ io.on('connection', function(socket){
                     else//if there isn't already an item, add the item to the database
                     {
                         //add a new result
-                        var newStudentTag = new student_ResponseDB(newResponse);
+                        var newStudentTag = new student_binary_ResponseDB(newResponse);
                         newStudentTag.save(function(error){
                             if(error)
                             {

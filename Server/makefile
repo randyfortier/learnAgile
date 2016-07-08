@@ -2,7 +2,7 @@ run:
 	node app.js
 
 open:
-	sublime app.js views/* public/js/tagging.js public/css/feedback.css
+	sublime app.js public/js/tagging.js views/* public/css/feedback.css
 
 broswer:
 	chrome http://localhost:3000
