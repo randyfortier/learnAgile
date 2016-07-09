@@ -23,7 +23,7 @@
 
 .tagged {
 	position: relative;
-	background-color: white;
+	background-color: gray;
 	display:block;
 
 	border-radius: 5px;
@@ -32,6 +32,9 @@
 
 	display: flex;
 	align-items: center;
+}
+.clickable {
+	pointer-events: none;
 }
 
 .clicked {
@@ -46,22 +49,10 @@
 	width: 400;
 	height: 400;
 	position: fixed;
-	background-color: red;
+	background-color: white;
 	border:1px solid #000000;
 	left: 80%;
 
 	/*remove to show the chart*/
-	display: none;
-}
-
-#send_remove_tag {
-	background-color: red;
-	width: 100px;
-	height: 75px;
-	position: fixed;
-	left: 0px;
-	top: 0px;
-
-	color: white;
-	font-size: 28px;
+	/*display: none;*/
 }

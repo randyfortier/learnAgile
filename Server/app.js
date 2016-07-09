@@ -61,6 +61,9 @@ function cleanDB()
     UserDB.remove({}, function(err) { 
         console.log('collection removed') 
     });
+    student_binary_ResponseDB.remove({}, function(err) { 
+        console.log('collection removed') 
+    });
 }
 
 
@@ -111,14 +114,43 @@ app.get('/registerform', function(request, response){
 
 app.get('/', function(request, response){
     //check if there already is a userid in the session data
-    // checkForID(request.session);
+    checkForID(request.session);
     // cleanDB();
-    if(request.session.userid){
-        response.redirect('/lecture');
+    // if(request.session.userid){
+    //     response.redirect('/lecture');
+    //     return;
+    // }
+    // //load the login page
+    // response.render('login');
+    response.render('extra_login');
+});
+
+//check if the users already has a session, if so then do nothing, else 
+//give them a unique code
+function checkForID(session)
+{
+    if(!session.userid)
+    {
+        session.userid = uuid.v4();
+    }
+}
+
+app.post('/lecture', function(request, response){
+    //if there is no id in the session data go back to the the login screen
+    var session = request.session;
+    if(!session.userid)
+    {
+        response.redirect('/');
         return;
     }
-    //load the login page
-    response.render('login');
+
+    //set if ther user is an instructor or a student
+    session.isInstructor = (request.body.isInstructor === "true")? true:false;
+
+    //have the calls specific lecture slide, add the current lecture slide uuid.v4 number to the session data
+    session.lecture = '35e202f2-4b5d-43b3-be1e-926c299c10a7';
+
+    response.sendFile(__dirname + '/views/Lecture.html');
 });
 
 //mongodb login functionality
@@ -328,11 +360,9 @@ io.on('connection', function(socket){
                 lecture : lecture,
                 tag_title : request.tag_title
             };
-
             //search for the results
             student_binary_ResponseDB.find(query).select({response: 1}).then(function(results){
                 //for each returned data piece, sort it into 3 catagories, -1, 0, 1
-                // console.log(results);
                 var chart_data = {};
                 for (var cnt = 0; cnt < results.length; cnt++)
                     chart_data[results[cnt].response] = (chart_data[results[cnt].response] + 1) || 1;
@@ -342,8 +372,9 @@ io.on('connection', function(socket){
                 removeProperty(chart_data, '0', 'dont');
                 removeProperty(chart_data, '-1', 'unknown');
                 
+                request.data = chart_data;
                 //send the data to the instructor
-                socket.emit('chart_update', chart_data);
+                socket.emit('chart_update', request);
                 
             });
         });
@@ -357,9 +388,7 @@ io.on('connection', function(socket){
 
         //when the student sends a response to the server, update/add that data to the code
         socket.on('student_response', function(response_data){
-            console.log(response_data);
-            // return;
-
+            
             //add to the database
             var title = response_data.title;
 
@@ -379,29 +408,61 @@ io.on('connection', function(socket){
 
             //search to see if there is already an item with the correct id's
             student_binary_ResponseDB.find(searchQuery).limit(1).then(function(results){
-                    //if there is already an item update it
-                    if(results.length > 0)
-                    {
-                        //update the current response
-                        student_binary_ResponseDB.update(searchQuery, newResponse, {multi: false}, function(error, numAffected){
-                            if(error)
-                            {
-                                console.log("Error in updating " + session.userid + "'s account, response was " + response + ", lecture was " + lecture + ", slide number was " + slide_index);
-                            }
-                        });
-                    }
-                    else//if there isn't already an item, add the item to the database
-                    {
-                        //add a new result
-                        var newStudentTag = new student_binary_ResponseDB(newResponse);
-                        newStudentTag.save(function(error){
-                            if(error)
-                            {
-                                console.log("Error in adding " + session.userid + "'s account, response was " + response + ", lecture was " + lecture + ", slide number was " + slide_index);
-                            }
-                        });
-                    }
-                });
+                //if there is already an item update it
+                if(results.length > 0)
+                {
+                    // update the current response
+                    student_binary_ResponseDB.update(searchQuery, newResponse, {multi: false}, function(error, numAffected){
+                        if(error)
+                        {
+                            console.log("Error in updating " + session.userid + "'s account, response was " + response + ", lecture was " + lecture + ", slide number was " + slide_index);
+                        }
+                    });
+                }
+                else//if there isn't already an item, add the item to the database
+                {
+                    //add a new result
+                    var newStudentTag = new student_binary_ResponseDB(newResponse);
+                    newStudentTag.save(function(error){
+                        if(error)
+                        {
+                            console.log("Error in adding " + session.userid + "'s account, response was " + response + ", lecture was " + lecture + ", slide number was " + slide_index);
+                        }
+                    });
+                }
+            });
+        });
+        
+        //called when the user check for the status of there current tag
+        socket.on('check_binary_tag_status', function(title){
+            //set up the database query
+            var searchQuery = {
+                lecture: lecture,
+                studentid: session.userid,
+                tag_title: title
+            };
+            //check if ther exsits a response for a tag from the specific user
+            student_binary_ResponseDB.find(searchQuery).select({response: 1}).limit(1).then(function(results){
+                //if there is a response, return that response
+                if(results.length > 0)
+                {
+                    socket.emit('binary_tag_status', {title: title, response: results[0].response})
+                }
+                else//if there is no response then insert one and send the result of unknown response to the user
+                {
+                    //add unknown response to the searchQuery to turn it into a database record to be inserted
+                    searchQuery.response = -1;//Unknown Response
+                    //create the new record and save the record
+                    var newStudentTag = new student_binary_ResponseDB(searchQuery);
+                    newStudentTag.save(function(error){
+                        if(error){ // if there was an error then return what print out the user, the lecture and the title of the tag
+                            console.log("Error adding Default response for user: " + session.userid + ", lecture: " + lecture + ", title: " + title);
+                        }
+                    });
+                    //send the unknown response to the user
+                    socket.emit('binary_tag_status', {title: title, response: searchQuery.response})
+                }
+            });        
         });
     }
 

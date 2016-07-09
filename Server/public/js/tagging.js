@@ -3,6 +3,8 @@ var socket = io();
 socket.on('setup', function(isInstuctor){
     if(isInstuctor)
     {
+
+        var tag_color = {};
         //set up the canvas, its id and its size
         var pieChartHTML = $('<canvas id="student_chart" width="200" height="200"></canvas>');
 
@@ -13,6 +15,10 @@ socket.on('setup', function(isInstuctor){
         var pieChart = null;
 
         var currentTitle = "Einstein";
+        var tag_titles = [];
+
+        var radarChart = null;
+        var radar_chart_data = {};
 
         Reveal.addEventListener( 'slidechanged', function( event ) {
             //easy access to the current slide
@@ -22,7 +28,18 @@ socket.on('setup', function(isInstuctor){
             socket.emit('instructor-moveslide', [event.indexh,event.indexv]);
 
             //move the chart to the current slide and move the chart to the top left corner
-            moveChart(slide, slide.offsetTop + 50);
+            moveChart(slide, slide.offsetTop);
+
+            //check for xml data
+            var rawxml = $(slide).find('.binary_tag');
+            //use !== 0 beacuse find returns a empty array
+            //if !0 then there is a tag there
+            if(rawxml.length !== 0)
+            {
+                //NOTE: have script be type='text/xml', also parseXML didn't work and gave error
+                //add the buuton to the screen and update the onclick method with the tag data and index of slide
+                updateTagTitles($(rawxml[0]).text());
+            }
 
         });
 
@@ -31,8 +48,105 @@ socket.on('setup', function(isInstuctor){
             var slide = event.currentSlide;
 
             //this move is for when on the first slide, beacuse slide change isn't called on the first slide
-            moveChart(slide, slide.offsetTop + 50);
+            moveChart(slide, slide.offsetTop);
         });
+
+        function updateAllTagChartData()
+        {
+            tag_titles.forEach(function(title, index){
+                socket.emit('get_chart_data', {
+                        tag_title : title,
+                        index: index
+                    });
+            });
+        }
+
+        function updateTagTitles(xml)
+        {
+            tag_titles = [];
+            //for each child in the xml get the title
+            $(xml).children().each(function(){
+                //push the name in the list
+                tag_titles.push($(this).attr('title'));
+            });
+            updateRadarChart();
+            radar_chart_data = {
+                labels: ["Yes","No","unknown"],
+                datasets: tag_titles.slice()
+            };
+            updateAllTagChartData();
+        }
+
+        socket.on('chart_update', function(chart_data){
+            updateTagChartData(chart_data);
+        });
+
+
+        function updateTagChartData(chart_data)
+        {
+            var data = [(chart_data.data.understand)?chart_data.data.understand:0, 
+                        (chart_data.data.dont)?chart_data.data.dont:0, 
+                        (chart_data.data.unknown)?chart_data.data.unknown:0];
+            var rgb 
+            if(!tag_color[chart_data.tag_title])
+                tag_color[chart_data.tag_title] = randRGB();
+            rgb = tag_color[chart_data.tag_title];
+
+            radar_chart_data.datasets[chart_data.index] = {};
+            radar_chart_data.datasets[chart_data.index].data = data;
+            radar_chart_data.datasets[chart_data.index].pointBorderColor = "#fff";
+            radar_chart_data.datasets[chart_data.index].pointHoverBackgroundColor = "#fff";
+            radar_chart_data.datasets[chart_data.index].label = chart_data.tag_title;
+            
+            
+            radar_chart_data.datasets[chart_data.index].backgroundColor = RGBA(rgb, '0.2');
+            radar_chart_data.datasets[chart_data.index].borderColor = RGBA(rgb, '1');
+            radar_chart_data.datasets[chart_data.index].pointBackgroundColor = RGBA(rgb, '1');
+            radar_chart_data.datasets[chart_data.index].pointHoverBorderColor = RGBA(rgb, '1');
+        }
+
+        function randRGB()
+        {
+            var r = rand(255);
+            var g = rand(255);
+            var b = rand(255);
+            return {r:r, g:g, b:b};
+        }
+        
+        function RGBA(rgb, a)
+        {
+            return 'rgba('+rgb.r+','+rgb.g+','+rgb.b+','+a+')';
+        }
+
+        function rand(max)
+        {
+            return Math.floor(Math.random() * max);
+        }
+
+        //updates the pie chart with the data in the "data" variable
+        function updateRadarChart()
+        {
+            //if there isn't a pieChart, don't destroy it
+            if(radarChart !== null)
+                /*if it is not destroyed each time, an error occurs where
+                *mutliple graphs are on top of each other, and when moving
+                *the mouse over the graph old data will be shown along with new data
+                */
+                radarChart.destroy();
+
+            if(Object.keys(radar_chart_data).length === 0)
+                return;
+
+            //generate the chart onto the html, based on the mock data
+            radarChart = new Chart(pieChartHTML, {
+                type: 'radar',
+                data: radar_chart_data,
+                options: {
+                    responsive: false,
+                    animation: false
+                }
+            });
+        }
 
         //updates the pie chart with the data in the "data" variable
         function updatePieChart(server_data)
@@ -91,7 +205,7 @@ socket.on('setup', function(isInstuctor){
             //remove the prevoius chart, if one exists
             $('#student_chart').remove();
 
-            if ($(slide).find('.feedback').length === 0)
+            if ($(slide).find('.binary_tag').length === 0)
                 return;
 
             //move the chart up of down based on the "top" variable, it is negetive beacuse the number set throught is the offset that the current slide is from its parent, which is where the top of the slide starts
@@ -102,19 +216,29 @@ socket.on('setup', function(isInstuctor){
         }
 
 
-        socket.on('chart_update', function(chart_data){
-            console.log(chart_data);
-            updatePieChart(chart_data);
-        });
+        // socket.on('chart_update', function(chart_data){
+            // console.log(chart_data);
+            // updatePieChart(chart_data);
+        // });
 
         var timer = null;
         //timer for constantly updating the pie graph
         function Timer(){
-            var slide = Reveal.getIndices();
-            var index = slide.h + "." + slide.v;
-            socket.emit('get_chart_data', {
-                        tag_title : currentTitle
-                    });
+            try
+            {
+                updateAllTagChartData();
+                updateRadarChart();
+            }
+            catch(err)
+            {
+                console.log(err)
+            }
+            // console.log("tick" + tag_titles);
+            // var slide = Reveal.getIndices();
+            // var index = slide.h + "." + slide.v;
+            // socket.emit('get_chart_data', {
+            //             tag_title : currentTitle
+            //         });
             timer = setTimeout(function(){Timer();}, timerSpeed);
         }
 
@@ -187,21 +311,55 @@ socket.on('setup', function(isInstuctor){
             $(slide).prepend(tagSidebar);
         }
 
-        function bulidImage(src)
-        {
-            return '<img class="clickable" src="'+src+'" />';
-        }
-
         function bulidTag(xml)
         {
+            //variable for the name of each of the tags
+            var tags = [];
+            
             //for each child in the xml make a tag out of it
             $(xml).children().each(function(){
+
+                //push the name in the list
+                var title = $(this).attr('title');
+                tags.push(title);
+
                 //add to the sidebar a icon that has the title of the child title and the image that is the string location of the text in the child
-                $(sidebar).append(bulidSidebarIcon($(this).attr('title'), "unclicked", bulidImage($(this).text())));
+                $(sidebar).append(bulidSidebarIcon(title, "unknown", bulidImage($(this).text())));
             });
+
+            //check the status of each of the tags, base on what the server has
+            CheckTagStatus(tags);
+
             //add the click function of the images
-            $('.clickable').click(tag_click);
+            $('.tagged').click(tag_click);
         }
+
+        function CheckTagStatus(tags)
+        {   
+            //for each tag, send the name to the server and wait for what the status is of that tag
+            tags.forEach(function(tag_title){
+                socket.emit('check_binary_tag_status', tag_title);
+            });
+        }
+
+        //get the response from the server that is the status of the tag according to what is in the database server
+        socket.on('binary_tag_status', function(tag_status){
+            //get the tag by it's name
+            var tag = $('#' + tag_status.title);
+
+            //check what state that tag was when you last used it
+            switch(tag_status.response)
+            {
+                case 1:
+                    tag.addClass("clicked"); // it was on
+                    break;
+                case 0:
+                    tag.addClass("unclicked"); // it was off
+                    break;
+
+                //no default beacause it has the default is coded into tag_click and bulid tag
+            }
+        });
 
         //when the tag item is clicked
         function tag_click(event)
@@ -210,7 +368,8 @@ socket.on('setup', function(isInstuctor){
             var clicked = $(event.target);
             var response = UNKNOWN_RESPONSE;
 
-            clicked = clicked.parent();
+            if(clicked.hasClass('clickable'))//unclicked class
+                clicked = clicked.parent();
 
             if(clicked.hasClass('unclicked'))//unclicked class
             {
@@ -223,6 +382,10 @@ socket.on('setup', function(isInstuctor){
                 clicked.removeClass('clicked');
                 clicked.addClass('unclicked');
                 response = DONTUNDERSTAND_RESPONSE;
+            }
+            else if(clicked.hasClass('unknown')){
+                clicked.addClass('clicked');
+                response = UNDERSTAND_RESPONSE;
             }
             else
                 return;
@@ -244,6 +407,11 @@ socket.on('setup', function(isInstuctor){
         function bulidSidebarIcon(id, tag_class, innerItem)
         {
             return $('<div id="'+id+'"class="tagged '+tag_class+'"> '+ innerItem +'</div>');
+        }
+
+        function bulidImage(src)
+        {
+            return '<img class="clickable" src="'+src+'" />';
         }
     }
 });
