@@ -1,22 +1,23 @@
-var socket = io();
+var socket = io('http://localhost:3000');
+//send the user the lecture id
+socket.emit('server_setup', $('title').text());
 
-socket.on('setup', function(isInstuctor){
+socket.on('client_setup', function(isInstuctor){
     if(isInstuctor)
     {
 
+        //name of the tag tiles, and the color assigned to each tag
         var tag_color = {};
+        var tag_titles = [];
+
         //set up the canvas, its id and its size
-        var pieChartHTML = $('<canvas id="student_chart" width="200" height="200"></canvas>');
+        var ChartHTML = $('<canvas id="student_chart" width="200" height="200"></canvas>');
 
         //speed that the timer ticks
         var timerSpeed = 1000;
+        var timer = null;
 
-        //generate the chart onto the html, based on the mock data
-        var pieChart = null;
-
-        var currentTitle = "Einstein";
-        var tag_titles = [];
-
+        //variable for the radarChart and its data
         var radarChart = null;
         var radar_chart_data = {};
 
@@ -43,16 +44,9 @@ socket.on('setup', function(isInstuctor){
 
         });
 
-        Reveal.addEventListener('ready', function(event){
-            //easy access to the current slide
-            var slide = event.currentSlide;
-
-            //this move is for when on the first slide, beacuse slide change isn't called on the first slide
-            moveChart(slide, slide.offsetTop);
-        });
-
         function updateAllTagChartData()
         {
+            //for each title, send a request for it's tag data
             tag_titles.forEach(function(title, index){
                 socket.emit('get_chart_data', {
                         tag_title : title,
@@ -63,64 +57,53 @@ socket.on('setup', function(isInstuctor){
 
         function updateTagTitles(xml)
         {
+            //reset the tag titles
             tag_titles = [];
             //for each child in the xml get the title
             $(xml).children().each(function(){
                 //push the name in the list
                 tag_titles.push($(this).attr('title'));
             });
-            updateRadarChart();
+
+            //set the current chat data to be a template for data to be inputed
             radar_chart_data = {
                 labels: ["Yes","No","unknown"],
                 datasets: tag_titles.slice()
             };
+
+            //update the tag data
             updateAllTagChartData();
         }
 
         socket.on('chart_update', function(chart_data){
+            //when the chart data comes in, parse it, and save the data
             updateTagChartData(chart_data);
         });
 
-
         function updateTagChartData(chart_data)
         {
+            //set the data in the chart.js format
             var data = [(chart_data.data.understand)?chart_data.data.understand:0, 
                         (chart_data.data.dont)?chart_data.data.dont:0, 
                         (chart_data.data.unknown)?chart_data.data.unknown:0];
-            var rgb 
+            //set the color of the chart data, if no colour is assigned the generate a new color
+            var rgb;
             if(!tag_color[chart_data.tag_title])
                 tag_color[chart_data.tag_title] = randRGB();
             rgb = tag_color[chart_data.tag_title];
 
+            //reset the chart dat and set the chart data, label, and other field
             radar_chart_data.datasets[chart_data.index] = {};
             radar_chart_data.datasets[chart_data.index].data = data;
             radar_chart_data.datasets[chart_data.index].pointBorderColor = "#fff";
             radar_chart_data.datasets[chart_data.index].pointHoverBackgroundColor = "#fff";
             radar_chart_data.datasets[chart_data.index].label = chart_data.tag_title;
             
-            
+            //set the color for chart data
             radar_chart_data.datasets[chart_data.index].backgroundColor = RGBA(rgb, '0.2');
             radar_chart_data.datasets[chart_data.index].borderColor = RGBA(rgb, '1');
             radar_chart_data.datasets[chart_data.index].pointBackgroundColor = RGBA(rgb, '1');
             radar_chart_data.datasets[chart_data.index].pointHoverBorderColor = RGBA(rgb, '1');
-        }
-
-        function randRGB()
-        {
-            var r = rand(255);
-            var g = rand(255);
-            var b = rand(255);
-            return {r:r, g:g, b:b};
-        }
-        
-        function RGBA(rgb, a)
-        {
-            return 'rgba('+rgb.r+','+rgb.g+','+rgb.b+','+a+')';
-        }
-
-        function rand(max)
-        {
-            return Math.floor(Math.random() * max);
         }
 
         //updates the pie chart with the data in the "data" variable
@@ -134,66 +117,16 @@ socket.on('setup', function(isInstuctor){
                 */
                 radarChart.destroy();
 
+            //if ther is property's in the chart data, do nothing
             if(Object.keys(radar_chart_data).length === 0)
                 return;
 
             //generate the chart onto the html, based on the mock data
-            radarChart = new Chart(pieChartHTML, {
+            radarChart = new Chart(ChartHTML, {
                 type: 'radar',
                 data: radar_chart_data,
                 options: {
-                    responsive: false,
-                    animation: false
-                }
-            });
-        }
-
-        //updates the pie chart with the data in the "data" variable
-        function updatePieChart(server_data)
-        {
-            //if data is empty then don't do anything
-            if(server_data.length === 0)
-                return;
-            //if there isn't a pieChart, don't destroy it
-            if(pieChart !== null)
-                /*if it is not destroyed each time, an error occurs where
-                *mutliple graphs are on top of each other, and when moving
-                *the mouse over the graph old data will be shown along with new data
-                */
-                pieChart.destroy();
-
-            //the first 3 data points are for the names of the three pieces of the pie
-            var data = {
-                labels: [
-                    "Understand", 
-                    "Don't Understand", 
-                    "Unknown"
-                ],
-                datasets: [
-                    {
-                        //the last 3 data points are for the amounts of each piece of the pie
-                        data: [(server_data.understand)?server_data.understand:0, 
-                        (server_data.dont)?server_data.dont:0, 
-                        (server_data.unknown)?server_data.unknown:0],
-                        backgroundColor: [
-                            "#FF6384",
-                            "#36A2EB",
-                            "#FFCE56"
-                        ],
-                        hoverBackgroundColor: [
-                            "#FF6384",
-                            "#36A2EB",
-                            "#FFCE56"
-                        ]
-                    }]
-            };
-
-            //generate the chart onto the html, based on the mock data
-            pieChart = new Chart(pieChartHTML, {
-                type: 'pie',
-                data: data,
-                options: {
-                    responsive: false,
+                    responsive: false,//stops the animation, so the update looks better
                     animation: false
                 }
             });
@@ -209,40 +142,49 @@ socket.on('setup', function(isInstuctor){
                 return;
 
             //move the chart up of down based on the "top" variable, it is negetive beacuse the number set throught is the offset that the current slide is from its parent, which is where the top of the slide starts
-            pieChartHTML.css('top', -top);
+            ChartHTML.css('top', -top);
 
             //add the chart to the current slide
-            $(slide).prepend(pieChartHTML);
+            $(slide).prepend(ChartHTML);
         }
 
+        //return the format of chart.js rgba color
+        function RGBA(rgb, a)
+        {
+            return 'rgba('+rgb.r+','+rgb.g+','+rgb.b+','+a+')';
+        }
 
-        // socket.on('chart_update', function(chart_data){
-            // console.log(chart_data);
-            // updatePieChart(chart_data);
-        // });
+        //randomaly generate a color
+        function randRGB()
+        {
+            return {r:rand(255), g:rand(255), b:rand(255)};
+        }
+        
+        //random function that get the color from 0 to the max
+        function rand(max)
+        {
+            return Math.floor(Math.random() * max);
+        }
 
-        var timer = null;
-        //timer for constantly updating the pie graph
+        //timer for constantly updating the graph graph
         function Timer(){
+            //a try statement so if there is a problem with the data, the timer doesn't stop
             try
             {
+                //update the char data, the display the chart
                 updateAllTagChartData();
                 updateRadarChart();
             }
             catch(err)
             {
+                //if there is an error, show it
                 console.log(err)
             }
-            // console.log("tick" + tag_titles);
-            // var slide = Reveal.getIndices();
-            // var index = slide.h + "." + slide.v;
-            // socket.emit('get_chart_data', {
-            //             tag_title : currentTitle
-            //         });
+            //start the timer over, waiting a set amount of time
             timer = setTimeout(function(){Timer();}, timerSpeed);
         }
 
-        //initial set the chart and start the timer
+        //initial start the timer
         $(document).ready(function(){
             Timer();
         });
@@ -263,11 +205,19 @@ socket.on('setup', function(isInstuctor){
                 Reveal.slide(indexies[0], indexies[1], 0);
         });
 
+        //when the slide changes, update the current the slide data
         Reveal.addEventListener( 'slidechanged', function( event ) {
-            //easier access to the current slide variable
-            var slide = event.currentSlide;
+            slide_load(event.currentSlide);
+        });
 
-            //2b, have a vertical sidebar to show the tags for the 
+        //when the doucument is ready load the current slide
+        $(document).ready(function(){
+            slide_load(Reveal.getCurrentSlide());
+        });
+
+        function slide_load(slide)
+        {
+            //have a vertical sidebar to show the tags for the 
             //add the sidebar to the slide
             removeNAddSidebar(slide, [$('.slides').height(), slide.offsetTop]);
 
@@ -281,20 +231,6 @@ socket.on('setup', function(isInstuctor){
                 //add the buuton to the screen and update the onclick method with the tag data and index of slide
                 updateCurrentTags($(rawxml[0]).text());
             }
-        });
-
-        function updateCurrentTags(xml)
-        {
-            //remove the previous tags
-            $('.tagged').remove();
-
-            bulidTag(xml);
-        }
-
-        function getTagID()
-        {
-            var slideIndices = Reveal.getIndices(); //the slide numbers
-            return slideIndices.h +'_'+ slideIndices.v;//text for the id of the div
         }
 
         function removeNAddSidebar(slide, adjustvalues = [])
@@ -311,6 +247,15 @@ socket.on('setup', function(isInstuctor){
             $(slide).prepend(tagSidebar);
         }
 
+        function updateCurrentTags(xml)
+        {
+            //remove the previous tags
+            $('.tagged').remove();
+
+            //bulid the tags that are in the xml
+            bulidTag(xml);
+        }
+
         function bulidTag(xml)
         {
             //variable for the name of each of the tags
@@ -324,7 +269,7 @@ socket.on('setup', function(isInstuctor){
                 tags.push(title);
 
                 //add to the sidebar a icon that has the title of the child title and the image that is the string location of the text in the child
-                $(sidebar).append(bulidSidebarIcon(title, "unknown", bulidImage($(this).text())));
+                $(sidebar).append(bulidSidebarIcon(title, "unknown", $(this).text()));
             });
 
             //check the status of each of the tags, base on what the server has
@@ -335,7 +280,7 @@ socket.on('setup', function(isInstuctor){
         }
 
         function CheckTagStatus(tags)
-        {   
+        {
             //for each tag, send the name to the server and wait for what the status is of that tag
             tags.forEach(function(tag_title){
                 socket.emit('check_binary_tag_status', tag_title);
@@ -352,9 +297,11 @@ socket.on('setup', function(isInstuctor){
             {
                 case 1:
                     tag.addClass("clicked"); // it was on
+                    tag.removeClass("unknown");
                     break;
                 case 0:
                     tag.addClass("unclicked"); // it was off
+                    tag.removeClass("unknown");
                     break;
 
                 //no default beacause it has the default is coded into tag_click and bulid tag
@@ -367,31 +314,43 @@ socket.on('setup', function(isInstuctor){
             //this is the text item that was clicked
             var clicked = $(event.target);
             var response = UNKNOWN_RESPONSE;
+            var added = "";
+            var removed = "";
 
+            //check if the img was click of the div was, if the image the change clicked to its parent, the div
             if(clicked.hasClass('clickable'))//unclicked class
-                clicked = clicked.parent();
+                clicked = clicked.parent();//the div
 
+            //if the div has unclicked then switch the classes and set the response to understand
             if(clicked.hasClass('unclicked'))//unclicked class
             {
-                clicked.removeClass('unclicked');
-                clicked.addClass('clicked');
+                removed = 'unclicked';
+                added = 'clicked';
                 response = UNDERSTAND_RESPONSE;
             }
+            //if the div has clicked then switch the classes and set the response to dontunderstand
             else if(clicked.hasClass('clicked'))//clicked class
             {
-                clicked.removeClass('clicked');
-                clicked.addClass('unclicked');
+                removed = 'clicked';
+                added = 'unclicked';
                 response = DONTUNDERSTAND_RESPONSE;
             }
+            //if the div has yet to be clicked, add clicked, remove unknown and set the repsonse to understand
             else if(clicked.hasClass('unknown')){
-                clicked.addClass('clicked');
+                added = 'clicked';
+                removed = 'unknown';
                 response = UNDERSTAND_RESPONSE;
             }
             else
+                //if the wrong item was clicked, do nothing
                 return;
+                
+            //remove and add the class in removed and added
+            clicked.removeClass(removed);
+            clicked.addClass(added);
 
+            //send the tag data
             sendTagResponse(clicked.attr('id'), response); 
-           
         }
 
         function sendTagResponse(title, response)
@@ -404,11 +363,12 @@ socket.on('setup', function(isInstuctor){
         }
 
         //template for the sidebar's items
-        function bulidSidebarIcon(id, tag_class, innerItem)
+        function bulidSidebarIcon(id, tag_class, src)
         {
-            return $('<div id="'+id+'"class="tagged '+tag_class+'"> '+ innerItem +'</div>');
+            return $('<div id="'+id+'"class="tagged '+tag_class+'"> '+ bulidImage(src) +'</div>');
         }
 
+        //template for the sidebar image
         function bulidImage(src)
         {
             return '<img class="clickable" src="'+src+'" />';

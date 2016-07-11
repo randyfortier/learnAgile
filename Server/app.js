@@ -15,14 +15,11 @@ var io = require('socket.io')(http);
 var mongoose = require('mongoose');
 var bcrypt = require('bcrypt-nodejs');
 
-
 //setup server for saving the response data
 mongoose.connect('localhost:27017/tagging');
 var Schema = mongoose.Schema;
 
-
 //array for users that are connected
-var Users = [];//NOTE: to be replaced by mongoDB table
 var LiveTag = {};
 
 //be able to parse post data
@@ -39,7 +36,6 @@ app.use(express.static('public'));
 app.set('views', __dirname + '/views');
 app.set('view engine', 'pug');
 
-
 //taken from randy's example
 var sessionMiddleware = session({
     genid: function(request) {
@@ -55,7 +51,7 @@ var sessionMiddleware = session({
 //use the session data that is above
 app.use(sessionMiddleware);
 
-
+//added to erase the database when needed
 function cleanDB()
 {
     UserDB.remove({}, function(err) { 
@@ -66,95 +62,60 @@ function cleanDB()
     });
 }
 
-
-app.get('/lecture', function(request, response){
-    //if there is a get request for lecture, redirect to home screen
-     //if there is no id in the session data go back to the the login screen
-    var session = request.session;
-    if(!session.userid)
-    {
+//show that your are logged in, can be changed to redirect another site
+app.get('/loggedin', function(request, response){
+    if(!request.session.userid){
         response.redirect('/');
-        return;
     }
-
-    //have the calls specific lecture slide, add the current lecture slide uuid.v4 number to the session data
-    session.lecture = '35e202f2-4b5d-43b3-be1e-926c299c10a7';
-
-    response.sendFile(__dirname + '/views/Lecture.html');
+    response.render('loggedin', {username: request.session.sid});
 });
 
 app.post('/login', function(request, response){
+    //get the sid and password
     var sid = request.body.username;
     var password = request.body.password;
-    console.log(sid + ", " + password);
 
+    //check if they can login and send the to the loggedin screen
     login(request.session, sid, password, function(){
-        response.redirect('/lecture');
+        response.redirect('/loggedin');
+    }, function(){
+        response.redirect('/'); 
     });
 });
 
 app.post('/register', function(request, response){
+    //get the sid and password for the request
     var sid = request.body.username;
     var password = request.body.password;
 
+    //if the password and sid are empty the redirect to the regster page
     if(sid === "" || password === "")
     {
         response.redirect('/registerform');
         return;
     }
 
+    //possible add in a match of sid to a database of sids
+
+    //register the sid and password and redirect to login on success
     register(request.session, sid, password, function(){
-        response.redirect('/lecture'); 
+        response.redirect('/loggedin'); 
+    }, function(){
+        response.redirect('/registerform'); 
     });
 });
 
 app.get('/registerform', function(request, response){
+    //render the register page
     response.render('register');
 });
 
 app.get('/', function(request, response){
-    //check if there already is a userid in the session data
-    checkForID(request.session);
-    // cleanDB();
-    // if(request.session.userid){
-    //     response.redirect('/lecture');
-    //     return;
-    // }
     // //load the login page
-    // response.render('login');
-    response.render('extra_login');
-});
-
-//check if the users already has a session, if so then do nothing, else 
-//give them a unique code
-function checkForID(session)
-{
-    if(!session.userid)
-    {
-        session.userid = uuid.v4();
-    }
-}
-
-app.post('/lecture', function(request, response){
-    //if there is no id in the session data go back to the the login screen
-    var session = request.session;
-    if(!session.userid)
-    {
-        response.redirect('/');
-        return;
-    }
-
-    //set if ther user is an instructor or a student
-    session.isInstructor = (request.body.isInstructor === "true")? true:false;
-
-    //have the calls specific lecture slide, add the current lecture slide uuid.v4 number to the session data
-    session.lecture = '35e202f2-4b5d-43b3-be1e-926c299c10a7';
-
-    response.sendFile(__dirname + '/views/Lecture.html');
+    response.render('login');
 });
 
 //mongodb login functionality
-
 var userSchema = new Schema({
     userid: {type: String, 
               unique: true,
@@ -167,57 +128,79 @@ var userSchema = new Schema({
 var UserDB = mongoose.model('user', userSchema);
 
 
-function register(session, sid, password, onSuccess, isInstructor) /* fname, lname, */
+function register(session, sid, password, onSuccess, onFail, isInstructor) /* fname, lname, */
 {
-    
-    var userid = uuid.v4();
-    var hash = bcrypt.hashSync(password);
-    console.log(hash);
-    var userdata = {
-        userid: userid,
-        sid: sid,
-        hashedPassword: hash,
-        isInstructor: isInstructor || false
-    };
-
-    var newUser = new UserDB(userdata);
-
-    newUser.save(function(error){
-        if(error)
+    UserDB.find({sid: sid}).limit(1).then(function(results){
+        if(results.length > 0)
         {
-            console.log("Error in Registering, data: " +  userdata);
+            //if there is already a user with the sid regestered
+            onFail();
         }
         else
         {
-            console.log("User Added: " + userdata);
-            session.userid = userid;
-            session.isInstructor = userdata.isInstructor;
-            onSuccess();
+            //generate a uuid for the user and has the password
+            var userid = uuid.v4();
+            var hash = bcrypt.hashSync(password);
+
+            //setup the record for saving the new user
+            var userdata = {
+                userid: userid,
+                sid: sid,
+                hashedPassword: hash,
+                isInstructor: isInstructor || false
+            };           
+
+            //declare a new user and save the user
+            var newUser = new UserDB(userdata);
+            newUser.save(function(error){
+                if(error)
+                {
+                    //if the ere is a error, log it and call the onFail method
+                    console.log("Error in Registering, data: " +  userdata);
+                    onFail();
+                }
+                else
+                {
+                    //if succefully added, log the username
+                    console.log("User Added: " + userdata);
+
+                    //set user the session variables and call onSuccess()
+                    session.userid = userid;
+                    session.isInstructor = userdata.isInstructor;
+                    session.sid = sid;
+                    onSuccess();
+                }
+            });
         }
     });
 }
 
-function login(session, sid, password, onSuccess)
+function login(session, sid, password, onSuccess, onFail)
 {
+    //check of there is user with the sid that was submitted
     UserDB.find({sid: sid}).limit(1).then(function(results){
         if((results.length > 0) && (bcrypt.compareSync(password, results[0].hashedPassword)))
         {
             //successful login, contiune with the login
             session.userid = results[0].userid;
             session.isInstructor = results[0].isInstructor;
+            session.sid = results[0].sid;
+            onSuccess();
         }
         else
         {
-            //incorect password
+            //incorect password call the on fall method
             console.log("Login Attempt: " + sid /*+ " Password: " + password*/);
+            onFail();
         }
-        onSuccess();
     });
 }
 
-function registerInstructor(session, sid, password, onSuccess)
+//when registering a instructor
+function registerInstructor(session, sid, password, onSuccess, onFail)
 {
-    register(session, sid, password, onSuccess, true);
+    //sed the isInstrctor to true
+    register(session, sid, password, onSuccess, onFail, true);
 }
 
 //Socket.IO Functionality
@@ -229,67 +212,16 @@ io.use(function(socket, next){
     sessionMiddleware(socket.request, socket.request.res, next);
 });
 
-//check if the user is in the Users array if not then add them
-function addToUsers(session, search)
+//change the name of a property in an object
+function renameProperty(object, oldname, newname)
 {
-    //find if the users already exists
-    var user = Users.find(search);
-
-    //if users doesn't exist in the array already, add them
-    if(!user){
-        Users.push({id: session.userid, count: 1});
-        return Users[Users.length - 1];
-    }
-    else //else increase the number connection they have
-    {
-        user.count++;
-        return user;
-    }
-}
-
-//remove a user from the Users array, use the "search" function to find and remove them
-function removeUser(search)
-{
-    //find the user, and decrease the number of connection they have
-    user = Users.find(search);
-    user.count--;
-    //if this is the last connection for that user, then remove them from the list
-    if(user.count === 0)
-        Users.splice(Users.indexOf(Users.find(search)), 1);
-}
-
-// //send the tag data the students
-// function sendTag(session, tag_data)
-// {
-//     io.to(session.lecture).emit('student_tag_data', tag_data);
-// }
-
-//you lose the tag if you reload the page or load the page after the tag sent
-//save the tag data and if the tag is alive send that tag data to the currently 
-//loading user
-// function isTagAvaiable(session)
-// {
-//     //if alive send tag data
-//     if(LiveTag[session.lecture])
-//     {
-//         sendTag(session, LiveTag[session.lecture]);
-//     }
-// }
-
-function removeProperty(object, oldname, newname)
-{
+    //change the property only if it exits
     if(object.hasOwnProperty(oldname)){
+        //the the value to the newname and remove the old name
         object[newname] = object[oldname];
         delete object[oldname];
     }
 }
-
-// function removeTag(lecture)
-// {
-//     delete LiveTag[lecture];
-//     io.to(lecture).emit('remove_tag');
-// }
-
 
 //schema for the response from student on the tags
 var student_binary_tag_response_schema = new Schema({
@@ -300,182 +232,152 @@ var student_binary_tag_response_schema = new Schema({
 },{collection: 'response'});
 var student_binary_ResponseDB = mongoose.model('student_response', student_binary_tag_response_schema);
 
-
-
-
 //setup teacher controlling slide 
 io.on('connection', function(socket){
     var session = socket.request.session;
-    var lecture = session.lecture;
     //if there is no userid then don't allow any functionality
     if(!session.userid)
         return;
-    
-    //function for searching for the connected user in the Users array
-    var search = function (index){
-        return index.id === session.userid;
-    };
+    //set up the server connection, by having the lecture id sent to the server
+    socket.on('server_setup', function(lecture){
+        //send user to right room
+        // in this room it is easier to send a message to all students
+        socket.join(lecture);/*can have a function call back for any error*/
 
-    //add to Users
-    addToUsers(session, search);
+        //setup the functionality of the lecture 
+        socket.emit('client_setup', session.isInstructor);
 
-    //send user to right room
-    // in this room it is easier to send a message to all students
-    socket.join(lecture);/*can have a function call back for any error*/
-
-    //setup the functionality of the lecture 
-    socket.emit('setup', session.isInstructor);
-
-    //use this so the functionality of the instructor is only accessable to the instructor
-    /*NOTE: used isInstructor because if it was the oppsite the else statement would be for
-    * the instructor and if there was no isStudent in the session data it would treat the user
-    * an instructor.
-    */
-    if(session.isInstructor)
-    {
-        //hold the functionality of the instructor head
-        //if the instructor move there slide, the send a siginal to the student to have
-        //there slide move
-        socket.on('instructor-moveslide', function(indexies){
-            io.to(session.lecture).emit('student-moveslide', indexies);
-        });
-        
-        // //recieve tag data
-        // socket.on('instructor_tag_data', function(tag_data){
-        //     //set the current tag data base on the lecture id
-        //     LiveTag[lecture] = tag_data;
-        //     sendTag(session, tag_data);
-        // });
-
-        // //remove the student's tag
-        // socket.on('remove_tag', function(){
-        //     removeTag(lecture);
-        // });
-
-        //used to get the real time data for the student
-        socket.on('get_chart_data', function(request){
-            //set a query to look for all data what matches
-            // the right lecture, slide number and tag title
-            var query = {
-                lecture : lecture,
-                tag_title : request.tag_title
-            };
-            //search for the results
-            student_binary_ResponseDB.find(query).select({response: 1}).then(function(results){
-                //for each returned data piece, sort it into 3 catagories, -1, 0, 1
-                var chart_data = {};
-                for (var cnt = 0; cnt < results.length; cnt++)
-                    chart_data[results[cnt].response] = (chart_data[results[cnt].response] + 1) || 1;
-                
-                //change the progrety so they repersent the data better
-                removeProperty(chart_data, '1', 'understand');
-                removeProperty(chart_data, '0', 'dont');
-                removeProperty(chart_data, '-1', 'unknown');
-                
-                request.data = chart_data;
-                //send the data to the instructor
-                socket.emit('chart_update', request);
-                
+        //use this so the functionality of the instructor is only accessable to the instructor
+        /*NOTE: used isInstructor because if it was the oppsite the else statement would be for
+        * the instructor and if there was no isStudent in the session data it would treat the user
+        * an instructor.
+        */
+        if(session.isInstructor)
+        {
+            //hold the functionality of the instructor head
+            //if the instructor move there slide, the send a siginal to the student to have
+            //there slide move
+            socket.on('instructor-moveslide', function(indexies){
+                io.to(session.lecture).emit('student-moveslide', indexies);
             });
-        });
-    }
-    else
-    {
-        //holds the functionality that is unique to the student
-
-        //check if there is a tag aviable, so to send the tag date to the student
-        // isTagAvaiable(session);
-
-        //when the student sends a response to the server, update/add that data to the code
-        socket.on('student_response', function(response_data){
             
-            //add to the database
-            var title = response_data.title;
-
-            //setup database item
-            var newResponse = {
-                lecture: lecture,
-                studentid: session.userid,
-                tag_title: title,
-                response: response_data.response
-            };
-            //setup search item
-            var searchQuery = {
-                lecture: lecture,
-                studentid: session.userid, 
-                tag_title: title
-            };
-
-            //search to see if there is already an item with the correct id's
-            student_binary_ResponseDB.find(searchQuery).limit(1).then(function(results){
-                //if there is already an item update it
-                if(results.length > 0)
-                {
-                    // update the current response
-                    student_binary_ResponseDB.update(searchQuery, newResponse, {multi: false}, function(error, numAffected){
-                        if(error)
-                        {
-                            console.log("Error in updating " + session.userid + "'s account, response was " + response + ", lecture was " + lecture + ", slide number was " + slide_index);
-                        }
-                    });
-                }
-                else//if there isn't already an item, add the item to the database
-                {
-                    //add a new result
-                    var newStudentTag = new student_binary_ResponseDB(newResponse);
-                    newStudentTag.save(function(error){
-                        if(error)
-                        {
-                            console.log("Error in adding " + session.userid + "'s account, response was " + response + ", lecture was " + lecture + ", slide number was " + slide_index);
-                        }
-                    });
-                }
+            //used to get the real time data for the student
+            socket.on('get_chart_data', function(request){
+                //set a query to look for all data what matches
+                // the right lecture, slide number and tag title
+                var query = {
+                    lecture : lecture,
+                    tag_title : request.tag_title
+                };
+                //search for the results
+                student_binary_ResponseDB.find(query).select({response: 1}).then(function(results){
+                    //for each returned data piece, sort it into 3 catagories, -1, 0, 1
+                    var chart_data = {};
+                    for (var cnt = 0; cnt < results.length; cnt++)
+                        chart_data[results[cnt].response] = (chart_data[results[cnt].response] + 1) || 1;
+                    
+                    //change the progrety so they repersent the data better
+                    renameProperty(chart_data, '1', 'understand');
+                    renameProperty(chart_data, '0', 'dont');
+                    renameProperty(chart_data, '-1', 'unknown');
+                    
+                    //wrap the chart data in the request that was send
+                    request.data = chart_data;
+                    //send the data to the instructor
+                    socket.emit('chart_update', request);
+                    
+                });
             });
+        }
+        else
+        {
+            //holds the functionality that is unique to the student
+
+            //when the student sends a response to the server, update/add that data to the code
+            socket.on('student_response', function(response_data){
+                
+                //add to the database
+                var title = response_data.title;
+
+                //setup database item
+                var newResponse = {
+                    lecture: lecture,
+                    studentid: session.userid,
+                    tag_title: title,
+                    response: response_data.response
+                };
+                //setup search item
+                var searchQuery = {
+                    lecture: lecture,
+                    studentid: session.userid, 
+                    tag_title: title
+                };
+
+                //search to see if there is already an item with the correct id's
+                student_binary_ResponseDB.find(searchQuery).limit(1).then(function(results){
+                    //if there is already an item update it
+                    if(results.length > 0)
+                    {
+                        // update the current response
+                        student_binary_ResponseDB.update(searchQuery, newResponse, {multi: false}, function(error, numAffected){
+                            if(error)
+                            {
+                                console.log("Error in updating " + session.userid + "'s account, response was " + response + ", lecture was " + lecture + ", slide number was " + slide_index);
+                            }
+                        });
+                    }
+                    else//if there isn't already an item, add the item to the database
+                    {
+                        //add a new result
+                        var newStudentTag = new student_binary_ResponseDB(newResponse);
+                        newStudentTag.save(function(error){
+                            if(error)
+                            {
+                                console.log("Error in adding " + session.userid + "'s account, response was " + response + ", lecture was " + lecture + ", slide number was " + slide_index);
+                            }
+                        });
+                    }
+                });
+            });
+            
+            //called when the user check for the status of there current tag
+            socket.on('check_binary_tag_status', function(title){
+                //set up the database query
+                var searchQuery = {
+                    lecture: lecture,
+                    studentid: session.userid,
+                    tag_title: title
+                };
+                //check if ther exsits a response for a tag from the specific user
+                student_binary_ResponseDB.find(searchQuery).select({response: 1}).limit(1).then(function(results){
+                    //if there is a response, return that response
+                    if(results.length > 0)
+                    {
+                        socket.emit('binary_tag_status', {title: title, response: results[0].response})
+                    }
+                    else//if there is no response then insert one and send the result of unknown response to the user
+                    {
+                        //add unknown response to the searchQuery to turn it into a database record to be inserted
+                        searchQuery.response = -1;//Unknown Response
+                        //create the new record and save the record
+                        var newStudentTag = new student_binary_ResponseDB(searchQuery);
+                        newStudentTag.save(function(error){
+                            if(error){ // if there was an error then return what print out the user, the lecture and the title of the tag
+                                console.log("Error adding Default response for user: " + session.userid + ", lecture: " + lecture + ", title: " + title);
+                            }
+                        });
+                        //send the unknown response to the user
+                        socket.emit('binary_tag_status', {title: title, response: searchQuery.response})
+                    }
+                });        
+            });
+        }
+
+        //when disconnecting for the server, check if the user can be removed
+        socket.on('disconnect', function(){
+            //remove the user for the room
+            socket.leave(session.lecture);
         });
-        
-        //called when the user check for the status of there current tag
-        socket.on('check_binary_tag_status', function(title){
-            //set up the database query
-            var searchQuery = {
-                lecture: lecture,
-                studentid: session.userid,
-                tag_title: title
-            };
-            //check if ther exsits a response for a tag from the specific user
-            student_binary_ResponseDB.find(searchQuery).select({response: 1}).limit(1).then(function(results){
-                //if there is a response, return that response
-                if(results.length > 0)
-                {
-                    socket.emit('binary_tag_status', {title: title, response: results[0].response})
-                }
-                else//if there is no response then insert one and send the result of unknown response to the user
-                {
-                    //add unknown response to the searchQuery to turn it into a database record to be inserted
-                    searchQuery.response = -1;//Unknown Response
-                    //create the new record and save the record
-                    var newStudentTag = new student_binary_ResponseDB(searchQuery);
-                    newStudentTag.save(function(error){
-                        if(error){ // if there was an error then return what print out the user, the lecture and the title of the tag
-                            console.log("Error adding Default response for user: " + session.userid + ", lecture: " + lecture + ", title: " + title);
-                        }
-                    });
-                    //send the unknown response to the user
-                    socket.emit('binary_tag_status', {title: title, response: searchQuery.response})
-                }
-            });        
-        });
-    }
-
-    //when disconnecting for the server, check if the user can be removed
-    socket.on('disconnect', function(){
-        //remove the user for the room
-        socket.leave(session.lecture);
-
-        // if(session.isInstructor)
-        //     removeTag(lecture);
-
-        //check if the user is to be removed
-        removeUser(search);
     });
 });
 
