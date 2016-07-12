@@ -1,0 +1,30 @@
+doctype html
+html
+	head
+
+		script(src="https://cdn.socket.io/socket.io-1.4.5.js")
+		script(src="https://ajax.googleapis.com/ajax/libs/jquery/3.0.0/jquery.min.js")
+		
+		script.
+			var lec = !{JSON.stringify(lectures)};
+			console.log(Object.keys(lec));
+			$(document).ready(function(){
+				Object.keys(lec).forEach(function(item){
+					$('#lecture_area').append($('<li class="lecture">').text(item));
+				});
+
+				$('.lecture').click(function(event){
+					console.log(event.target);
+					var form = $('<form style="display: none" action="/report", method="post"><input id="lec" name="lecture"/><button id="go"></button></form>');
+
+					form.find('#lec').val($(event.target).text());
+
+					form.find('#go').trigger("click");
+
+					
+				});
+			});
+	body
+		div
+			ul(id="lecture_area")
+

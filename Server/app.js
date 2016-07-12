@@ -203,6 +203,49 @@ function registerInstructor(session, sid, password, onSuccess, onFail)
     register(session, sid, password, onSuccess, onFail, true);
 }
 
+
+//report Functionality
+app.post('/report', function(request, response){
+    //get the lectrue from the request
+    var lecture = request.body.lecture;
+    //render the report page sending the lectrue to it
+    response.render('LectureReport', {lecture: lecture})
+});
+
+app.get('/lectures', function(request, response){
+    //get the student uuid number from the session data
+    var studentid = request.session.userid;
+
+    //search for all response's for the user
+    student_binary_ResponseDB.find({studentid: studentid}).select({lecture: 1})
+    .then(function(results){
+        var lectureList = {};
+        //create a object where there exisits the name of each lecture slide
+        //NOTE: tried ot use mongooses group by functionality, but got no data every time
+        results.forEach(function(item){
+            lectureList[item.lecture] = (lectureList[item.lecture] + 1 || 1);
+        });
+
+        //render the lectures page, send the list of lectures
+        response.render("selectlecture", {lectures: lectureList});
+    });
+
+});
+
+function sendTableReportData(session, lecture, socket)
+{
+    //search through the DB for all response from the user on the wanted lecture
+    student_binary_ResponseDB.
+    find({studentid:session.userid, lecture: lecture}).
+    select({tag_title: 1, response: 1}).
+    then(function(results){
+        if(results.length > 0)
+        {
+           socket.emit('table_data', results);
+        }
+    });
+}
+
 //Socket.IO Functionality
 
 //this is used to give socket.io access to the session data,
@@ -229,7 +272,7 @@ var student_binary_tag_response_schema = new Schema({
     studentid: String,
     tag_title: String,
     response: Number
-},{collection: 'response'});
+},{collection: 'binary_response'});
 var student_binary_ResponseDB = mongoose.model('student_response', student_binary_tag_response_schema);
 
 //setup teacher controlling slide 
@@ -239,13 +282,13 @@ io.on('connection', function(socket){
     if(!session.userid)
         return;
     //set up the server connection, by having the lecture id sent to the server
-    socket.on('server_setup', function(lecture){
+    socket.on('lecture_server_setup', function(lecture){
         //send user to right room
         // in this room it is easier to send a message to all students
         socket.join(lecture);/*can have a function call back for any error*/
-
+      
         //setup the functionality of the lecture 
-        socket.emit('client_setup', session.isInstructor);
+        socket.emit('lecture_client_setup', session.isInstructor);
 
         //use this so the functionality of the instructor is only accessable to the instructor
         /*NOTE: used isInstructor because if it was the oppsite the else statement would be for
@@ -378,6 +421,10 @@ io.on('connection', function(socket){
             //remove the user for the room
             socket.leave(session.lecture);
         });
+    });
+
+    socket.on('get_student_report_data', function(lecture){
+        sendTableReportData(session, lecture, socket);
     });
 });
 

@@ -1,11 +1,10 @@
 var socket = io('http://localhost:3000');
 //send the user the lecture id
-socket.emit('server_setup', $('title').text());
+socket.emit('lecture_server_setup', $('title').text());
 
-socket.on('client_setup', function(isInstuctor){
+socket.on('lecture_client_setup', function(isInstuctor){
     if(isInstuctor)
     {
-
         //name of the tag tiles, and the color assigned to each tag
         var tag_color = {};
         var tag_titles = [];
