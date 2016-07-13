@@ -229,7 +229,12 @@ app.get('/lectures', function(request, response){
         //render the lectures page, send the list of lectures
         response.render("selectlecture", {lectures: lectureList});
     });
+});
 
+app.get('/courseoverview', function(request, response){
+
+
+    response.sendFile(__dirname + "/views/CourseOverview.html");
 });
 
 function sendTableReportData(session, lecture, socket)
@@ -425,6 +430,15 @@ io.on('connection', function(socket){
 
     socket.on('get_student_report_data', function(lecture){
         sendTableReportData(session, lecture, socket);
+    });
+
+    socket.on('course_overview_report', function(){
+        //add if statement for if the user is a instructor
+        console.log("called");
+        student_binary_ResponseDB.find({}).then(function(results){
+            if(results.length > 0)
+                socket.emit('report_course_overview', results);
+        });
     });
 });
 
