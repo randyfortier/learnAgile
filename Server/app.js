@@ -487,7 +487,7 @@ io.on('connection', function(socket){
             //if the instructor move there slide, the send a siginal to the student to have
             //there slide move
             socket.on('instructor-moveslide', function(indexies){
-                io.to(session.lecture).emit('student-moveslide', indexies);
+                io.to(lecture).emit('student-moveslide', indexies);
             });
             
             //used to get the real time data for the student

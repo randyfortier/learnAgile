@@ -2,6 +2,24 @@ var socket = io('http://localhost:3000');
 var binary_default = {};
 var currentH = 0;
 var isDefault = true;
+var ActionFunc = null;
+
+$('.slides').children().each(function(index){
+    //check for the instances of binary_tags
+    var found = $(this).find('.binary_default');
+
+    //if an item is found
+    if(found[0])
+    {
+        binary_default['h_' + index] = $(found[0]).text();// add the first binary_default to the default map
+    }
+    else
+    {
+        found = $(this).find('.binary_tag')[0];//find the first avaible binary tag
+        if(found)//if there is a binary tag add it
+            binary_default['h_' + index] = $(found).text();        
+    }   
+});
 
 //send the user the lecture id
 socket.emit('lecture_server_setup', $('title').text());
@@ -23,6 +41,15 @@ socket.on('lecture_client_setup', function(isInstuctor){
         //variable for the radarChart and its data
         var radarChart = null;
         var radar_chart_data = {};
+        var checkForChart = false;
+
+        ActionFunc = function(){
+            checkForChart = !checkForChart;
+            if(checkForChart)
+                LoadChart();
+            else
+                $('#student_chart').remove();
+        };
 
         Reveal.addEventListener( 'slidechanged', function( event ) {
             //easy access to the current slide
@@ -31,9 +58,23 @@ socket.on('lecture_client_setup', function(isInstuctor){
             //sends a siginal to the server to change the students slides
             socket.emit('instructor-moveslide', [event.indexh,event.indexv]);
 
-            //move the chart to the current slide and move the chart to the top left corner
-            moveChart(slide, slide.offsetTop);
+            if(checkForChart)
+                LoadChart();
 
+        });
+
+        function LoadChart()
+        {
+            //remove the prevoius chart, if one exists
+            $('#student_chart').remove();
+            var slide = Reveal.getCurrentSlide();
+            if(checkNupdateTag(slide, Reveal.getIndices().h))
+                moveChart(slide, slide.offsetTop);
+
+        }
+
+        function checkNupdateTag(slide, hIndex)
+        {
             //check for xml data
             var rawxml = $(slide).find('.binary_tag');
             //use !== 0 beacuse find returns a empty array
@@ -43,9 +84,16 @@ socket.on('lecture_client_setup', function(isInstuctor){
                 //NOTE: have script be type='text/xml', also parseXML didn't work and gave error
                 //add the buuton to the screen and update the onclick method with the tag data and index of slide
                 updateTagTitles($(rawxml[0]).text());
+                return true;
             }
-
-        });
+            else
+                 //check to see if the a default exists, if so then add the default
+                if(binary_default.hasOwnProperty(hIndex)){
+                    updateTagTitles(binary_default['h_'+hIndex]);
+                    return true;
+                }
+            return false;
+        }        
 
         function updateAllTagChartData()
         {
@@ -139,10 +187,7 @@ socket.on('lecture_client_setup', function(isInstuctor){
         function moveChart(slide, top = 0)
         {
             //remove the prevoius chart, if one exists
-            $('#student_chart').remove();
-
-            if ($(slide).find('.binary_tag').length === 0)
-                return;
+            // $('#student_chart').remove();
 
             //move the chart up of down based on the "top" variable, it is negetive beacuse the number set throught is the offset that the current slide is from its parent, which is where the top of the slide starts
             ChartHTML.css('top', -top);
@@ -198,6 +243,12 @@ socket.on('lecture_client_setup', function(isInstuctor){
         var DONTUNDERSTAND_RESPONSE = 0;
         var UNDERSTAND_RESPONSE = 1;
         var tagSidebar = $('<div id="sidebar"></div>');
+        var follow_Instructors_Slides = false;
+
+        ActionFunc = function()
+        {
+            follow_Instructors_Slides = !follow_Instructors_Slides;
+        }
 
         //NOTE: when adding sidebar, height at 100% only matches the height of the text on the screen
         //adjusts that when adding to a new slide, fixed in the removeNaddsidebar function
@@ -423,25 +474,12 @@ socket.on('lecture_client_setup', function(isInstuctor){
         function bulidImage(src)
         {
             return '<img class="clickable" src="'+src+'" />';
-        }
-
-        
+        }   
     }
 });
 
-$('.slides').children().each(function(index){
-    //check for the instances of binary_tags
-    var found = $(this).find('.binary_default');
-
-    //if an item is found
-    if(found[0])
-    {
-        binary_default['h_' + index] = $(found[0]).text();// add the first binary_default to the default map
-    }
-    else
-    {
-        found = $(this).find('.binary_tag')[0];//find the first avaible binary tag
-        if(found)//if there is a binary tag add it
-            binary_default['h_' + index] = $(found).text();        
-    }   
-});
+function tagAction()
+{
+    if(ActionFunc !== null)
+        ActionFunc();
+}
