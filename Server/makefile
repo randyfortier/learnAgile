@@ -1,4 +1,5 @@
 run:
+	clear
 	node app.js
 
 open:

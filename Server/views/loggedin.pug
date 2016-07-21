@@ -6,11 +6,11 @@ html
 		if(username === "")
 			p Error Login In
 		else
-			p You have Loged In, Welcome #{username}.
-			form(action='/report', method='post')
-				button See Report
-			form(action='/lectures', method='get')
+			p You are Loged In, Welcome #{username}.
+			form(action='/courseReport', method='get')
 				button All Lectures
-			form(action='/courseoverview', method='get')
+			form(action='/courseOverview', method='get')
 				button Course Overview
+			form(action='/logout', method='post')
+				button Logout
 				

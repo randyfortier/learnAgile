@@ -83,6 +83,14 @@ app.post('/login', function(request, response){
     });
 });
 
+app.post('/logout', function(request, response){
+    var session = request.session;
+    delete session.userid;
+    delete session.isInstructor;
+    delete session.sid;
+    response.redirect('/');
+});
+
 app.post('/register', function(request, response){
     //get the sid and password for the request
     var sid = request.body.username;
@@ -112,7 +120,10 @@ app.get('/registerform', function(request, response){
 
 app.get('/', function(request, response){
     // //load the login page
-    response.render('login');
+    if(request.session.userid)
+        response.render('loggedin', {username: request.session.sid}); 
+    else
+        response.render('login');
 });
 
 //mongodb login functionality
@@ -205,45 +216,213 @@ function registerInstructor(session, sid, password, onSuccess, onFail)
 
 
 //report Functionality
-app.post('/report', function(request, response){
+app.post('/lectureReport', function(request, response){
+    //get the lectrue from the request
+    var lecture = request.body.lecture;
+    var student = (request.body.student || request.session.userid);
+    //render the report page sending the lectrue to it
+    response.render('LectureReport', {stud_lec: {lecture: lecture, student: student}})
+});
+
+app.post('/lectureOverview', function(request, response){
     //get the lectrue from the request
     var lecture = request.body.lecture;
     //render the report page sending the lectrue to it
-    response.render('LectureReport', {lecture: lecture})
-});
 
-app.get('/lectures', function(request, response){
-    //get the student uuid number from the session data
-    var studentid = request.session.userid;
+    // //search for all response's for the user
+    // student_binary_ResponseDB.find(/*{studentid: studentid}*/)
+    // .then(function(results){
+    //     var allStats = {};
+    //     var studStats = {};
+    //     //create a object where there exisits the name of each lecture slide
+    //     results.forEach(function(item){
+    //         // updateReportData(allStats, item.studentid, item);
+    //         updateReportData(allStats, item.studentid, item);
+    //         if(item.lecture === lecture)
+    //             updateReportData(studStats, item.studentid, item);
+    //     });
+
+    //     //render the lectures page, send the list of lectures
+    //     response.render('selectStudent', {students: studStats , lecture: lecture, alldata: allStats});
+    //     // response.render("selectlecture", {lectures: lectStats, alldata: allStats});
+    // });
 
     //search for all response's for the user
-    student_binary_ResponseDB.find({studentid: studentid}).select({lecture: 1})
+    student_binary_ResponseDB.find({lecture: lecture})
     .then(function(results){
-        var lectureList = {};
+        var secStats = {};
+        var studStats = {};
         //create a object where there exisits the name of each lecture slide
-        //NOTE: tried ot use mongooses group by functionality, but got no data every time
         results.forEach(function(item){
-            lectureList[item.lecture] = (lectureList[item.lecture] + 1 || 1);
+            // updateReportData(allStats, item.studentid, item);
+            // updateReportData(allStats, item.studentid, item);
+            // if(item.lecture === lecture)
+            // updateReportData(studStats, item.studentid, item);
+
+            lectureOverviewReport(secStats, item.section, item);
+            lectureOverviewReport(studStats, item.studentid, item);
+             
         });
 
         //render the lectures page, send the list of lectures
-        response.render("selectlecture", {lectures: lectureList});
+        response.render('selectStudent', {sections: secStats, students: studStats , lecture: lecture});
+        // response.render("selectlecture", {lectures: lectStats, alldata: allStats});
     });
 });
 
-app.get('/courseoverview', function(request, response){
+app.post('/courseReport', function(request, response){
+   courseReport(request.body.userid, response);
+});
 
+app.get('/courseReport', function(request, response){
+   courseReport(request.session.userid, response);
+});
+
+app.get('/courseOverview', function(request, response){
 
     response.sendFile(__dirname + "/views/CourseOverview.html");
 });
 
-function sendTableReportData(session, lecture, socket)
+function updateCourseOverviewReportData(stats, type, tag_title, response)
+{
+    initVariable(stats, type);
+
+    var stype = stats[type];
+    if(!stype[tag_title]){
+        stype[tag_title] = {};
+        stype[tag_title].U = 0;
+        stype[tag_title].D = 0;
+        stype[tag_title].UNK = 0;
+        stype[tag_title].length = 0;
+    }
+    
+    var sign = ""
+    switch(response)
+    {
+        case 1:
+            sign = "U";
+            break;
+        case 0:
+            sign = "D";
+            break;
+        case -1:
+            sign = "UKN";
+            break;
+
+    }
+    var tstype = stype[tag_title];
+    tstype[sign] = tstype[sign] + 1;
+    tstype.length = tstype.length + 1;
+}
+
+function initVariable(variable, value)
+{
+    if(!variable[value])
+        variable[value] = {};
+    return variable[value];
+}
+
+function lectureOverviewReport(stats, selectValue, item)
+{
+    var select = initVariable(stats, selectValue);
+
+    if(!select[item.tag_title]){
+        select[item.tag_title] = {};
+        select[item.tag_title].U = 0;
+        select[item.tag_title].D = 0;
+        select[item.tag_title].UNK = 0;
+        select[item.tag_title].length = 0;
+    }
+
+    var sign = ""
+    switch(item.response)
+    {
+        case 1:
+            sign = "U";
+            break;
+        case 0:
+            sign = "D";
+            break;
+        case -1:
+            sign = "UKN";
+            break;
+
+    }
+    var tag = select[item.tag_title];
+    tag[sign] = tag[sign] + 1;
+    tag.length = tag.length + 1;
+}
+
+
+function _updateReportData(stats, type, section, tag_title, response)
+{
+    initVariable(stats, type);
+    
+    var secVar = stats[type];
+
+    initVariable(secVar, section);
+
+    var stype = secVar[section];
+    if(!stype[tag_title]){
+        stype[tag_title] = {};
+        stype[tag_title].U = 0;
+        stype[tag_title].D = 0;
+        stype[tag_title].UNK = 0;
+        stype[tag_title].length = 0;
+    }
+    
+    var sign = ""
+    switch(response)
+    {
+        case 1:
+            sign = "U";
+            break;
+        case 0:
+            sign = "D";
+            break;
+        case -1:
+            sign = "UKN";
+            break;
+
+    }
+    var tstype = stype[tag_title];
+    tstype[sign] = tstype[sign] + 1;
+    tstype.length = tstype.length + 1;
+}
+
+function updateReportData(stats, type, item)
+{
+    _updateReportData(stats, type, item.section, item.tag_title, item.response);
+}
+
+function courseReport(studentid, response)
+{
+    //search for all response's for the user
+    student_binary_ResponseDB.find(/*{studentid: studentid}*/)
+    .then(function(results){
+        var allStats = {};
+        var lectStats = {};
+
+        //create a object where there exisits the name of each lecture slide
+        results.forEach(function(item){
+            // updateReportData(allStats, item.studentid, item);
+            updateReportData(allStats, item.lecture, item);
+            if(item.studentid === studentid)
+                updateReportData(lectStats, item.lecture, item);
+        });
+
+        //render the lectures page, send the list of lectures
+        response.render("selectlecture", {lectures: lectStats, alldata: allStats});
+    });
+}
+
+function sendTableReportData(student_lecture, socket)
 {
     //search through the DB for all response from the user on the wanted lecture
-    student_binary_ResponseDB.
-    find({studentid:session.userid, lecture: lecture}).
-    select({tag_title: 1, response: 1}).
-    then(function(results){
+    student_binary_ResponseDB
+    .find({studentid: student_lecture.student, lecture: student_lecture.lecture})
+    .select({tag_title: 1, response: 1})
+    .then(function(results){
         if(results.length > 0)
         {
            socket.emit('table_data', results);
@@ -276,6 +455,7 @@ var student_binary_tag_response_schema = new Schema({
     lecture: String,
     studentid: String,
     tag_title: String,
+    section: String,
     response: Number
 },{collection: 'binary_response'});
 var student_binary_ResponseDB = mongoose.model('student_response', student_binary_tag_response_schema);
@@ -286,6 +466,7 @@ io.on('connection', function(socket){
     //if there is no userid then don't allow any functionality
     if(!session.userid)
         return;
+
     //set up the server connection, by having the lecture id sent to the server
     socket.on('lecture_server_setup', function(lecture){
         //send user to right room
@@ -352,12 +533,14 @@ io.on('connection', function(socket){
                     lecture: lecture,
                     studentid: session.userid,
                     tag_title: title,
+                    section: response_data.section,
                     response: response_data.response
                 };
                 //setup search item
                 var searchQuery = {
                     lecture: lecture,
-                    studentid: session.userid, 
+                    studentid: session.userid,
+                    section: response_data.section,
                     tag_title: title
                 };
 
@@ -389,19 +572,21 @@ io.on('connection', function(socket){
             });
             
             //called when the user check for the status of there current tag
-            socket.on('check_binary_tag_status', function(title){
+            socket.on('check_binary_tag_status', function(title_section){
                 //set up the database query
                 var searchQuery = {
                     lecture: lecture,
                     studentid: session.userid,
-                    tag_title: title
+                    section: title_section.section,
+                    tag_title: title_section.title
                 };
                 //check if ther exsits a response for a tag from the specific user
                 student_binary_ResponseDB.find(searchQuery).select({response: 1}).limit(1).then(function(results){
                     //if there is a response, return that response
+                    var response = -1;
                     if(results.length > 0)
                     {
-                        socket.emit('binary_tag_status', {title: title, response: results[0].response})
+                        response = results[0].response;
                     }
                     else//if there is no response then insert one and send the result of unknown response to the user
                     {
@@ -415,8 +600,11 @@ io.on('connection', function(socket){
                             }
                         });
                         //send the unknown response to the user
-                        socket.emit('binary_tag_status', {title: title, response: searchQuery.response})
+                        response = searchQuery.response;
                     }
+
+                    title_section.response = response;
+                    socket.emit('binary_tag_status', title_section);
                 });        
             });
         }
@@ -428,19 +616,42 @@ io.on('connection', function(socket){
         });
     });
 
-    socket.on('get_student_report_data', function(lecture){
-        sendTableReportData(session, lecture, socket);
+    socket.on('get_student_report_data', function(s_l){
+        sendTableReportData(s_l, socket);
+        console.log('get_student_report_data');
     });
 
     socket.on('course_overview_report', function(){
         //add if statement for if the user is a instructor
-        console.log("called");
         student_binary_ResponseDB.find({}).then(function(results){
-            if(results.length > 0)
-                socket.emit('report_course_overview', results);
+            if(results.length > 0){
+                var studStats = {};
+                var lecStats = {};
+
+                results.forEach(function(item){
+                    updateCourseOverviewReportData(lecStats, item.lecture, item.tag_title, item.response);
+                    updateCourseOverviewReportData(studStats, item.studentid, item.tag_title, item.response);     
+                });
+
+                socket.emit('report_course_overview', {studStats: studStats, lecStats: lecStats});
+            }
         });
+        console.log('course_overview_report');
+    });
+
+    socket.on('userid_to_sid', function(request){
+        UserDB.find({userid: request.studentid}).select({sid: 1}).limit(1).then(function(results){
+
+            if(results.length > 0){
+                request.sid = results[0].sid;
+                socket.emit('return_userid_to_sid', request);
+            }
+        }); 
+        console.log('userid_to_sid');
     });
 });
+
+// cleanDB();
 
 //listen for a connection
 http.listen(app.get('port'), function(){

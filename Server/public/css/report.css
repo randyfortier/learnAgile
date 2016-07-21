@@ -1,0 +1,47 @@
+.title {
+	text-align: center;
+}
+
+td {
+	text-align: center;
+}
+
+
+#CourseTable
+{
+	float: left;
+	width: 49%;
+}
+
+#StudentTable
+{
+	float: right;
+	width: 49%;
+}
+
+.exellent {
+	background-color: green;
+}
+
+.great {
+	background-color: blue;
+}
+
+.good {
+	background-color: yellow;
+}
+
+
+.ok {
+	background-color: orange;
+}
+
+
+.bad {
+	background-color: red;
+}
+
+.need_help{
+	background-color: black;
+	color: white;
+}

@@ -1,4 +1,8 @@
 var socket = io('http://localhost:3000');
+var binary_default = {};
+var currentH = 0;
+var isDefault = true;
+
 //send the user the lecture id
 socket.emit('lecture_server_setup', $('title').text());
 
@@ -220,6 +224,41 @@ socket.on('lecture_client_setup', function(isInstuctor){
             //add the sidebar to the slide
             removeNAddSidebar(slide, [$('.slides').height(), slide.offsetTop]);
 
+            var hIndex = Reveal.getIndices().h;
+            if(hIndex !== currentH)
+            {
+                //there was a change, load next default
+                loadDefaultBinaryTag(hIndex)
+                currentH = hIndex;
+            }
+
+            //check if there is a tag avaiable in the current slide, if ther is load it
+            var change = checkNloadCurrentSlideXML(slide);
+
+            //if a change has occured, change isDefault to false, 
+            if(change)
+                isDefault = false;
+            else
+            {
+                //else, check to see if the default is up, if it isn't reload the default
+                if(!isDefault)
+                    loadDefaultBinaryTag(currentH);
+            }
+        }
+
+        function loadDefaultBinaryTag(index)
+        {
+            //check to see if the a default exists, if so then add the default
+            var hIndex = 'h_' + index;
+            if(binary_default.hasOwnProperty(hIndex))
+                updateCurrentTags(binary_default[hIndex]);
+            else // else remove the previous tags
+                removeTags();
+            isDefault = true;
+        }
+
+        function checkNloadCurrentSlideXML(slide)
+        {
             //check for xml data
             var rawxml = $(slide).find('.binary_tag');
             //use !== 0 beacuse find returns a empty array
@@ -229,8 +268,11 @@ socket.on('lecture_client_setup', function(isInstuctor){
                 //NOTE: have script be type='text/xml', also parseXML didn't work and gave error
                 //add the buuton to the screen and update the onclick method with the tag data and index of slide
                 updateCurrentTags($(rawxml[0]).text());
+                return true;
             }
+            return false;
         }
+
 
         function removeNAddSidebar(slide, adjustvalues = [])
         {
@@ -246,11 +288,15 @@ socket.on('lecture_client_setup', function(isInstuctor){
             $(slide).prepend(tagSidebar);
         }
 
-        function updateCurrentTags(xml)
+        function removeTags()
         {
             //remove the previous tags
             $('.tagged').remove();
+        }
 
+        function updateCurrentTags(xml)
+        {
+            removeTags();
             //bulid the tags that are in the xml
             bulidTag(xml);
         }
@@ -265,10 +311,11 @@ socket.on('lecture_client_setup', function(isInstuctor){
 
                 //push the name in the list
                 var title = $(this).attr('title');
-                tags.push(title);
+                var section = $(this).attr('section');
+                tags.push({title:title, section: section});
 
                 //add to the sidebar a icon that has the title of the child title and the image that is the string location of the text in the child
-                $(sidebar).append(bulidSidebarIcon(title, "unknown", $(this).text()));
+                $(sidebar).append(bulidSidebarIcon(title + "_" + section, "unknown", $(this).text()));
             });
 
             //check the status of each of the tags, base on what the server has
@@ -288,8 +335,9 @@ socket.on('lecture_client_setup', function(isInstuctor){
 
         //get the response from the server that is the status of the tag according to what is in the database server
         socket.on('binary_tag_status', function(tag_status){
+
             //get the tag by it's name
-            var tag = $('#' + tag_status.title);
+            var tag = $('#' + tag_status.title + '_' + tag_status.section);
 
             //check what state that tag was when you last used it
             switch(tag_status.response)
@@ -349,14 +397,18 @@ socket.on('lecture_client_setup', function(isInstuctor){
             clicked.addClass(added);
 
             //send the tag data
-            sendTagResponse(clicked.attr('id'), response); 
+            var id = clicked.attr('id').split('_');
+            var title = id[0];
+            var section = id[1];
+            sendTagResponse(title, section, response); 
         }
 
-        function sendTagResponse(title, response)
+        function sendTagResponse(title, section, response)
         {
             //emit to the server, the title of the tag, the slide index, and which tag state they are in
             socket.emit('student_response', {
                 title: title,
+                section: section,
                 response: response
             });
         }
@@ -372,5 +424,24 @@ socket.on('lecture_client_setup', function(isInstuctor){
         {
             return '<img class="clickable" src="'+src+'" />';
         }
+
+        
     }
+});
+
+$('.slides').children().each(function(index){
+    //check for the instances of binary_tags
+    var found = $(this).find('.binary_default');
+
+    //if an item is found
+    if(found[0])
+    {
+        binary_default['h_' + index] = $(found[0]).text();// add the first binary_default to the default map
+    }
+    else
+    {
+        found = $(this).find('.binary_tag')[0];//find the first avaible binary tag
+        if(found)//if there is a binary tag add it
+            binary_default['h_' + index] = $(found).text();        
+    }   
 });

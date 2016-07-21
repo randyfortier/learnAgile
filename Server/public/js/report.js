@@ -4,7 +4,7 @@ var Table = $('<table id="student_table"></table>');
 
 $(document).ready(function(){
 
-	socket.emit('get_student_report_data', lecture);
+	socket.emit('get_student_report_data', lec_stud);
 
 });
 socket.on('table_data', function(table_data){
@@ -54,7 +54,7 @@ function ParseDBResponse(value)
 			return "U";
 		case 0: //don't understand
 			return "D";
-		default: //defualt is unknown and -1
+		default: //default is unknown and -1
 			return "UNK";
 	}
 }
