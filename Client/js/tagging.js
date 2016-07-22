@@ -21,6 +21,12 @@ $('.slides').children().each(function(index){
     }   
 });
 
+function tagAction()
+{
+    if(ActionFunc !== null)
+        ActionFunc();
+}
+
 //send the user the lecture id
 socket.emit('lecture_server_setup', $('title').text());
 
@@ -324,7 +330,6 @@ socket.on('lecture_client_setup', function(isInstuctor){
             return false;
         }
 
-
         function removeNAddSidebar(slide, adjustvalues = [])
         {
             //gets ride of the old sidebar on the previous slide
@@ -477,9 +482,3 @@ socket.on('lecture_client_setup', function(isInstuctor){
         }   
     }
 });
-
-function tagAction()
-{
-    if(ActionFunc !== null)
-        ActionFunc();
-}

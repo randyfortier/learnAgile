@@ -220,8 +220,23 @@ app.post('/lectureReport', function(request, response){
     //get the lectrue from the request
     var lecture = request.body.lecture;
     var student = (request.body.student || request.session.userid);
-    //render the report page sending the lectrue to it
-    response.render('LectureReport', {stud_lec: {lecture: lecture, student: student}})
+
+    //search for all response's for the user
+    student_binary_ResponseDB.find({lecture:lecture})
+    .then(function(results){
+        var allStats = {};
+        var studStats = {};
+
+        //create a object where there exisits the name of each lecture slide
+        results.forEach(function(item){
+            lectureOverviewReport(allStats, item.section, item);
+            if(item.studentid === student)
+                lectureOverviewReport(studStats, item.section, item);
+        });
+        //render the report page sending the lectrue to it
+        response.render('LectureReport', {stud_lec: {lecture: lecture, student: student}, student_stats: studStats, all_stats: allStats});
+    });
+
 });
 
 app.post('/lectureOverview', function(request, response){
@@ -394,6 +409,39 @@ function updateReportData(stats, type, item)
 {
     _updateReportData(stats, type, item.section, item.tag_title, item.response);
 }
+
+// function updateLectureReport(stats, item)
+// {
+//     var stype = initVariable(stats, item.section);
+//     if(!stype[item.tag_title]){
+//         stype[item.tag_title] = {};
+//         stype[item.tag_title].U = 0;
+//         stype[item.tag_title].D = 0;
+//         stype[item.tag_title].UNK = 0;
+//         stype[item.tag_title].length = 0;
+//     }
+    
+//     var sign = ""
+//     switch(item.response)
+//     {
+//         case 1:
+//             sign = "U";
+//             break;
+//         case 0:
+//             sign = "D";
+//             break;
+//         case -1:
+//             sign = "UKN";
+//             break;
+
+//     }
+//     var tstype = stype[item.tag_title];
+//     tstype[sign] = tstype[sign] + 1;
+//     tstype.length = tstype.length + 1;
+// }
+
+
+
 
 function courseReport(studentid, response)
 {

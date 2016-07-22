@@ -22,6 +22,8 @@ socket.on('report_course_overview', function(report){
 	addToTable(studStats, 'StudentTable');
 	addToTable(lecStats, 'CourseTable');
 
+
+
 	$('.student').click(function(event){
 		invokePostCall('/courseReport', 'userid', (StudentSIDtoID[$(event.target).text()] || $(event.target).text()));
 	});
@@ -29,11 +31,16 @@ socket.on('report_course_overview', function(report){
 	$('.lecture').click(function(event){
 		invokePostCall('/lectureOverview', 'lecture', $(event.target).text());
 	});
+	addTableColour();
 
+});
+
+function addTableColour()
+{
 	$('td').each(function(){
 		var text = $(this).text();
 
-		if(text.includes('%') && text.length < 8)
+		if(text.includes('%'))
 		{
 			text = text.substr(0, text.length -1);
 			var percent = Number(text);
@@ -50,11 +57,9 @@ socket.on('report_course_overview', function(report){
 				$(this).addClass('bad');
 			else
 				$(this).addClass('need_help');
-
 		}
-
 	});
-});
+}
 
 function invokePostCall(action, postName, value)
 {

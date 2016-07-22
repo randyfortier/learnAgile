@@ -2,7 +2,7 @@ doctype html
 html
 	head
 
-		title Lecture #{lecture}.
+		title 
 		script(src="https://cdn.socket.io/socket.io-1.4.5.js")
 		script(src="https://ajax.googleapis.com/ajax/libs/jquery/3.0.0/jquery.min.js")
 		script(src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.6/Chart.js")
@@ -10,9 +10,108 @@ html
 
 		script.
 			var lec_stud = !{JSON.stringify(stud_lec)};
+			var studStats = !{JSON.stringify(student_stats)};
+			var avgStats = !{JSON.stringify(all_stats)};
+			$('title').text('Lecture - ' + lec_stud.lecture);
 
+
+			var table_content = '<tr><th>Tag Name</th><th>Overall Yes% (Student/Average)</th><th>Overall No% (Student / Average)</th><th>Overall Unknown% (Student / Average)</th><th>Yes% that gave an answer (Student / Average)</th><th>No% that gave an answer (Student / Average)</th></tr>';
+
+			
+			var overallColspan = 6;
+			
+			$(document).ready(function(){
+
+				$('#section_table').append(table_content);
+
+				addToTable('section_table', studStats, avgStats);
+				addTableColour();
+			});
+
+			function createScoreData(item)
+			{
+			    return {
+			        overallYes: percentFormat(item.U, item.length),
+			        overallNo: percentFormat(item.D, item.length),
+			        overallUnknown: percentFormat(item.UNK, item.length),
+			        givenYes: percentFormat(item.U, item.U+item.D),
+			        givenNo: percentFormat(item.D, item.U+item.D)
+			    };
+			}
+
+			function addToTable(tableid, stats, allstats)
+			{
+				Object.keys(stats).forEach(function(section){//each section
+					var secVar = stats[section];
+					var allSecVar = allstats[section];
+
+					$('#' + tableid).append(makeHeadTableInsert(section, overallColspan));
+					Object.keys(secVar).forEach(function(tag){//each tag
+						$('#' + tableid).append(makeTableInsert(tag, secVar[tag], allSecVar[tag]));
+					});
+				});
+			}
+
+			function makeHeadTableInsert(value, colspan)
+			{
+				return '<tr class="removable"><th class="lecture" colspan='+colspan+'>'+ value+'</td></tr>';	
+			}
+
+			function makeNameTableInsert(title, colspan)
+			{
+				return '<tr class="removable "><td class="title" colspan='+colspan+'>'+ title + '</td></tr>';	
+			}
+
+			function tableEntry(tag1, tag2)
+			{
+				return '<td>'+ tag1 + ' / ' + tag2 +'</td>'
+			}
+
+			function makeTableInsert(tag, item, allstats_item)
+			{
+				console.log(item);
+				var calScore = createScoreData(item);
+				var calAllScore = createScoreData(allstats_item);
+				return '<tr class="removable">'+
+				'<td>'+tag+'</td>' +
+				tableEntry(calScore.overallYes, calAllScore.overallYes) + 
+				tableEntry(calScore.overallNo, calAllScore.overallNo) +
+				tableEntry(calScore.overallUnknown, calAllScore.overallUnknown) +
+				tableEntry(calScore.givenYes, calAllScore.givenYes) +
+				tableEntry(calScore.givenNo, calAllScore.givenNo) +'</tr>';	
+			}
+
+			function percentFormat(score, length)
+			{
+				return ((score/length) * 100).toFixed(2) + "%";
+			}
+
+			function addTableColour()
+			{
+				$('td').each(function(){
+					var text = $(this).text();
+
+					if(text.includes('%'))
+					{
+						text = text.substr(0, text.length -1);
+						var percent = Number(text);
+
+						if(percent >= 90)
+							$(this).addClass('exellent');
+						else if(percent >= 80)
+							$(this).addClass('great');
+						else if(percent >= 70)
+							$(this).addClass('good');
+						else if(percent >= 60)
+							$(this).addClass('ok');
+						else if(percent >= 50)
+							$(this).addClass('bad');
+						else
+							$(this).addClass('need_help');
+					}
+				});
+			}
 
 	body
+		table(id='section_table', border='1')
 		div(id='table_area')
-		div(id='score_area')
-		div(id='chart_area')

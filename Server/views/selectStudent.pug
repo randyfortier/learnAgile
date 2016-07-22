@@ -40,6 +40,7 @@ html
 				$('.student').click(function(event){
 					invokePostCall('/lectureReport', 'student', StudentSIDtoID[$(event.target).text()], 'lecture', current_lecture);
 				});
+				addTableColour();
 			});
 
 			function createScoreData(item)
@@ -104,6 +105,32 @@ html
 			function percentFormat(score, length)
 			{
 				return ((score/length) * 100).toFixed(2) + "%";
+			}
+
+			function addTableColour()
+			{
+				$('td').each(function(){
+					var text = $(this).text();
+
+					if(text.includes('%'))
+					{
+						text = text.substr(0, text.length -1);
+						var percent = Number(text);
+
+						if(percent >= 90)
+							$(this).addClass('exellent');
+						else if(percent >= 80)
+							$(this).addClass('great');
+						else if(percent >= 70)
+							$(this).addClass('good');
+						else if(percent >= 60)
+							$(this).addClass('ok');
+						else if(percent >= 50)
+							$(this).addClass('bad');
+						else
+							$(this).addClass('need_help');
+					}
+				});
 			}
 
 
