@@ -321,7 +321,7 @@ function updateCourseOverviewReportData(stats, type, tag_title, response)
             sign = "D";
             break;
         case -1:
-            sign = "UKN";
+            sign = "UNK";
             break;
 
     }
@@ -359,7 +359,7 @@ function lectureOverviewReport(stats, selectValue, item)
             sign = "D";
             break;
         case -1:
-            sign = "UKN";
+            sign = "UNK";
             break;
 
     }
@@ -396,7 +396,7 @@ function _updateReportData(stats, type, section, tag_title, response)
             sign = "D";
             break;
         case -1:
-            sign = "UKN";
+            sign = "UNK";
             break;
 
     }
@@ -431,7 +431,7 @@ function updateReportData(stats, type, item)
 //             sign = "D";
 //             break;
 //         case -1:
-//             sign = "UKN";
+//             sign = "UNK";
 //             break;
 
 //     }
@@ -700,6 +700,7 @@ io.on('connection', function(socket){
 });
 
 // cleanDB();
+// student_binary_ResponseDB.find({ tag_title:undefined }).remove().exec();
 
 //listen for a connection
 http.listen(app.get('port'), function(){

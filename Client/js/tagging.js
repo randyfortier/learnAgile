@@ -2,29 +2,47 @@ var socket = io('http://localhost:3000');
 var binary_default = {};
 var currentH = 0;
 var isDefault = true;
+var currentSection = "";
 var ActionFunc = null;
+
+var standardTags = {
+    'en': {title:'Einstein', src:'images/Einstein.png'},
+    'heart': {title:'Heart', src:'images/Heart.png'}
+};
+
+function setBinary_default(index, text, section)
+{
+    binary_default['h_' + index] = {xml: text, section:section};
+}
 
 $('.slides').children().each(function(index){
     //check for the instances of binary_tags
     var found = $(this).find('.binary_default');
-
     //if an item is found
     if(found[0])
     {
-        binary_default['h_' + index] = $(found[0]).text();// add the first binary_default to the default map
+        setBinary_default(index, $(found[0]).text(), $(found).attr('binarysection'));// add the first binary_default to the default map
     }
     else
     {
         found = $(this).find('.binary_tag')[0];//find the first avaible binary tag
+
         if(found)//if there is a binary tag add it
-            binary_default['h_' + index] = $(found).text();        
+            setBinary_default(index, $(found).text(), $(found).attr('binarysection'));
     }   
+
 });
+console.log(binary_default);
 
 function tagAction()
 {
     if(ActionFunc !== null)
         ActionFunc();
+}
+
+if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
+    $('.tagged').css('width', 100);
+    $('.tagged').css('height', 100);
 }
 
 //send the user the lecture id
@@ -308,7 +326,7 @@ socket.on('lecture_client_setup', function(isInstuctor){
             //check to see if the a default exists, if so then add the default
             var hIndex = 'h_' + index;
             if(binary_default.hasOwnProperty(hIndex))
-                updateCurrentTags(binary_default[hIndex]);
+                updateCurrentTags(binary_default[hIndex].xml, binary_default[hIndex].section);
             else // else remove the previous tags
                 removeTags();
             isDefault = true;
@@ -324,7 +342,7 @@ socket.on('lecture_client_setup', function(isInstuctor){
             {
                 //NOTE: have script be type='text/xml', also parseXML didn't work and gave error
                 //add the buuton to the screen and update the onclick method with the tag data and index of slide
-                updateCurrentTags($(rawxml[0]).text());
+                updateCurrentTags($(rawxml[0]).text(), $(rawxml).attr('binarysection'));
                 return true;
             }
             return false;
@@ -350,28 +368,36 @@ socket.on('lecture_client_setup', function(isInstuctor){
             $('.tagged').remove();
         }
 
-        function updateCurrentTags(xml)
+        function updateCurrentTags(xml, section)
         {
             removeTags();
             //bulid the tags that are in the xml
-            bulidTag(xml);
+            bulidTag(xml, section);
         }
 
-        function bulidTag(xml)
+        function getTagInfo(item)
+        {
+            // var tagData = standardTags[$(item)[0].tagName.toLowerCase()];
+            return standardTags[$(item)[0].tagName.toLowerCase()];
+        }
+
+        function bulidTag(xml, section)
         {
             //variable for the name of each of the tags
             var tags = [];
-            
+
             //for each child in the xml make a tag out of it
             $(xml).children().each(function(){
 
-                //push the name in the list
-                var title = $(this).attr('title');
-                var section = $(this).attr('section');
-                tags.push({title:title, section: section});
+                var tagInfo = getTagInfo($(this));
+
+                // //push the name in the list
+                // var title = $(this).attr('title');
+                // var section = $(this).attr('section');
+                tags.push({title:tagInfo.title, section: section});
 
                 //add to the sidebar a icon that has the title of the child title and the image that is the string location of the text in the child
-                $(sidebar).append(bulidSidebarIcon(title + "_" + section, "unknown", $(this).text()));
+                $(sidebar).append(bulidSidebarIcon(tagInfo.title + "_" + section, "unknown", tagInfo.src));
             });
 
             //check the status of each of the tags, base on what the server has

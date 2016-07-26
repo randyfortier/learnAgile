@@ -22,8 +22,6 @@ socket.on('report_course_overview', function(report){
 	addToTable(studStats, 'StudentTable');
 	addToTable(lecStats, 'CourseTable');
 
-
-
 	$('.student').click(function(event){
 		invokePostCall('/courseReport', 'userid', (StudentSIDtoID[$(event.target).text()] || $(event.target).text()));
 	});
@@ -90,7 +88,7 @@ function addToTable(stats, tableid)
 
 function percentFormat(score, length)
 {
-	return ((score/length) * 100).toFixed(2) + "%";
+	return ((length === 0) ? '0.00' :((score/length) * 100).toFixed(2)) + "%";
 }
 
 function makeHeadTableInsert(value, classname, colspan)
