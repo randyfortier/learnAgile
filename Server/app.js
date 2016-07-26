@@ -89,6 +89,7 @@ app.post('/logout', function(request, response){
     delete session.isInstructor;
     delete session.sid;
     response.redirect('/');
+    console.log('User Logged Out');
 });
 
 app.post('/register', function(request, response){
@@ -113,9 +114,36 @@ app.post('/register', function(request, response){
     });
 });
 
+app.post('/registerInstructor', function(request, response){
+    //get the sid and password for the request
+    var sid = request.body.username;
+    var password = request.body.password;
+
+    //if the password and sid are empty the redirect to the regster page
+    if(sid === "" || password === "")
+    {
+        response.redirect('/registerform');
+        return;
+    }
+
+    //possible add in a match of sid to a database of sids
+
+    //register the sid and password and redirect to login on success
+    registerInstructor(request.session, sid, password, function(){
+        response.redirect('/loggedin'); 
+    }, function(){
+        response.redirect('/registerInstructorForm'); 
+    });
+});
+
 app.get('/registerform', function(request, response){
     //render the register page
     response.render('register');
+});
+
+app.get('/registerInstructorForm', function(request, response){
+    //render the register page
+    response.render('instructorRegister');
 });
 
 app.get('/', function(request, response){
@@ -141,11 +169,13 @@ var UserDB = mongoose.model('user', userSchema);
 
 function register(session, sid, password, onSuccess, onFail, isInstructor) /* fname, lname, */
 {
+    console.log('registering User');
     UserDB.find({sid: sid}).limit(1).then(function(results){
         if(results.length > 0)
         {
             //if there is already a user with the sid regestered
             onFail();
+            console.log('Failed To register User, User Aleady Exisits');
         }
         else
         {
@@ -188,10 +218,12 @@ function register(session, sid, password, onSuccess, onFail, isInstructor) /* fn
 
 function login(session, sid, password, onSuccess, onFail)
 {
+    console.log('Logging In User');
     //check of there is user with the sid that was submitted
     UserDB.find({sid: sid}).limit(1).then(function(results){
         if((results.length > 0) && (bcrypt.compareSync(password, results[0].hashedPassword)))
         {
+            console.log('Successfully Logged in User, ' + sid);
             //successful login, contiune with the login
             session.userid = results[0].userid;
             session.isInstructor = results[0].isInstructor;
@@ -210,12 +242,13 @@ function login(session, sid, password, onSuccess, onFail)
 //when registering a instructor
 function registerInstructor(session, sid, password, onSuccess, onFail)
 {
+    console.log('registering Instructor,');
     //sed the isInstrctor to true
     register(session, sid, password, onSuccess, onFail, true);
 }
 
-
 //report Functionality
+
 app.post('/lectureReport', function(request, response){
     //get the lectrue from the request
     var lecture = request.body.lecture;
@@ -244,24 +277,6 @@ app.post('/lectureOverview', function(request, response){
     var lecture = request.body.lecture;
     //render the report page sending the lectrue to it
 
-    // //search for all response's for the user
-    // student_binary_ResponseDB.find(/*{studentid: studentid}*/)
-    // .then(function(results){
-    //     var allStats = {};
-    //     var studStats = {};
-    //     //create a object where there exisits the name of each lecture slide
-    //     results.forEach(function(item){
-    //         // updateReportData(allStats, item.studentid, item);
-    //         updateReportData(allStats, item.studentid, item);
-    //         if(item.lecture === lecture)
-    //             updateReportData(studStats, item.studentid, item);
-    //     });
-
-    //     //render the lectures page, send the list of lectures
-    //     response.render('selectStudent', {students: studStats , lecture: lecture, alldata: allStats});
-    //     // response.render("selectlecture", {lectures: lectStats, alldata: allStats});
-    // });
-
     //search for all response's for the user
     student_binary_ResponseDB.find({lecture: lecture})
     .then(function(results){
@@ -269,11 +284,6 @@ app.post('/lectureOverview', function(request, response){
         var studStats = {};
         //create a object where there exisits the name of each lecture slide
         results.forEach(function(item){
-            // updateReportData(allStats, item.studentid, item);
-            // updateReportData(allStats, item.studentid, item);
-            // if(item.lecture === lecture)
-            // updateReportData(studStats, item.studentid, item);
-
             lectureOverviewReport(secStats, item.section, item);
             lectureOverviewReport(studStats, item.studentid, item);
              
@@ -410,39 +420,6 @@ function updateReportData(stats, type, item)
     _updateReportData(stats, type, item.section, item.tag_title, item.response);
 }
 
-// function updateLectureReport(stats, item)
-// {
-//     var stype = initVariable(stats, item.section);
-//     if(!stype[item.tag_title]){
-//         stype[item.tag_title] = {};
-//         stype[item.tag_title].U = 0;
-//         stype[item.tag_title].D = 0;
-//         stype[item.tag_title].UNK = 0;
-//         stype[item.tag_title].length = 0;
-//     }
-    
-//     var sign = ""
-//     switch(item.response)
-//     {
-//         case 1:
-//             sign = "U";
-//             break;
-//         case 0:
-//             sign = "D";
-//             break;
-//         case -1:
-//             sign = "UNK";
-//             break;
-
-//     }
-//     var tstype = stype[item.tag_title];
-//     tstype[sign] = tstype[sign] + 1;
-//     tstype.length = tstype.length + 1;
-// }
-
-
-
-
 function courseReport(studentid, response)
 {
     //search for all response's for the user
@@ -544,6 +521,7 @@ io.on('connection', function(socket){
                 // the right lecture, slide number and tag title
                 var query = {
                     lecture : lecture,
+                    section : request.section,
                     tag_title : request.tag_title
                 };
                 //search for the results

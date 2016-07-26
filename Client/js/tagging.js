@@ -69,10 +69,14 @@ socket.on('lecture_client_setup', function(isInstuctor){
 
         ActionFunc = function(){
             checkForChart = !checkForChart;
-            if(checkForChart)
+            if(checkForChart){
                 LoadChart();
-            else
+                Timer();
+            }
+            else{
+                clearTimeout(timer);
                 $('#student_chart').remove();
+            }
         };
 
         Reveal.addEventListener( 'slidechanged', function( event ) {
@@ -94,7 +98,6 @@ socket.on('lecture_client_setup', function(isInstuctor){
             var slide = Reveal.getCurrentSlide();
             if(checkNupdateTag(slide, Reveal.getIndices().h))
                 moveChart(slide, slide.offsetTop);
-
         }
 
         function checkNupdateTag(slide, hIndex)
@@ -107,37 +110,46 @@ socket.on('lecture_client_setup', function(isInstuctor){
             {
                 //NOTE: have script be type='text/xml', also parseXML didn't work and gave error
                 //add the buuton to the screen and update the onclick method with the tag data and index of slide
-                updateTagTitles($(rawxml[0]).text());
+                updateTagTitles($(rawxml[0]).text(), $(rawxml).attr('binarysection'));
                 return true;
             }
             else
                  //check to see if the a default exists, if so then add the default
                 if(binary_default.hasOwnProperty(hIndex)){
-                    updateTagTitles(binary_default['h_'+hIndex]);
+                    updateTagTitles(binary_default['h_'+hIndex].xml, binary_default['h_'+hIndex].section);
                     return true;
                 }
             return false;
         }        
 
-        function updateAllTagChartData()
+        function updateAllTagChartData(section)
         {
             //for each title, send a request for it's tag data
             tag_titles.forEach(function(title, index){
                 socket.emit('get_chart_data', {
                         tag_title : title,
+                        section: section,
                         index: index
                     });
             });
         }
 
-        function updateTagTitles(xml)
+        function getXMLData(item)
+        {
+            // var tagData = standardTags[$(item)[0].tagName.toLowerCase()];
+            return standardTags[$(item)[0].tagName.toLowerCase()];
+        }
+
+
+        function updateTagTitles(xml, section)
         {
             //reset the tag titles
             tag_titles = [];
+
             //for each child in the xml get the title
             $(xml).children().each(function(){
                 //push the name in the list
-                tag_titles.push($(this).attr('title'));
+                tag_titles.push(getXMLData($(this)).title);
             });
 
             //set the current chat data to be a template for data to be inputed
@@ -147,7 +159,7 @@ socket.on('lecture_client_setup', function(isInstuctor){
             };
 
             //update the tag data
-            updateAllTagChartData();
+            updateAllTagChartData(section);
         }
 
         socket.on('chart_update', function(chart_data){
@@ -239,12 +251,13 @@ socket.on('lecture_client_setup', function(isInstuctor){
         }
 
         //timer for constantly updating the graph graph
-        function Timer(){
+        function Timer()
+        {
             //a try statement so if there is a problem with the data, the timer doesn't stop
             try
             {
                 //update the char data, the display the chart
-                updateAllTagChartData();
+                updateAllTagChartData($(Reveal.getCurrentSlide()).find('.binary_tag').attr('binarysection'));
                 updateRadarChart();
             }
             catch(err)
@@ -256,10 +269,10 @@ socket.on('lecture_client_setup', function(isInstuctor){
             timer = setTimeout(function(){Timer();}, timerSpeed);
         }
 
-        //initial start the timer
-        $(document).ready(function(){
-            Timer();
-        });
+        // //initial start the timer
+        // $(document).ready(function(){
+        //     Timer();
+        // });
     }
     else
     {
