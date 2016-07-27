@@ -67,7 +67,7 @@ app.get('/loggedin', function(request, response){
     if(!request.session.userid){
         response.redirect('/');
     }
-    response.render('loggedin', {username: request.session.sid});
+    response.render('loggedin', {username: request.session.sid, isInstructor:  request.session.isInstructor});
 });
 
 app.post('/login', function(request, response){
@@ -149,7 +149,7 @@ app.get('/registerInstructorForm', function(request, response){
 app.get('/', function(request, response){
     // //load the login page
     if(request.session.userid)
-        response.render('loggedin', {username: request.session.sid}); 
+        response.redirect('/loggedin'); // response.render('loggedin', {username: request.session.sid, isInstructor: request.session.isInstructor}); 
     else
         response.render('login');
 });
@@ -558,8 +558,8 @@ io.on('connection', function(socket){
                 var newResponse = {
                     lecture: lecture,
                     studentid: session.userid,
-                    tag_title: title,
                     section: response_data.section,
+                    tag_title: title,
                     response: response_data.response
                 };
                 //setup search item
@@ -678,7 +678,14 @@ io.on('connection', function(socket){
 });
 
 // cleanDB();
-// student_binary_ResponseDB.find({ tag_title:undefined }).remove().exec();
+// student_binary_ResponseDB.find({ _id: '5797cc0cef555db834888f32' }).remove().exec(function(){
+//     console.log("done");
+// });
+// student_binary_ResponseDB.find(/*{studentid: studentid}*/)
+//     .then(function(results){
+//         console.log(results);
+//     });
+
 
 //listen for a connection
 http.listen(app.get('port'), function(){

@@ -7,10 +7,13 @@ html
 			p Error Login In
 		else
 			p You are Loged In, Welcome #{username}.
-			form(action='/courseReport', method='get')
-				button All Lectures
-			form(action='/courseOverview', method='get')
-				button Course Overview
+			if(isInstructor)
+				form(action='/courseOverview', method='get')
+					button Course Overview
+			else
+				form(action='/courseReport', method='get')
+					button All Lectures
+			
 			form(action='/logout', method='post')
 				button Logout
 				

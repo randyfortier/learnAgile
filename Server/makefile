@@ -2,11 +2,11 @@ run:
 	clear
 	node app.js
 
+db:
+	mongod --dbpath ./data/db --smallfiles
+
 open:
-	sublime app.js public/js/tagging.js views/* public/css/feedback.css
+	sublime app.js public/js/* views/*
 
-broswer:
-	chrome http://localhost:3000
-
-broswer2:
-	chrome http://localhost:3000 http://localhost:3000
+cleanForGit:
+	rm -r data/db/journal

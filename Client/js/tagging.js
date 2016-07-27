@@ -1,7 +1,7 @@
 var socket = io('http://localhost:3000');
 var binary_default = {};
 var currentH = 0;
-var isDefault = true;
+var isDefault = false;
 var currentSection = "";
 var ActionFunc = null;
 
@@ -303,6 +303,7 @@ socket.on('lecture_client_setup', function(isInstuctor){
 
         //when the doucument is ready load the current slide
         $(document).ready(function(){
+            currentH = Reveal.getIndices().h;
             slide_load(Reveal.getCurrentSlide());
         });
 
@@ -312,26 +313,13 @@ socket.on('lecture_client_setup', function(isInstuctor){
             //add the sidebar to the slide
             removeNAddSidebar(slide, [$('.slides').height(), slide.offsetTop]);
 
-            var hIndex = Reveal.getIndices().h;
-            if(hIndex !== currentH)
-            {
-                //there was a change, load next default
-                loadDefaultBinaryTag(hIndex)
-                currentH = hIndex;
-            }
-
+            currentH = Reveal.getIndices().h;
             //check if there is a tag avaiable in the current slide, if ther is load it
             var change = checkNloadCurrentSlideXML(slide);
-
-            //if a change has occured, change isDefault to false, 
-            if(change)
-                isDefault = false;
-            else
-            {
-                //else, check to see if the default is up, if it isn't reload the default
-                if(!isDefault)
-                    loadDefaultBinaryTag(currentH);
-            }
+            
+            if(!change)
+                //load the default if no change
+                loadDefaultBinaryTag(currentH);
         }
 
         function loadDefaultBinaryTag(index)
@@ -342,7 +330,6 @@ socket.on('lecture_client_setup', function(isInstuctor){
                 updateCurrentTags(binary_default[hIndex].xml, binary_default[hIndex].section);
             else // else remove the previous tags
                 removeTags();
-            isDefault = true;
         }
 
         function checkNloadCurrentSlideXML(slide)
@@ -398,15 +385,11 @@ socket.on('lecture_client_setup', function(isInstuctor){
         {
             //variable for the name of each of the tags
             var tags = [];
-
+            console.log("New Slide, Section: " + section);
             //for each child in the xml make a tag out of it
             $(xml).children().each(function(){
-
+                console.log(this, section);
                 var tagInfo = getTagInfo($(this));
-
-                // //push the name in the list
-                // var title = $(this).attr('title');
-                // var section = $(this).attr('section');
                 tags.push({title:tagInfo.title, section: section});
 
                 //add to the sidebar a icon that has the title of the child title and the image that is the string location of the text in the child
