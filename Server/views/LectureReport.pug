@@ -6,7 +6,7 @@ html
 		script(src="https://cdn.socket.io/socket.io-1.4.5.js")
 		script(src="https://ajax.googleapis.com/ajax/libs/jquery/3.0.0/jquery.min.js")
 		script(src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.6/Chart.js")
-		script(src="js/report.js")
+		link(rel="stylesheet", href="css/report.css")
 
 		script.
 			var lec_stud = !{JSON.stringify(stud_lec)};
@@ -23,8 +23,10 @@ html
 			$(document).ready(function(){
 
 				$('#section_table').append(table_content);
+				$('#avg_table').append(table_content);
 
 				addToTable('section_table', studStats, avgStats);
+				addToTable('avg_table', studStats, avgStats);
 				addTableColour();
 			});
 
@@ -39,15 +41,14 @@ html
 			    };
 			}
 
-			function addToTable(tableid, stats, allstats)
+			function addToTable(tableid, stats)
 			{
 				Object.keys(stats).forEach(function(section){//each section
 					var secVar = stats[section];
-					var allSecVar = allstats[section];
 
 					$('#' + tableid).append(makeHeadTableInsert(section, overallColspan));
 					Object.keys(secVar).forEach(function(tag){//each tag
-						$('#' + tableid).append(makeTableInsert(tag, secVar[tag], allSecVar[tag]));
+						$('#' + tableid).append(makeTableInsert(tag, secVar[tag]));
 					});
 				});
 			}
@@ -62,28 +63,21 @@ html
 				return '<tr class="removable "><td class="title" colspan='+colspan+'>'+ title + '</td></tr>';	
 			}
 
-			function tableEntry(tag1, tag2)
+			function makeTableInsert(tag, item)
 			{
-				return '<td>'+ tag1 + ' / ' + tag2 +'</td>'
-			}
-
-			function makeTableInsert(tag, item, allstats_item)
-			{
-				console.log(item);
 				var calScore = createScoreData(item);
-				var calAllScore = createScoreData(allstats_item);
 				return '<tr class="removable">'+
 				'<td>'+tag+'</td>' +
-				tableEntry(calScore.overallYes, calAllScore.overallYes) + 
-				tableEntry(calScore.overallNo, calAllScore.overallNo) +
-				tableEntry(calScore.overallUnknown, calAllScore.overallUnknown) +
-				tableEntry(calScore.givenYes, calAllScore.givenYes) +
-				tableEntry(calScore.givenNo, calAllScore.givenNo) +'</tr>';	
+				'<td>'+ calScore.overallYes +'</td>' +
+				'<td>'+ calScore.overallNo + '</td>' +
+				'<td>'+ calScore.overallUnknown + '</td>' +
+				'<td>'+ calScore.givenYes + '</td>' +
+				'<td>'+ calScore.givenNo + '</td></tr>';	
 			}
 
 			function percentFormat(score, length)
 			{
-				return ((score/length) * 100).toFixed(2) + "%";
+				return ((length === 0) ? '0.00' :((score/length) * 100).toFixed(2)) + "%";
 			}
 
 			function addTableColour()
@@ -113,5 +107,10 @@ html
 			}
 
 	body
+		if isInstructor
+			p Lecture - #{stud_lec.lecture}, Student - #{stud_lec.student}
+		else
+			p Lecture - #{stud_lec.lecture}
 		table(id='section_table', border='1')
-		div(id='table_area')
+		p Average over all Students
+		table(id='avg_table', border='1')

@@ -4,8 +4,7 @@ html
 
 		script(src="https://cdn.socket.io/socket.io-1.4.5.js")
 		script(src="https://ajax.googleapis.com/ajax/libs/jquery/3.0.0/jquery.min.js")
-		link(rel="stylesheet",
-		     href="css/report.css")
+		link(rel="stylesheet", href="css/report.css")
 
 		script.
 			var lec = !{JSON.stringify(lectures)};
@@ -18,18 +17,22 @@ html
 			$(document).ready(function(){
 				function invokePostCall(action, postName, value)
 				{
-					var form = $('<form style="display: none" action="'+action+'", method="post"><input id="postVar" name="'+postName+'"/><button id="go"></button></form>');
+					var form = $('<form style="display: none" action="'+action+'", method="post"><input id="postVar" name="'+postName+'"/><input id="postVar2" name="student"/><button id="go"></button></form>');
 					form.find('#postVar').val(value);
+					form.find('#postVar2').val('#{userid}');
 					form.find('#go').trigger("click");
 				}
 
 				$('#lecture_table').append(table_content);
+				$('#avg_table').append(table_content);
 
-				addToTable('lecture_table', lec, allLec);
+				addToTable('lecture_table', lec);
+				addToTable('avg_table', allLec);
 				
 				$('.lecture').click(function(event){
 					invokePostCall('/lectureReport', 'lecture', $(event.target).text());
 				});
+				addTableColour();
 			});
 
 			function createScoreData(item)
@@ -43,21 +46,19 @@ html
 			    };
 			}
 
-			function addToTable(tableid, stats, allstats)
+			function addToTable(tableid, stats)
 			{
 				Object.keys(stats).forEach(function(lecture){//each leacture/student
 					var lecVar = stats[lecture];
-					var allLecVar = allstats[lecture];
 
 					$('#' + tableid).append(makeHeadTableInsert(lecture, overallColspan));
 
 					Object.keys(lecVar).forEach(function(section){//each section
 						var secVar = lecVar[section];
-						var allSecVar = allLecVar[section];
 
 						$('#' + tableid).append(makeNameTableInsert(section, overallColspan));
 						Object.keys(secVar).forEach(function(tag){//each tag
-							$('#' + tableid).append(makeTableInsert(tag, secVar[tag], allSecVar[tag]));
+							$('#' + tableid).append(makeTableInsert(tag, secVar[tag]));
 						});
 					});
 				});
@@ -73,30 +74,54 @@ html
 				return '<tr class="removable "><td class="title" colspan='+colspan+'>'+ title + '</td></tr>';	
 			}
 
-			function tableEntry(tag1, tag2)
-			{
-				return '<td>'+ tag1 + ' / ' + tag2 +'</td>'
-			}
-
-			function makeTableInsert(tag, item, allstats_item)
+			function makeTableInsert(tag, item)
 			{
 				var calScore = createScoreData(item);
-				var calAllScore = createScoreData(allstats_item);
 				return '<tr class="removable">'+
 				'<td>'+tag+'</td>' +
-				tableEntry(calScore.overallYes, calAllScore.overallYes) + 
-				tableEntry(calScore.overallNo, calAllScore.overallNo) +
-				tableEntry(calScore.overallUnknown, calAllScore.overallUnknown) +
-				tableEntry(calScore.givenYes, calAllScore.givenYes) +
-				tableEntry(calScore.givenNo, calAllScore.givenNo) +'</tr>';	
+				'<td>'+ calScore.overallYes +'</td>' +
+				'<td>'+ calScore.overallNo + '</td>' +
+				'<td>'+ calScore.overallUnknown + '</td>' +
+				'<td>'+ calScore.givenYes + '</td>' +
+				'<td>'+ calScore.givenNo + '</td></tr>';	
 			}
 
 			function percentFormat(score, length)
 			{
-				return ((score/length) * 100).toFixed(2) + "%";
+				return ((length === 0) ? '0.00' :((score/length) * 100).toFixed(2)) + "%";
+			}
+
+			function addTableColour()
+			{
+				$('td').each(function(){
+					var text = $(this).text();
+
+					if(text.includes('%'))
+					{
+						text = text.substr(0, text.length -1);
+						var percent = Number(text);
+
+						if(percent >= 90)
+							$(this).addClass('exellent');
+						else if(percent >= 80)
+							$(this).addClass('great');
+						else if(percent >= 70)
+							$(this).addClass('good');
+						else if(percent >= 60)
+							$(this).addClass('ok');
+						else if(percent >= 50)
+							$(this).addClass('bad');
+						else
+							$(this).addClass('need_help');
+					}
+				});
 			}
 			
 	body
 		div
+			p #{sid}'s Lectures
+
 			table(id="lecture_table", border="1")
+			p Average over all Students
+			table(id="avg_table", border="1")
 

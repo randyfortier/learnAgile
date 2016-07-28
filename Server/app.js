@@ -252,8 +252,11 @@ function registerInstructor(session, sid, password, onSuccess, onFail)
 app.post('/lectureReport', function(request, response){
     //get the lectrue from the request
     var lecture = request.body.lecture;
-    var student = (request.body.student || request.session.userid);
-
+    var student;
+    if(request.session.isInstructor)
+        student = request.body.student;
+    else
+        student = request.session.userid;
     //search for all response's for the user
     student_binary_ResponseDB.find({lecture:lecture})
     .then(function(results){
@@ -266,8 +269,11 @@ app.post('/lectureReport', function(request, response){
             if(item.studentid === student)
                 lectureOverviewReport(studStats, item.section, item);
         });
-        //render the report page sending the lectrue to it
-        response.render('LectureReport', {stud_lec: {lecture: lecture, student: student}, student_stats: studStats, all_stats: allStats});
+
+        UserDB.find({userid: student}).then(function(results){
+            //render the report page sending the lectrue to it
+            response.render('LectureReport', {stud_lec: {lecture: lecture, student: results[0].sid}, student_stats: studStats, all_stats: allStats, isInstructor: request.session.isInstructor});
+        });
     });
 
 });
@@ -436,8 +442,13 @@ function courseReport(studentid, response)
                 updateReportData(lectStats, item.lecture, item);
         });
 
+        UserDB.find({userid: studentid}).then(function(results){
+            //render the lectures page, send the list of lectures
+            response.render("selectlecture", {lectures: lectStats, alldata: allStats, sid: results[0].sid, userid: studentid});            
+        });
+
         //render the lectures page, send the list of lectures
-        response.render("selectlecture", {lectures: lectStats, alldata: allStats});
+        // response.render("selectlecture", {lectures: lectStats, alldata: allStats, userid: studentid});
     });
 }
 
@@ -677,8 +688,8 @@ io.on('connection', function(socket){
     });
 });
 
-// cleanDB();
-// student_binary_ResponseDB.find({ _id: '5797cc0cef555db834888f32' }).remove().exec(function(){
+// // cleanDB();
+// student_binary_ResponseDB.find({ tag_title: 'Einstein' }).remove().exec(function(){
 //     console.log("done");
 // });
 // student_binary_ResponseDB.find(/*{studentid: studentid}*/)

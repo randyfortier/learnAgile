@@ -8,5 +8,6 @@ db:
 open:
 	sublime app.js public/js/* views/*
 
-cleanForGit:
+addToGit:
 	rm -r data/db/journal
+	git add ../*

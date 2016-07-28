@@ -12,7 +12,7 @@
 
 .tagged {
 	position: relative;
-	background-color: gray;
+	background-color: transparent;
 	display:block;
 
 	border-radius: 5px;
@@ -31,7 +31,6 @@
 }
 
 .clicked {
-	background-color: green;
 }
 
 .unclicked {
@@ -45,4 +44,10 @@
 	background-color: white;
 	border:1px solid #000000;
 	left: 80%;
+}
+
+
+.icon-disabled {
+  -webkit-filter: grayscale(1);
+  filter: grayscale(1);
 }

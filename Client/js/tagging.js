@@ -7,7 +7,10 @@ var ActionFunc = null;
 
 var standardTags = {
     'en': {title:'Einstein', src:'images/Einstein.png'},
-    'heart': {title:'Heart', src:'images/Heart.png'}
+    'heart': {title:'Heart', src:'images/Heart.png'},
+    'like': {title:'Like', src:'images/like.png'},
+    'hard': {title:'Hard', src:'images/hard.png'},
+    'study': {title:'Study', src:'images/study.png'}
 };
 
 function setBinary_default(index, text, section)
@@ -385,15 +388,13 @@ socket.on('lecture_client_setup', function(isInstuctor){
         {
             //variable for the name of each of the tags
             var tags = [];
-            console.log("New Slide, Section: " + section);
             //for each child in the xml make a tag out of it
             $(xml).children().each(function(){
-                console.log(this, section);
                 var tagInfo = getTagInfo($(this));
                 tags.push({title:tagInfo.title, section: section});
 
                 //add to the sidebar a icon that has the title of the child title and the image that is the string location of the text in the child
-                $(sidebar).append(bulidSidebarIcon(tagInfo.title + "_" + section, "unknown", tagInfo.src));
+                $(sidebar).append(bulidSidebarIcon(tagInfo.title + "_" + section, "icon-disabled", tagInfo.src));
             });
 
             //check the status of each of the tags, base on what the server has
@@ -413,26 +414,20 @@ socket.on('lecture_client_setup', function(isInstuctor){
 
         //get the response from the server that is the status of the tag according to what is in the database server
         socket.on('binary_tag_status', function(tag_status){
-
             //get the tag by it's name
             var tag = $('#' + tag_status.title + '_' + tag_status.section);
-
             //check what state that tag was when you last used it
             switch(tag_status.response)
             {
                 case 1:
-                    tag.addClass("clicked"); // it was on
-                    tag.removeClass("unknown");
-                    break;
-                case 0:
-                    tag.addClass("unclicked"); // it was off
-                    tag.removeClass("unknown");
+                    tag.addClass('clicked'); // it was on
+                    tag.removeClass('icon-disabled');
                     break;
 
                 //no default beacause it has the default is coded into tag_click and bulid tag
             }
         });
-
+        
         //when the tag item is clicked
         function tag_click(event)
         {
@@ -447,9 +442,9 @@ socket.on('lecture_client_setup', function(isInstuctor){
                 clicked = clicked.parent();//the div
 
             //if the div has unclicked then switch the classes and set the response to understand
-            if(clicked.hasClass('unclicked'))//unclicked class
+            if(clicked.hasClass('icon-disabled'))//unclicked class
             {
-                removed = 'unclicked';
+                removed = 'icon-disabled';
                 added = 'clicked';
                 response = UNDERSTAND_RESPONSE;
             }
@@ -457,14 +452,8 @@ socket.on('lecture_client_setup', function(isInstuctor){
             else if(clicked.hasClass('clicked'))//clicked class
             {
                 removed = 'clicked';
-                added = 'unclicked';
+                added = 'icon-disabled';
                 response = DONTUNDERSTAND_RESPONSE;
-            }
-            //if the div has yet to be clicked, add clicked, remove unknown and set the repsonse to understand
-            else if(clicked.hasClass('unknown')){
-                added = 'clicked';
-                removed = 'unknown';
-                response = UNDERSTAND_RESPONSE;
             }
             else
                 //if the wrong item was clicked, do nothing
