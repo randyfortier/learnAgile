@@ -14,6 +14,9 @@ serverShutdown:
 db:
 	mongod --dbpath ./data/db --smallfiles --fork --logpath ./log/mongod.log
 
+dbAddJ:
+	mongod --dbpath ./data/db --smallfiles
+
 dbShutdown:	
 	mongod --dbpath ./data/db --shutdown
 
