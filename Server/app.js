@@ -16,7 +16,7 @@ var mongoose = require('mongoose');
 var bcrypt = require('bcrypt-nodejs');
 
 //setup server for saving the response data
-mongoose.connect('localhost:27017/tagging');
+mongoose.connect('localhost:27018/tagging');
 var Schema = mongoose.Schema;
 
 //array for users that are connected

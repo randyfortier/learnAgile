@@ -12,7 +12,7 @@ serverShutdown:
 
 #Database
 db:
-	mongod --dbpath ./data/db --smallfiles --fork --logpath ./log/mongod.log
+	mongod --dbpath ./data/db --smallfiles --fork --logpath ./log/mongod.log --port 27018
 
 dbAddJ:
 	mongod --dbpath ./data/db --smallfiles
