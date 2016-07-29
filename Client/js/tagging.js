@@ -1,4 +1,4 @@
-var socket = io('http://localhost:3000');
+var socket = io('http://sci54.science.uoit.ca:3000');
 var binary_default = {};
 var currentH = 0;
 var isDefault = false;
@@ -427,7 +427,7 @@ socket.on('lecture_client_setup', function(isInstuctor){
                 //no default beacause it has the default is coded into tag_click and bulid tag
             }
         });
-        
+
         //when the tag item is clicked
         function tag_click(event)
         {

@@ -1,0 +1,53 @@
+#sidebar {
+	background-color: transparent;
+	color: white;
+	position: fixed;
+	left: 99%;
+	border-radius: 5px;
+	display: flex;
+	align-items: center;
+	flex-direction: column;
+	justify-content: center;
+}
+
+.tagged {
+	position: relative;
+	background-color: transparent;
+	display:block;
+
+	border-radius: 5px;
+	width: 65px;
+	height: 65px;
+
+	display: flex;
+	align-items: center;
+
+
+	-khtml-user-select: none;
+    -o-user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.clicked {
+}
+
+.unclicked {
+	background-color: red;
+}
+
+#student_chart {
+	width: 400;
+	height: 400;
+	position: fixed;
+	background-color: white;
+	border:1px solid #000000;
+	left: 80%;
+}
+
+
+.icon-disabled {
+  -webkit-filter: grayscale(1);
+  filter: grayscale(1);
+}
