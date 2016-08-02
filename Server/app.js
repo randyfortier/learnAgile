@@ -551,8 +551,8 @@ io.on('connection', function(socket){
                     request.data = chart_data;
                     //send the data to the instructor
                     socket.emit('chart_update', request);
-                    
                 });
+
             });
         }
         else

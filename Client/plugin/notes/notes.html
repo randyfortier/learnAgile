@@ -296,6 +296,7 @@
 					currentSlide.setAttribute( 'width', 1280 );
 					currentSlide.setAttribute( 'height', 1024 );
 					currentSlide.setAttribute( 'src', currentURL );
+					currentSlide.setAttribute( 'id', 'current-lecture' );
 					document.querySelector( '#current-slide' ).appendChild( currentSlide );
 
 					upcomingSlide = document.createElement( 'iframe' );
@@ -403,5 +404,14 @@
 			})();
 
 		</script>
+
+
+		<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.0.0/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.6/Chart.js"></script>
+        
+        <script type="text/javascript" src="../../js/instructorChart.js"></script>
+
 	</body>
 </html>

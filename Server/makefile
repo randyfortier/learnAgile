@@ -25,6 +25,11 @@ dbShutdown:
 open:
 	sublime app.js public/js/* views/*
 
+stop: serverShutdown dbShutdown
+
+status:	
+	@echo "Server: $$(pidof node)"
+	@echo "Database: $$(pidof mongod)"
 
 #setup of git
 addToGit:
