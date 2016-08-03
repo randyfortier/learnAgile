@@ -106,6 +106,7 @@ window.addEventListener('message',function(event){
 //update the chart info with the tags that where received by the post message
 function ParseTags(tags, section)
 {
+	console.log("ParseTags", tags, section);
 	//make sure that when there are no tags that nothing updates
 	if(!tags || !section)
 	{
@@ -121,18 +122,44 @@ function ParseTags(tags, section)
 	{
 	 	//set the current chat data to be a template for data to be inputed
 	    radar_chart_data = {
-	        labels: ["Yes","No","unknown"],
-	        datasets: tags.slice()
+	        labels: tags.slice(),//["Yes","No","unknown"],
+	        datasets: [{}]
 	    };
 	    tag_section = section;
 
 	    tag_titles = tags.slice();
+
+	    setupRadarData(tags, section)
+
 
 	    //update the tag data
 	    updateAllTagChartData(section);
 	}
 }
 
+
+function setupRadarData(tags, section)
+{
+	//extra
+ 	var rgb;
+    if(!tag_color[section])
+        tag_color[section] = randRGB();
+    rgb = tag_color[section];
+
+    //reset the chart dat and set the chart data, label, and other field
+    radar_chart_data.datasets[0] = {};
+    radar_chart_data.datasets[0].data = tags.slice();
+    radar_chart_data.datasets[0].data.forEach(function(item){ item = 0;});
+    radar_chart_data.datasets[0].pointBorderColor = "#fff";
+    radar_chart_data.datasets[0].pointHoverBackgroundColor = "#fff";
+	radar_chart_data.datasets[0].label = 'Tag Status - ' + section;
+    
+    //set the color for chart data
+    radar_chart_data.datasets[0].backgroundColor = RGBA(rgb, '0.2');
+    radar_chart_data.datasets[0].borderColor = RGBA(rgb, '1');
+    radar_chart_data.datasets[0].pointBackgroundColor = RGBA(rgb, '1');
+    radar_chart_data.datasets[0].pointHoverBorderColor = RGBA(rgb, '1');
+}
 
 function updateAllTagChartData(section)
 {
@@ -148,28 +175,12 @@ function updateAllTagChartData(section)
 
 function updateTagChartData(chart_data)
 {
-    //set the data in the chart.js format
-    var data = [(chart_data.data.understand)?chart_data.data.understand:0, 
-                (chart_data.data.dont)?chart_data.data.dont:0, 
-                (chart_data.data.unknown)?chart_data.data.unknown:0];
-    //set the color of the chart data, if no colour is assigned the generate a new color
-    var rgb;
-    if(!tag_color[chart_data.tag_title])
-        tag_color[chart_data.tag_title] = randRGB();
-    rgb = tag_color[chart_data.tag_title];
+	var data = chart_data.data;
 
-    //reset the chart dat and set the chart data, label, and other field
-    radar_chart_data.datasets[chart_data.index] = {};
-    radar_chart_data.datasets[chart_data.index].data = data;
-    radar_chart_data.datasets[chart_data.index].pointBorderColor = "#fff";
-    radar_chart_data.datasets[chart_data.index].pointHoverBackgroundColor = "#fff";
-    radar_chart_data.datasets[chart_data.index].label = chart_data.tag_title;
-    
-    //set the color for chart data
-    radar_chart_data.datasets[chart_data.index].backgroundColor = RGBA(rgb, '0.2');
-    radar_chart_data.datasets[chart_data.index].borderColor = RGBA(rgb, '1');
-    radar_chart_data.datasets[chart_data.index].pointBackgroundColor = RGBA(rgb, '1');
-    radar_chart_data.datasets[chart_data.index].pointHoverBorderColor = RGBA(rgb, '1');
+	var tag_val = (data.understand/(data.understand+data.dont));
+
+	radar_chart_data.datasets[0].data[chart_data.index] = tag_val;
+
 }
 
 //updates the pie chart with the data in the "data" variable
@@ -193,10 +204,27 @@ function updateRadarChart()
         data: radar_chart_data,
         options: {
             responsive: false,//stops the animation, so the update looks better
-            animation: false
+            animation: false,
+			maintainAspectRatio: true,
+			// legend:{
+			// 	display: true,
+			// 	labels:{
+			// 		fontSize:30
+			// 	}
+			// },
+            scale: {
+            	ticks: {
+            		maxTicksLimit: 4,
+            		stepSize: 0.25
+            		// fontSize: 20            	
+            	}
+            },
+            scaleOverride : true,
+            scaleFontSize: 20
         }
     });
 }
+
 
 //return the format of chart.js rgba color
 function RGBA(rgb, a)

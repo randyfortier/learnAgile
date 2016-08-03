@@ -7,7 +7,7 @@ runServer:
 	node app.js > ./log/node.log &	
 
 serverShutdown:
-	kill $(pidof node)
+	kill $$(pidof node)
 
 
 #Database

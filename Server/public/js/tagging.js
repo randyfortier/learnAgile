@@ -59,11 +59,6 @@ socket.emit('lecture_server_setup', $('title').text());
 socket.on('lecture_client_setup', function(isInstuctor){
     if(isInstuctor)
     {
-        Reveal.addEventListener( 'slidechanged', function( event ) {
-            //sends a siginal to the server to change the students slides
-            socket.emit('instructor-moveslide', [event.indexh,event.indexv]);
-        });
-
         if(window.parent)
         {
             var lec_name = undefined;
@@ -83,10 +78,15 @@ socket.on('lecture_client_setup', function(isInstuctor){
                     if(data.name){
                         sendXML(event.source, origin);
                         lec_name = data.name;
+                        Reveal.addEventListener( 'slidechanged', function( event ) {
+                            //sends a siginal to the server to change the students slides
+                            socket.emit('instructor-moveslide', [event.indexh,event.indexv]);
+                        });
+
                     }
                 }
             });
-            
+
             function sendXML(source, origin)
             {
                 var slide = Reveal.getCurrentSlide();

@@ -125,7 +125,6 @@ app.post('/registerInstructor', function(request, response){
         response.redirect('/registerform');
         return;
     }
-
     //possible add in a match of sid to a database of sids
 
     //register the sid and password and redirect to login on success
@@ -248,7 +247,6 @@ function registerInstructor(session, sid, password, onSuccess, onFail)
 }
 
 //report Functionality
-
 app.post('/lectureReport', function(request, response){
     //get the lectrue from the request
     var lecture = request.body.lecture;
@@ -310,42 +308,13 @@ app.get('/courseReport', function(request, response){
 });
 
 app.get('/courseOverview', function(request, response){
-
     response.sendFile(__dirname + "/views/CourseOverview.html");
 });
 
-function updateCourseOverviewReportData(stats, type, tag_title, response)
-{
-    initVariable(stats, type);
 
-    var stype = stats[type];
-    if(!stype[tag_title]){
-        stype[tag_title] = {};
-        stype[tag_title].U = 0;
-        stype[tag_title].D = 0;
-        stype[tag_title].UNK = 0;
-        stype[tag_title].length = 0;
-    }
-    
-    var sign = ""
-    switch(response)
-    {
-        case 1:
-            sign = "U";
-            break;
-        case 0:
-            sign = "D";
-            break;
-        case -1:
-            sign = "UNK";
-            break;
-
-    }
-    var tstype = stype[tag_title];
-    tstype[sign] = tstype[sign] + 1;
-    tstype.length = tstype.length + 1;
-}
-
+//initalize in a {} 
+// value:{}
+//if the value doen't already exist 
 function initVariable(variable, value)
 {
     if(!variable[value])
@@ -353,55 +322,26 @@ function initVariable(variable, value)
     return variable[value];
 }
 
-function lectureOverviewReport(stats, selectValue, item)
+//setup for the tag, if it doesn't already exist
+//set it top be an open {} with the values
+//understand - U
+//don't understand - D
+//unknown response - UNK
+//length
+function checkNsetupTag(stats, tag)
 {
-    var select = initVariable(stats, selectValue);
-
-    if(!select[item.tag_title]){
-        select[item.tag_title] = {};
-        select[item.tag_title].U = 0;
-        select[item.tag_title].D = 0;
-        select[item.tag_title].UNK = 0;
-        select[item.tag_title].length = 0;
+    if(!stats[tag]){
+        stats[tag] = {};
+        stats[tag].U = 0;
+        stats[tag].D = 0;
+        stats[tag].UNK = 0;
+        stats[tag].length = 0;
     }
-
-    var sign = ""
-    switch(item.response)
-    {
-        case 1:
-            sign = "U";
-            break;
-        case 0:
-            sign = "D";
-            break;
-        case -1:
-            sign = "UNK";
-            break;
-
-    }
-    var tag = select[item.tag_title];
-    tag[sign] = tag[sign] + 1;
-    tag.length = tag.length + 1;
 }
 
-
-function _updateReportData(stats, type, section, tag_title, response)
+//assigns updates the stats with the response value, at the position of tag_title
+function addResponse(stats, tag_title, response)
 {
-    initVariable(stats, type);
-    
-    var secVar = stats[type];
-
-    initVariable(secVar, section);
-
-    var stype = secVar[section];
-    if(!stype[tag_title]){
-        stype[tag_title] = {};
-        stype[tag_title].U = 0;
-        stype[tag_title].D = 0;
-        stype[tag_title].UNK = 0;
-        stype[tag_title].length = 0;
-    }
-    
     var sign = ""
     switch(response)
     {
@@ -416,11 +356,54 @@ function _updateReportData(stats, type, section, tag_title, response)
             break;
 
     }
-    var tstype = stype[tag_title];
-    tstype[sign] = tstype[sign] + 1;
-    tstype.length = tstype.length + 1;
+    var tag = stats[tag_title];
+    tag[sign] = tag[sign] + 1;
+    tag.length = tag.length + 1;
 }
 
+//creates the data structure for the Course Overview report
+function updateCourseOverviewReportData(stats, type, tag_title, response)
+{
+    //create the variable locaiton for the type (student or lecture)
+    var stype = initVariable(stats, type);
+
+    //check and possible initailze the tag under the (student or lecture) variable
+    checkNsetupTag(stype, tag_title);
+    
+    //update the data struct with the response
+    addResponse(stype, tag_title, response);
+}
+
+//creates the data structure for the Lecture Overview Report and the Lecture Report
+function lectureOverviewReport(stats, selectValue, item)
+{
+    //Initalize the vairble for storage of the response (section or studentID)
+    var select = initVariable(stats, selectValue);
+
+    //check and possible initailze the tag under the (section or studentID) variable
+    checkNsetupTag(select, item.tag_title);
+    
+    //update the data struct with the response
+    addResponse(select, item.tag_title, item.response);
+}
+
+
+function _updateReportData(stats, type, section, tag_title, response)
+{
+    //create the variable locaiton for the type (student or lecture)
+    var secVar = initVariable(stats, type);
+    
+    //create the variable locaiton for the section
+    var stype = initVariable(secVar, section);
+
+    //check and possible initailze the tag under the section variable
+    checkNsetupTag(stype, tag_title);
+
+    //update the data struct with the response
+    addResponse(stype, tag_title, response);
+}
+
+//wrapper Function 
 function updateReportData(stats, type, item)
 {
     _updateReportData(stats, type, item.section, item.tag_title, item.response);
@@ -452,19 +435,6 @@ function courseReport(studentid, response)
     });
 }
 
-function sendTableReportData(student_lecture, socket)
-{
-    //search through the DB for all response from the user on the wanted lecture
-    student_binary_ResponseDB
-    .find({studentid: student_lecture.student, lecture: student_lecture.lecture})
-    .select({tag_title: 1, response: 1})
-    .then(function(results){
-        if(results.length > 0)
-        {
-           socket.emit('table_data', results);
-        }
-    });
-}
 
 //Socket.IO Functionality
 
@@ -483,6 +453,10 @@ function renameProperty(object, oldname, newname)
         //the the value to the newname and remove the old name
         object[newname] = object[oldname];
         delete object[oldname];
+    }
+    else
+    {
+        object[newname] = 0;
     }
 }
 
@@ -653,33 +627,38 @@ io.on('connection', function(socket){
         });
     });
 
-    socket.on('get_student_report_data', function(s_l){
-        sendTableReportData(s_l, socket);
-        console.log('get_student_report_data');
-    });
-
     socket.on('course_overview_report', function(){
         //add if statement for if the user is a instructor
-        student_binary_ResponseDB.find({}).then(function(results){
-            if(results.length > 0){
-                var studStats = {};
-                var lecStats = {};
+        // if(session.isInstructors)
+        // {
+            //retrive all the data in the database
+            student_binary_ResponseDB.find({}).then(function(results){
+                //if there is a response send the data
+                if(results.length > 0){
+                    //variables for the student stats and the lecture stats
+                    var studStats = {};
+                    var lecStats = {};
 
-                results.forEach(function(item){
-                    updateCourseOverviewReportData(lecStats, item.lecture, item.tag_title, item.response);
-                    updateCourseOverviewReportData(studStats, item.studentid, item.tag_title, item.response);     
-                });
+                    //update the student and lecture stats wth each results
+                    results.forEach(function(item){
+                        updateCourseOverviewReportData(lecStats, item.lecture, item.tag_title, item.response);
+                        updateCourseOverviewReportData(studStats, item.studentid, item.tag_title, item.response);     
+                    });
 
-                socket.emit('report_course_overview', {studStats: studStats, lecStats: lecStats});
-            }
-        });
-        console.log('course_overview_report');
+                    //send the results to the Instructor
+                    socket.emit('report_course_overview', {studStats: studStats, lecStats: lecStats});
+                }
+            });
+            console.log('course_overview_report');
+        // }
     });
 
     socket.on('userid_to_sid', function(request){
+        //search teh userdb to find the name of a user give its id
         UserDB.find({userid: request.studentid}).select({sid: 1}).limit(1).then(function(results){
-
+            //return value if there is a result
             if(results.length > 0){
+                //get the sid and send it
                 request.sid = results[0].sid;
                 socket.emit('return_userid_to_sid', request);
             }
