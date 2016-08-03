@@ -1,4 +1,4 @@
-var socket = io('http://localhost:3000');
+var socket = io('http://sci54.science.uoit.ca:3000');
 var binary_default = {};
 var currentH = 0;
 var isDefault = false;

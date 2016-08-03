@@ -1,4 +1,4 @@
-var socket = io('http://localhost:3000');
+var socket = io('http://sci54.science.uoit.ca:3000');
 
 //set up the canvas, its id and its size
 var ChartHTML = $('<canvas id="student_chart" style="text-align:center; height: 400px; width: 400px" height="400" width="400"></canvas>');
