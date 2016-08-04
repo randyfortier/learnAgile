@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta http-equiv="x-ua-compatible" content="ie=edge">
+        
+        <title>Login - CSCI 1040u</title>
+        
+        <link href="images/uoit_logo_icon_32.ico" rel="icon" type="image/x-icon"/>
+        <link href="images/uoit_logo_icon_32.ico" rel="shortcut icon" type="image/x-icon"/>
+        <link rel="icon" type="image/png" href="images/logo_icon.jpg" alt="icon" />
+
+        <link href='https://fonts.googleapis.com/css?family=Caveat' rel='stylesheet' type='text/css'>
+        <link href='https://fonts.googleapis.com/css?family=Montserrat' rel='stylesheet' type='text/css'>
+
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css" integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r" crossorigin="anonymous">
+
+        <link rel="stylesheet" href="styles/primary.css" type="text/css" />
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+        <script src="js/check_status.js"></script>
+    </head>
+    
+    <body>        
+        <nav class="navbar navbar-inverse navbar-default navbar-fixed-top">
+          <div class="container">
+            <div class="navbar-header">
+              <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1" aria-expanded="false">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+              </button>
+              <a class="navbar-brand" href="#"><span class="logoText">CSCI 1040u</span></a>
+            </div>
+
+            <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+              <ul class="nav navbar-nav">
+                <li><a href="index.html">Home</a></li>
+                <li class="dropdown">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Course Materials <span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                      <li><a href="lecture_notes.html">Lecture Notes</a></li>
+                      <li><a href="labs.html">Labs</a></li>
+                      <li><a href="assignments.html">Assignments</a></li>
+                    </ul>
+                </li>
+                <!-- show if logged in: -->
+                <li class="dropdown loggedin" style="display: none">
+                    <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false">Reports <span class="caret"></span></a>
+                    <ul class="dropdown-menu">
+                      <li class="isInstructor" style="display: none"><a href="/courseOverview">Course Summary</a></li>
+                      <li class="isStudent" style="display: none"><a href="/course_report.html">Course Report</a></li>
+                      <li class="isInstructor" style="display: none"><a href="/lectureOverview">Lecture Summary</a></li>
+                      <!-- <li class="isStudent" style="display: none"><a href="/lectureReport">Lecture Report</a></li> -->
+                    </ul>
+                </li>
+                <!-- show (these two) if not logged in: -->
+                <li class="active not-loggedin" style="display: none"><a href="login.html">Login</a></li>
+                <li class="not-loggedin" style="display: none"><a href="register.html">Register</a></li>
+                <li class="loggedin" style="display: none"><a href="/logout">Logout</a></li>
+              </ul>
+            </div>
+          </div>
+        </nav>
+                
+        <div class="jumbotron">
+          <div class="container-fluid">
+              <div class="col-sm-10 col-sm-offset-1">
+                <h1><span class="logoText">CSCI 1040u</span></h1>
+                <p><span class="logoText">Introduction to Computer Science</span></p>
+              </div>
+          </div>
+        </div>
+
+        <div id="content">
+            <div class="container-fluid col-sm-10 col-sm-offset-1">
+				<form class="form-horizontal" role="form" action="/login" method="post">
+				  <div class="form-group">
+					<label class="control-label col-sm-2" for="sid">Student ID:</label>
+					<div class="col-sm-10">
+					  <input type="text" class="form-control" id="sid" name="sid" placeholder="Enter your SID">
+					</div>
+				  </div>
+				  <div class="form-group">
+					<label class="control-label col-sm-2" for="pwd">Password:</label>
+					<div class="col-sm-10"> 
+					  <input type="password" class="form-control" id="pwd" name="password" placeholder="Enter password">
+					</div>
+				  </div>
+				  <!-- This form element has been disabled, since I am unsure if this functionality is enabled or not on our site -->
+				  <!--
+				  <div class="form-group"> 
+					<div class="col-sm-offset-2 col-sm-10">
+					  <div class="checkbox">
+						<label><input type="checkbox"> Remember me</label>
+					  </div>
+					</div>
+				  </div>
+				  -->
+				  <div class="form-group"> 
+					<div class="col-sm-offset-2 col-sm-10">
+					  <button type="submit" class="btn btn-default">Login</button>
+					</div>
+				  </div>
+				</form>
+            </div>
+        
+                
+            <footer class="info container-fluid">
+                <section class="col-xs-12 col-sm-4 col-sm-offset-1">
+                    <h3>Contact</h3>
+                    <p title="2000 Simcoe St. N.  Oshawa, ON  L1H 7K4">
+                        UA 2032<br />
+                        randy.fortier&#64;uoit.ca<br />
+                        905-721-8668 ext. 2114<br />
+                    </p>
+                </section>
+                <section class="col-xs-12 col-sm-4 col-sm-offset-2">
+                    <h3>Connect</h3>
+                    <ul>
+                        <li><img title="randy.fortier&#64;uoit.ca" src="images/social/email.png" alt="E-Mail" /></li>
+                        <li><a href="https://plus.google.com/+RandyFortier/posts"><img src="images/social/google+.png" alt="Google+" /></a></li>
+                        <li><a href="https://twitter.com/randy_fortier"><img src="images/social/twitter.png" alt="Twitter" /></a></li>
+                        <!--<li><a href="#"><img src="images/social/youtube.png" alt="YouTube" /></a></li>-->
+                    </ul>
+                </section>
+            </footer>
+            <footer class="copyright">
+                &copy; Copyright - Randy J. Fortier - 2016
+            </footer>
+        </div>
+           
+        
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+        <!--
+        <script src="http://www.atlasestateagents.co.uk/javascript/tether.min.js"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.2/js/bootstrap.min.js" integrity="sha384-vZ2WRJMwsjRMW/8U7i6PWi6AlO1L79snBrmgiDpgIWJ82z8eA5lenwvxbMV1PAh7" crossorigin="anonymous"></script>
+        -->
+     </body>
+</html>

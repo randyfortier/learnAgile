@@ -1,4 +1,4 @@
-var socket = io('http://sci54.science.uoit.ca:3000');
+var socket = io();//'http://sci54.science.uoit.ca:3000');
 var binary_default = {};
 var currentH = 0;
 var isDefault = false;
@@ -6,8 +6,6 @@ var currentSection = "";
 var ActionFunc = null;
 
 var standardTags = {
-    'en': {title:'Einstein', src:'images/Einstein.png'},
-    'heart': {title:'Heart', src:'images/Heart.png'},
     'like': {title:'Like', src:'images/like.png'},
     'hard': {title:'Hard', src:'images/hard.png'},
     'study': {title:'Study', src:'images/study.png'}
@@ -24,21 +22,29 @@ $('.slides').children().each(function(index){
     //if an item is found
     if(found[0])
     {
-        setBinary_default(index, $(found[0]).text(), $(found).attr('binarysection'));// add the first binary_default to the default map
+        setBinary_default(index, $(found[0]).text(), $(found).attr('binary-section'));// add the first binary_default to the default map
     }
     else
     {
         found = $(this).find('.binary_tag')[0];//find the first avaible binary tag
 
         if(found)//if there is a binary tag add it
-            setBinary_default(index, $(found).text(), $(found).attr('binarysection'));
+            setBinary_default(index, $(found).text(), $(found).attr('binary-section'));
     }   
-
 });
 
 function getXMLData(item)
 {
-    return standardTags[$(item)[0].tagName.toLowerCase()];
+    var standard = standardTags[$(item)[0].tagName.toLowerCase()];
+
+    if(!standard)
+    {
+        var title = $(item).attr('title');
+        var src = $(item).attr('src');
+        return {title: title, src:src};
+    }
+    else
+        return standard;
 }
 
 function tagAction()
@@ -106,7 +112,7 @@ socket.on('lecture_client_setup', function(isInstuctor){
                 {
                     //NOTE: have script be type='text/xml', also parseXML didn't work and gave error
                     //add the buuton to the screen and update the onclick method with the tag data and index of slide
-                    return {tags: bulidListfromXML($(rawxml[0]).text()) , section: $(rawxml).attr('binarysection')};
+                    return {tags: bulidListfromXML($(rawxml[0]).text()) , section: $(rawxml).attr('binary-section')};
                     
                 }
                 else
@@ -127,7 +133,10 @@ socket.on('lecture_client_setup', function(isInstuctor){
                 //for each child in the xml get the title
                 $(xml).children().each(function(){
                     //push the name in the list
-                    list.push(getXMLData($(this)).title);
+                    var data = getXMLData($(this));
+                    if(!data.title || !data.src)
+                        return;    
+                    list.push(data.title);
                 });
                 return list;
             }
@@ -201,7 +210,7 @@ socket.on('lecture_client_setup', function(isInstuctor){
             {
                 //NOTE: have script be type='text/xml', also parseXML didn't work and gave error
                 //add the buuton to the screen and update the onclick method with the tag data and index of slide
-                updateCurrentTags($(rawxml[0]).text(), $(rawxml).attr('binarysection'));
+                updateCurrentTags($(rawxml[0]).text(), $(rawxml).attr('binary-section'));
                 return true;
             }
             return false;
@@ -240,7 +249,10 @@ socket.on('lecture_client_setup', function(isInstuctor){
             var tags = [];
             //for each child in the xml make a tag out of it
             $(xml).children().each(function(){
+
                 var tagInfo = getXMLData($(this));
+                if(!tagInfo.title || !tagInfo.src)
+                    return;
                 tags.push({title:tagInfo.title, section: section});
 
                 //add to the sidebar a icon that has the title of the child title and the image that is the string location of the text in the child

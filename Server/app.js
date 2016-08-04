@@ -67,12 +67,14 @@ app.get('/loggedin', function(request, response){
     if(!request.session.userid){
         response.redirect('/');
     }
-    response.render('loggedin', {username: request.session.sid, isInstructor:  request.session.isInstructor});
+    // response.render('loggedin', {username: request.session.sid, isInstructor:  request.session.isInstructor});
+    response.redirect('/lecture_notes.html')
 });
 
 app.post('/login', function(request, response){
+    console.log(request.body);
     //get the sid and password
-    var sid = request.body.username;
+    var sid = request.body.sid;
     var password = request.body.password;
 
     //check if they can login and send the to the loggedin screen
@@ -83,7 +85,7 @@ app.post('/login', function(request, response){
     });
 });
 
-app.post('/logout', function(request, response){
+app.get('/logout', function(request, response){
     var session = request.session;
     delete session.userid;
     delete session.isInstructor;
@@ -94,13 +96,13 @@ app.post('/logout', function(request, response){
 
 app.post('/register', function(request, response){
     //get the sid and password for the request
-    var sid = request.body.username;
+    var sid = request.body.sid;
     var password = request.body.password;
 
     //if the password and sid are empty the redirect to the regster page
     if(sid === "" || password === "")
     {
-        response.redirect('/registerform');
+        response.redirect('/register.html');
         return;
     }
 
@@ -110,7 +112,7 @@ app.post('/register', function(request, response){
     register(request.session, sid, password, function(){
         response.redirect('/loggedin'); 
     }, function(){
-        response.redirect('/registerform'); 
+        response.redirect('/register.html');
     });
 });
 
@@ -150,7 +152,7 @@ app.get('/', function(request, response){
     if(request.session.userid)
         response.redirect('/loggedin'); // response.render('loggedin', {username: request.session.sid, isInstructor: request.session.isInstructor}); 
     else
-        response.render('login');
+        response.redirect('/login.html');// response.render('login');
 });
 
 //mongodb login functionality
@@ -311,6 +313,21 @@ app.get('/courseOverview', function(request, response){
     response.sendFile(__dirname + "/views/CourseOverview.html");
 });
 
+app.post('/status',function(request, response){
+
+    var status = {};
+    var session = request.session;
+    
+    if(session.userid)
+        status['loggedin'] = true;
+    else
+        status['loggedin'] = false;
+    if(session.isInstructor)
+        status['isInstructor'] = true;
+
+    response.send(JSON.stringify(status));
+    console.log("called");
+});
 
 //initalize in a {} 
 // value:{}
@@ -427,7 +444,8 @@ function courseReport(studentid, response)
 
         UserDB.find({userid: studentid}).then(function(results){
             //render the lectures page, send the list of lectures
-            response.render("selectlecture", {lectures: lectStats, alldata: allStats, sid: results[0].sid, userid: studentid});            
+            response.send(JSON.stringify({lectures: lectStats, alldata: allStats, sid: results[0].sid, userid: studentid}));
+            // response.render("selectlecture", {lectures: lectStats, alldata: allStats, sid: results[0].sid, userid: studentid});            
         });
 
         //render the lectures page, send the list of lectures
@@ -668,7 +686,7 @@ io.on('connection', function(socket){
 });
 
 // // cleanDB();
-// student_binary_ResponseDB.find({ tag_title: 'Einstein' }).remove().exec(function(){
+// student_binary_ResponseDB.find({ tag_title: 'Heart' }).remove().exec(function(){
 //     console.log("done");
 // });
 // student_binary_ResponseDB.find(/*{studentid: studentid}*/)
