@@ -8,7 +8,6 @@ var table_content = '<tr><th>Tag Name</th><th>Yes</th><th>No</th><th>No Response
 
 socket.on('report_course_overview', function(report){
 
-	console.log(report);
 	var studStats = report.studStats;
 	var lecStats = report.lecStats;
 	StudentSIDtoID = {};

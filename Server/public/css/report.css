@@ -7,7 +7,7 @@ td, th {
 }
 
 
-#CourseTable
+/*#CourseTable
 {
 	float: left;
 	width: 49%;
@@ -17,7 +17,7 @@ td, th {
 {
 	float: right;
 	width: 49%;
-}
+}*/
 
 .exellent {
 	background-color: green;

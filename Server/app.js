@@ -72,7 +72,6 @@ app.get('/loggedin', function(request, response){
 });
 
 app.post('/login', function(request, response){
-    console.log(request.body);
     //get the sid and password
     var sid = request.body.sid;
     var password = request.body.password;
@@ -168,7 +167,7 @@ var userSchema = new Schema({
 var UserDB = mongoose.model('user', userSchema);
 
 
-function register(session, sid, password, onSuccess, onFail, isInstructor) /* fname, lname, */
+function register(session, sid, password, onSuccess, onFail, isInstructor)
 {
     console.log('registering User');
     UserDB.find({sid: sid}).limit(1).then(function(results){
@@ -295,8 +294,11 @@ app.post('/lectureOverview', function(request, response){
              
         });
 
+        console.log(secStats, studStats);
+
         //render the lectures page, send the list of lectures
-        response.render('selectStudent', {sections: secStats, students: studStats , lecture: lecture});
+        response.send(JSON.stringify({sections: secStats, students: studStats , lecture: lecture}));
+        // response.render('selectStudent', {sections: secStats, students: studStats , lecture: lecture});
         // response.render("selectlecture", {lectures: lectStats, alldata: allStats});
     });
 });
@@ -326,7 +328,6 @@ app.post('/status',function(request, response){
         status['isInstructor'] = true;
 
     response.send(JSON.stringify(status));
-    console.log("called");
 });
 
 //initalize in a {} 
@@ -354,6 +355,7 @@ function checkNsetupTag(stats, tag)
         stats[tag].UNK = 0;
         stats[tag].length = 0;
     }
+    return stats[tag];
 }
 
 //assigns updates the stats with the response value, at the position of tag_title
@@ -517,34 +519,33 @@ io.on('connection', function(socket){
             socket.on('instructor-moveslide', function(indexies){
                 io.to(lecture).emit('student-moveslide', indexies);
             });
-            
+
             //used to get the real time data for the student
-            socket.on('get_chart_data', function(request){
+            socket.on('get_chart_tag_data', function(request){
                 //set a query to look for all data what matches
                 // the right lecture, slide number and tag title
                 var query = {
                     lecture : lecture,
-                    section : request.section,
-                    tag_title : request.tag_title
+                    section : request.section
                 };
-                //search for the results
-                student_binary_ResponseDB.find(query).select({response: 1}).then(function(results){
-                    //for each returned data piece, sort it into 3 catagories, -1, 0, 1
-                    var chart_data = {};
-                    for (var cnt = 0; cnt < results.length; cnt++)
-                        chart_data[results[cnt].response] = (chart_data[results[cnt].response] + 1) || 1;
-                    
-                    //change the progrety so they repersent the data better
-                    renameProperty(chart_data, '1', 'understand');
-                    renameProperty(chart_data, '0', 'dont');
-                    renameProperty(chart_data, '-1', 'unknown');
-                    
-                    //wrap the chart data in the request that was send
-                    request.data = chart_data;
-                    //send the data to the instructor
-                    socket.emit('chart_update', request);
-                });
 
+                student_binary_ResponseDB.find(query).select({response: 1, tag_title: 1}).then(function(results){
+                    if(results.length > 0)
+                    {
+                        var tag_data = {};
+                        request.tags.forEach(function(item, index){
+                            checkNsetupTag(tag_data, item);
+                            tag_data[item].index = index;
+                        });
+
+                        results.forEach(function(item){                        
+                            if(tag_data[item.tag_title])
+                                addResponse(tag_data, item.tag_title, item.response);
+                        });
+                        
+                        socket.emit('chart_tag_update', tag_data);
+                    }
+                });
             });
         }
         else
@@ -599,41 +600,54 @@ io.on('connection', function(socket){
                     }
                 });
             });
-            
+           
             //called when the user check for the status of there current tag
-            socket.on('check_binary_tag_status', function(title_section){
+            socket.on('check_binary_tags_status', function(titles_section){
+                
+                var titles = titles_section.titles;
                 //set up the database query
                 var searchQuery = {
                     lecture: lecture,
                     studentid: session.userid,
-                    section: title_section.section,
-                    tag_title: title_section.title
+                    section: titles_section.section
                 };
+
                 //check if ther exsits a response for a tag from the specific user
-                student_binary_ResponseDB.find(searchQuery).select({response: 1}).limit(1).then(function(results){
-                    //if there is a response, return that response
-                    var response = -1;
+                student_binary_ResponseDB.find(searchQuery).select({response: 1, tag_title: 1}).then(function(results){
                     if(results.length > 0)
                     {
-                        response = results[0].response;
-                    }
-                    else//if there is no response then insert one and send the result of unknown response to the user
-                    {
-                        //add unknown response to the searchQuery to turn it into a database record to be inserted
-                        searchQuery.response = -1;//Unknown Response
-                        //create the new record and save the record
-                        var newStudentTag = new student_binary_ResponseDB(searchQuery);
-                        newStudentTag.save(function(error){
-                            if(error){ // if there was an error then return what print out the user, the lecture and the title of the tag
-                                console.log("Error adding Default response for user: " + session.userid + ", lecture: " + lecture + ", title: " + title);
+                        var dbtags = {};
+                        results.forEach(function(tag){
+
+                            dbtags[tag.tag_title] = tag.response;
+
+                        });
+
+                        var tag_responses = [];
+                        titles.forEach(function(tag){
+
+                            if(dbtags.hasOwnProperty(tag))
+                            {
+                                tag_responses.push({title: tag, response: dbtags[tag]});
+                            }
+                            else
+                            {
+                                //create the new record and save the record
+                                tag_responses.push({title: tag, response: -1});
+                                searchQuery.tag_title = tag;
+                                searchQuery.response = -1;
+
+                                var newStudentTag = new student_binary_ResponseDB(searchQuery);
+                                newStudentTag.save(function(error){
+                                    if(error){ // if there was an error then return what print out the user, the lecture and the title of the tag
+                                        console.log("Error adding Default response for user: " + session.userid + ", lecture: " + lecture + ", title: " + title);
+                                    }
+                                });           
                             }
                         });
-                        //send the unknown response to the user
-                        response = searchQuery.response;
-                    }
 
-                    title_section.response = response;
-                    socket.emit('binary_tag_status', title_section);
+                        socket.emit('binary_tags_status', {tag_responses: tag_responses, section: titles_section.section});
+                    }
                 });        
             });
         }

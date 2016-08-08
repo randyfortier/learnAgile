@@ -45,8 +45,7 @@ function findLecture()
 }
 
 //inital look for the currect_slide iframe
-var temp = setTimeout(findLecture, 4000);
-
+var temp = setTimeout(findLecture, 2000);
 
 //setup the info for the current_leccture slide,
 //handles:
@@ -76,8 +75,13 @@ function load_Lecture(lecture)
 	            updateTagChartData(chart_data);
 	        });
 
+	        socket.on('chart_tag_update', function(chart_data){
+	            //when the chart data comes in, parse it, and save the data
+	            updateTagChartData(chart_data);
+	        });
+
 	        //start timer to refresh the chart
-			Timer();
+			// Timer();
 	    }
 	});
 }
@@ -93,11 +97,15 @@ window.addEventListener('message',function(event){
 	var data = JSON.parse( event.data );
 	//if the Tags field exists
 	if(data.Tags){
+		console.log('Event listener, Data:', data);
 		//have the first message only be caught
-		if(onlyOne)
+		// if(onlyOne){
+			stopTimer();
 			//send the tags to be updated
 			ParseTags(data.Tags.tags, data.Tags.section);
-		onlyOne = !onlyOne;
+
+		// }
+		// onlyOne = !onlyOne;
 	}
 });
 
@@ -110,8 +118,8 @@ function ParseTags(tags, section)
 	//make sure that when there are no tags that nothing updates
 	if(!tags || !section)
 	{
-		tag_section = section;
-	    tag_titles = tags;
+		tag_section = null;
+	    tag_titles = null;
 		//clean chart
 		if(radarChart !== null)
 			radarChart.destroy();
@@ -120,6 +128,7 @@ function ParseTags(tags, section)
 
 	if(IsInstuctor)
 	{
+		console.log("Parse Tags, Setting up Chart");
 	 	//set the current chat data to be a template for data to be inputed
 	    radar_chart_data = {
 	        labels: tags.slice(),//["Yes","No","unknown"],
@@ -134,6 +143,8 @@ function ParseTags(tags, section)
 
 	    //update the tag data
 	    updateAllTagChartData(section);
+
+	    timer = setTimeout(function(){Timer();}, timerSpeed/4);
 	}
 }
 
@@ -163,24 +174,19 @@ function setupRadarData(tags, section)
 
 function updateAllTagChartData(section)
 {
-    //for each title, send a request for it's tag data
-    tag_titles.forEach(function(title, index){
-        socket.emit('get_chart_data', {
-                tag_title : title,
-                section: section,
-                index: index
-            });
-    });
+	socket.emit('get_chart_tag_data', {section: section, tags: tag_titles});
 }
 
 function updateTagChartData(chart_data)
 {
-	var data = chart_data.data;
+	Object.keys(chart_data).forEach(function(item){
+		var data = chart_data[item];
+		var index = data.index;
 
-	var tag_val = (data.understand/(data.understand+data.dont));
+		var tag_val = (data.U/(data.U+data.D));
 
-	radar_chart_data.datasets[0].data[chart_data.index] = tag_val;
-
+		radar_chart_data.datasets[0].data[index] = tag_val;
+	});
 }
 
 //updates the pie chart with the data in the "data" variable
@@ -205,13 +211,6 @@ function updateRadarChart()
         options: {
             responsive: false,//stops the animation, so the update looks better
             animation: false,
-			maintainAspectRatio: true,
-			// legend:{
-			// 	display: true,
-			// 	labels:{
-			// 		fontSize:30
-			// 	}
-			// },
             scale: {
             	ticks: {
             		maxTicksLimit: 4,
@@ -219,8 +218,6 @@ function updateRadarChart()
             		// fontSize: 20            	
             	}
             },
-            scaleOverride : true,
-            scaleFontSize: 20
         }
     });
 }
@@ -244,13 +241,18 @@ function rand(max)
     return Math.floor(Math.random() * max);
 }
 
+function stopTimer()
+{
+	clearTimeout(timer);
+}
+
 //timer for constantly updating the graph graph
 function Timer()
 {
     //a try statement so if there is a problem with the data, the timer doesn't stop
     try
     {
-    	console.log(tag_titles, tag_section);
+    	console.log('Timer:', tag_titles, tag_section);
     	if(tag_titles && tag_section){
 	        //update the char data, the display the chart
 	        updateAllTagChartData(tag_section);

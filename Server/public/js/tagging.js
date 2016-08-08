@@ -96,9 +96,10 @@ socket.on('lecture_client_setup', function(isInstuctor){
             function sendXML(source, origin)
             {
                 var slide = Reveal.getCurrentSlide();
-
+                var tags = checkNupdateTag(slide, Reveal.getIndices().h); 
+                console.log('sendXML, TAGS:', tags);
                 source.postMessage(JSON.stringify({
-                    Tags: checkNupdateTag(slide, Reveal.getIndices().h)
+                    Tags: tags//checkNupdateTag(slide, Reveal.getIndices().h)
                 }), origin); 
             }
 
@@ -246,14 +247,15 @@ socket.on('lecture_client_setup', function(isInstuctor){
         function bulidTag(xml, section)
         {
             //variable for the name of each of the tags
-            var tags = [];
+            var tags = {section: section};
+            tags.titles = [];
             //for each child in the xml make a tag out of it
             $(xml).children().each(function(){
 
                 var tagInfo = getXMLData($(this));
                 if(!tagInfo.title || !tagInfo.src)
                     return;
-                tags.push({title:tagInfo.title, section: section});
+                tags.titles.push(tagInfo.title);
 
                 //add to the sidebar a icon that has the title of the child title and the image that is the string location of the text in the child
                 $(sidebar).append(bulidSidebarIcon(tagInfo.title + "_" + section, "icon-disabled", tagInfo.src));
@@ -268,26 +270,25 @@ socket.on('lecture_client_setup', function(isInstuctor){
 
         function CheckTagStatus(tags)
         {
-            //for each tag, send the name to the server and wait for what the status is of that tag
-            tags.forEach(function(tag_title){
-                socket.emit('check_binary_tag_status', tag_title);
-            });
+            socket.emit('check_binary_tags_status', tags);
         }
 
         //get the response from the server that is the status of the tag according to what is in the database server
-        socket.on('binary_tag_status', function(tag_status){
-            //get the tag by it's name
-            var tag = $('#' + tag_status.title + '_' + tag_status.section);
-            //check what state that tag was when you last used it
-            switch(tag_status.response)
-            {
-                case 1:
-                    tag.addClass('clicked'); // it was on
-                    tag.removeClass('icon-disabled');
-                    break;
+        socket.on('binary_tags_status', function(tag_status){
 
-                //no default beacause it has the default is coded into tag_click and bulid tag
-            }
+            tag_status.tag_responses.forEach(function(tag_data){
+                //get the tag by it's name
+                var tag = $('#' + tag_data.title + '_' + tag_status.section);
+                //check what state that tag was when you last used it
+                switch(tag_data.response)
+                {
+                    case 1:
+                        tag.addClass('clicked'); // it was on
+                        tag.removeClass('icon-disabled');
+                        break;
+                    //no default beacause it has the default is coded into tag_click and bulid tag
+                }
+            });
         });
 
         //when the tag item is clicked
