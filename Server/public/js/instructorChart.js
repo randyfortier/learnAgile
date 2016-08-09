@@ -70,6 +70,8 @@ function load_Lecture(lecture)
 		IsInstuctor = isInstuctor;
 	    if(isInstuctor)
 	    {
+	    	ParseTags(tag_titles, tag_section);
+	    	
 	        socket.on('chart_update', function(chart_data){
 	            //when the chart data comes in, parse it, and save the data
 	            updateTagChartData(chart_data);
@@ -126,17 +128,22 @@ function ParseTags(tags, section)
 	        labels: tags.slice(),//["Yes","No","unknown"],
 	        datasets: [{}]
 	    };
-	    tag_section = section;
 
+	    tag_section = section;
 	    tag_titles = tags.slice();
 
 	    setupRadarData(tags, section)
-
 
 	    //update the tag data
 	    updateAllTagChartData(section);
 
 	    timer = setTimeout(function(){Timer();}, timerSpeed/4);
+	}
+	else
+	{
+		tag_section = section;
+
+	    tag_titles = tags.slice();
 	}
 }
 
@@ -244,7 +251,7 @@ function Timer()
     //a try statement so if there is a problem with the data, the timer doesn't stop
     try
     {
-    	if(tag_titles && tag_section){
+    	if(tag_titles && tag_section && IsInstuctor){
 	        //update the char data, the display the chart
 	        updateAllTagChartData(tag_section);
 	        updateRadarChart();

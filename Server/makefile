@@ -6,7 +6,7 @@ run:
 runServer:
 	node app.js > ./log/node.log &	
 
-serverShutdown:
+serverSd:
 	kill $$(pidof node)
 
 
@@ -17,7 +17,7 @@ db:
 dbAddJ:
 	mongod --dbpath ./data/db --smallfiles
 
-dbShutdown:	
+dbSd:	
 	mongod --dbpath ./data/db --shutdown
 
 
@@ -27,11 +27,14 @@ open:
 
 stop: serverShutdown dbShutdown
 
+#check status of server
 status:	
 	@echo "Server: $$(pidof node)"
 	@echo "Database: $$(pidof mongod)"
+
 
 #setup of git
 addToGit:
 	rm -r data/db/journal
 	git add ../*
+

@@ -4,12 +4,18 @@ var currentH = 0;
 var isDefault = false;
 var currentSection = "";
 var ActionFunc = null;
+var isMobile = false;
+var mobileSize = 110;
+var mobilePos = "110%"
+// var cnt = 0;
 
 var standardTags = {
     'like': {title:'Like', src:'images/like.png'},
     'hard': {title:'Hard', src:'images/hard.png'},
     'study': {title:'Study', src:'images/study.png'}
 };
+
+
 
 function setBinary_default(index, text, section)
 {
@@ -52,17 +58,17 @@ function tagAction()
     if(ActionFunc !== null)
         ActionFunc();
 }
-
+//4
 if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
-    $('.tagged').css('width', 100);
-    $('.tagged').css('height', 100);
-    screen.lockOrientation('landscape');
+    isMobile = true;   
 }
+//socket.emit('mobile_debug', "Debug " + cnt++);
 
 //send the user the lecture id
 socket.emit('lecture_server_setup', $('title').text());
 
 socket.on('lecture_client_setup', function(isInstuctor){
+
     if(isInstuctor)
     {
         if(window.parent)
@@ -168,6 +174,8 @@ socket.on('lecture_client_setup', function(isInstuctor){
         //when the slide changes, update the current the slide data
         Reveal.addEventListener( 'slidechanged', function( event ) {
             slide_load(event.currentSlide);
+            // if(isMobile)
+            //     $(event.currentSlide).append($('<div>').text("on mobile Device"));
         });
 
         //when the doucument is ready load the current slide
@@ -260,6 +268,13 @@ socket.on('lecture_client_setup', function(isInstuctor){
                 //add to the sidebar a icon that has the title of the child title and the image that is the string location of the text in the child
                 $(sidebar).append(bulidSidebarIcon(tagInfo.title + "_" + section, "icon-disabled", tagInfo.src));
             });
+            if(isMobile)
+            {
+                $('.tagged').css("height", mobileSize);
+                $('.tagged').css("width", mobileSize);
+                tagSidebar.css("left", mobilePos);
+
+            }
 
             //check the status of each of the tags, base on what the server has
             CheckTagStatus(tags);

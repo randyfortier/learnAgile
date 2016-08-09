@@ -767,6 +767,10 @@ io.on('connection', function(socket){
             socket.leave(session.lecture);
         });
     });
+
+    // socket.on('mobile_debug', function(data){
+    //     console.log(session.sid + ": " + data);
+    // });
 });
 
 // // cleanDB();
