@@ -1,0 +1,16 @@
+extends layout
+block content
+	script(src="https://cdn.socket.io/socket.io-1.4.5.js")
+	script(src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.6/Chart.js")
+
+	link(rel="stylesheet", href="css/report.css")
+	script(src="js/courseoverview.js")
+
+	div(class="container-fluid col-sm-10 col-sm-offset-1")
+		table(border="1", id="CourseTable")
+		br
+		table(border="1", id="StudentTable")
+		br
+
+	include footer.pug
+

@@ -1,13 +1,8 @@
-var socket = io();
-
 var StudentSIDtoID = {};
-
 var overallColspan = 10;
-
 var table_content = '<tr><th>Tag Name</th><th>Yes</th><th>No</th><th>No Response</th><th>Total</th><th>Overall Yes%</th><th>Overall No%</th><th>Overall Unknown%</th><th>Yes% that gave an answer</th><th>No% that gave an answer</th></tr>';
 
-socket.on('report_course_overview', function(report){
-
+$.post('/course_overview', function(report){
 	var studStats = report.studStats;
 	var lecStats = report.lecStats;
 	StudentSIDtoID = {};
@@ -21,15 +16,14 @@ socket.on('report_course_overview', function(report){
 	addToTable(studStats, 'StudentTable');
 	addToTable(lecStats, 'CourseTable');
 
-	$('.student').click(function(event){
-		invokePostCall('/courseReport', 'userid', (StudentSIDtoID[$(event.target).text()] || $(event.target).text()));
-	});
+	// $('.student').click(function(event){
+	// 	invokePostCall('/courseReport', 'userid', (StudentSIDtoID[$(event.target).text()] || $(event.target).text()));
+	// });
 
-	$('.lecture').click(function(event){
-		invokePostCall('/lectureOverview', 'lecture', $(event.target).text());
-	});
+	// $('.lecture').click(function(event){
+	// 	invokePostCall('/lectureOverview', 'lecture', $(event.target).text());
+	// });
 	addTableColour();
-
 });
 
 function addTableColour()
@@ -72,7 +66,7 @@ function addToTable(stats, tableid)
 		var opt = {};
 		if(tableid === 'StudentTable'){
 			opt = {type:1, classname:'student', index:index};
-			socket.emit('userid_to_sid', {studentid: type, index: index});
+			// socket.emit('userid_to_sid', {studentid: type, index: index});
 		}
 		else
 			opt = {type:2, classname: 'lecture'};
@@ -110,14 +104,3 @@ function makeTableInsert(tag, item)
 {
 	return '<tr class="removable"><td>'+ tag+'</td><td>'+ item.U+'</td><td>'+ item.D+'</td><td>'+ item.UNK+'</td><td>'+ item.length+'</td><td>'+ percentFormat(item.U, item.length)+'</td><td>'+ percentFormat(item.D, item.length)+'</td><td>'+ percentFormat(item.UNK, item.length)+'</td><td>'+ percentFormat(item.U, item.U+item.D)+'</td><td>'+ percentFormat(item.D, item.U+item.D)+'</td></tr>';	
 }
-
-$(document).ready(function(){
-	socket.emit('course_overview_report');	
-});
-
-socket.on('return_userid_to_sid', function(sidResult){
-
-	var sid = sidResult.sid;
-	StudentSIDtoID[sid] = sidResult.studentid;
-	$('#class_'+sidResult.index).text(sid);
-});

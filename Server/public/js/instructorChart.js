@@ -88,8 +88,8 @@ function load_Lecture(lecture)
 
 
 //2 post messages are send, which are identical, to the addEventListener.
-//use onlyOnce, to stop the second message not be used.
-var onlyOne = true;
+// //use onlyOnce, to stop the second message not be used.
+// var onlyOne = true;
 
 //listen for a message that contains the xml tags,
 window.addEventListener('message',function(event){
@@ -97,15 +97,9 @@ window.addEventListener('message',function(event){
 	var data = JSON.parse( event.data );
 	//if the Tags field exists
 	if(data.Tags){
-		console.log('Event listener, Data:', data);
-		//have the first message only be caught
-		// if(onlyOne){
-			stopTimer();
-			//send the tags to be updated
-			ParseTags(data.Tags.tags, data.Tags.section);
-
-		// }
-		// onlyOne = !onlyOne;
+		stopTimer();
+		//send the tags to be updated
+		ParseTags(data.Tags.tags, data.Tags.section);
 	}
 });
 
@@ -114,7 +108,6 @@ window.addEventListener('message',function(event){
 //update the chart info with the tags that where received by the post message
 function ParseTags(tags, section)
 {
-	console.log("ParseTags", tags, section);
 	//make sure that when there are no tags that nothing updates
 	if(!tags || !section)
 	{
@@ -128,7 +121,6 @@ function ParseTags(tags, section)
 
 	if(IsInstuctor)
 	{
-		console.log("Parse Tags, Setting up Chart");
 	 	//set the current chat data to be a template for data to be inputed
 	    radar_chart_data = {
 	        labels: tags.slice(),//["Yes","No","unknown"],
@@ -252,7 +244,6 @@ function Timer()
     //a try statement so if there is a problem with the data, the timer doesn't stop
     try
     {
-    	console.log('Timer:', tag_titles, tag_section);
     	if(tag_titles && tag_section){
 	        //update the char data, the display the chart
 	        updateAllTagChartData(tag_section);
@@ -267,4 +258,3 @@ function Timer()
     //start the timer over, waiting a set amount of time
     timer = setTimeout(function(){Timer();}, timerSpeed);
 }
-

@@ -1,0 +1,90 @@
+doctype
+html
+	head
+		title= title
+		
+		meta(charset="utf-8")
+		meta(name="viewport", content="width=device-width, initial-scale=1, shrink-to-fit=no")
+		meta(http-equiv="x-ua-compatible" content="ie=edge")
+
+		link(href="images/uoit_logo_icon_32.ico", rel="icon", type="image/x-icon")
+		link(href="images/uoit_logo_icon_32.ico", rel="shortcut icon", type="image/x-icon")
+		link(rel="icon", type="image/png", href="images/logo_icon.jpg", alt="icon")
+
+		link(href='https://fonts.googleapis.com/css?family=Caveat', rel='stylesheet', type='text/css')
+		link(href='https://fonts.googleapis.com/css?family=Montserrat', rel='stylesheet', type='text/css')
+
+		link(rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css", integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7", crossorigin="anonymous")
+		link(rel="stylesheet", href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css", integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r", crossorigin="anonymous")
+
+		link(rel="stylesheet", href="styles/primary.css", type="text/css")
+		script(src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js")
+
+	body
+
+		nav(class="navbar navbar-inverse navbar-default navbar-fixed-top")
+			div(class="container")
+				div(class="navbar-header")
+					button(type="button",
+					       class="navbar-toggle collapsed",
+					       data-toggle="collapse",
+					       data-target="#bs-example-navbar-collapse-1",
+					       aria-expanded="false")
+						span(class="sr-only") Toggle navigation
+						span(class="icon-bar")
+						span(class="icon-bar")
+						span(class="icon-bar")
+					a(class="navbar-brand",
+					  href="#")
+						span(class="logoText") CSCI 1040u
+
+				div(class="collapse navbar-collapse",
+					id="bs-example-navbar-collapse-1")
+					ul(class="nav navbar-nav")
+						li
+							a(href="/") Home
+						li(class="dropdown")
+							a(href="#", class="dropdown-toggle", data-toggle="dropdown", role="button", aria-haspopup="true", aria-expanded="false") Course Materials
+								span(class="caret")
+							ul(class="dropdown-menu")
+								li
+									a(href="lecture_notes") Lecture Notes
+								li
+									a(href="labs.html") Labs
+								li
+									a(href="assignments.html") Assignments
+						if (loggedin === true)
+							li(class="dropdown")
+								a(href="#", class="dropdown-toggle", data-toggle="dropdown", role="button", aria-haspopup="true", aria-expanded="false") Reports
+									span(class="caret")
+
+								ul(class="dropdown-menu")
+									if (isInstructor == true)
+										li 
+											a(href="/course_overview") Course Summary
+										li
+											a(href="/course_report_list") Course Report
+										li
+											a(href="/lecture_overview_list") Lecture Summary
+									else
+										li
+											a(href="/course_report") Course Report
+									
+							li
+								a(href="/logout") Logout	
+						else	
+							li
+								a(href="/login") Login
+							li
+								a(href="/register") Register
+
+						
+		div(class="jumbotron")
+			div(class="container-fluid")
+				div(class="col-sm-10 col-sm-offset-1")
+					h1
+						span(class="logoText") CSCI 1040u
+					p
+						span(class="logoText") Introduction to Computer Science
+
+		block content
