@@ -6,6 +6,9 @@ td, th {
 	text-align: center;
 }
 
+.underline {
+	text-decoration: underline;
+}
 
 /*#CourseTable
 {

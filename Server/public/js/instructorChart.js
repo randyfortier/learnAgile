@@ -71,7 +71,7 @@ function load_Lecture(lecture)
 	    if(isInstuctor)
 	    {
 	    	ParseTags(tag_titles, tag_section);
-	    	
+
 	        socket.on('chart_update', function(chart_data){
 	            //when the chart data comes in, parse it, and save the data
 	            updateTagChartData(chart_data);
@@ -216,7 +216,7 @@ function updateRadarChart()
             		stepSize: 0.25
             		// fontSize: 20            	
             	}
-            },
+            }
         }
     });
 }

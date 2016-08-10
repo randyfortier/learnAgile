@@ -7,24 +7,64 @@ $.post('/course_overview', function(report){
 	var lecStats = report.lecStats;
 	StudentSIDtoID = {};
 
-	$('#StudentTable').append(makeHeadTableInsert('Student Table','title', overallColspan));
-	$('#CourseTable').append(makeHeadTableInsert('Course Table', 'title', overallColspan));
-	
 	$('#StudentTable, #CourseTable').append(table_content);
 	
-
 	addToTable(studStats, 'StudentTable');
 	addToTable(lecStats, 'CourseTable');
 
-	// $('.student').click(function(event){
-	// 	invokePostCall('/courseReport', 'userid', (StudentSIDtoID[$(event.target).text()] || $(event.target).text()));
-	// });
+	addChart('student_chart', studStats, 'Hard');
 
-	// $('.lecture').click(function(event){
-	// 	invokePostCall('/lectureOverview', 'lecture', $(event.target).text());
-	// });
 	addTableColour();
 });
+
+
+function addChart(canvas, stats, tag_name)
+{
+	var data = {};
+	data.labels = [];
+	data.datasets = [{}];
+	data.datasets[0].label = "Understanding";
+	data.datasets[0].borderWidth = 1;
+	data.datasets[0].borderColor = [];
+	data.datasets[0].backgroundColor = [];
+	data.datasets[0].data = [];
+
+	Object.keys(stats).forEach(function(section){//each section
+		var secVar = stats[section];
+
+		data.labels.push(section);
+
+		var tag = secVar[tag_name];
+		var color = randRGB();
+		data.datasets[0].borderColor.push(RGBA(color, 1));
+		data.datasets[0].backgroundColor.push(RGBA(color, 0.2));
+		data.datasets[0].data.push(chartFormat(tag.U, tag.U+tag.D));
+	});
+
+	var myBarChart = new Chart($('#' + canvas), {
+		type: 'bar',
+		data: data,
+		options: {
+			responsive: false,
+			animation: false,
+			scales: {
+				yAxes:[{
+					ticks: {
+						min : 0,
+						max : 100,
+						maxTicksLimit: 4,
+						stepSize: 25
+					}
+				}]
+			}
+		}
+	});
+}			
+
+function chartFormat(score, length)
+{
+	return ((length === 0) ? '0' :(score/length) * 100);
+}
 
 function addTableColour()
 {
@@ -50,13 +90,6 @@ function addTableColour()
 				$(this).addClass('need_help');
 		}
 	});
-}
-
-function invokePostCall(action, postName, value)
-{
-	var form = $('<form style="display: none" action="'+action+'", method="post"><input id="postVar" name="'+postName+'"/><button id="go"></button></form>');
-	form.find('#postVar').val(value);
-	form.find('#go').trigger("click");
 }
 
 function addToTable(stats, tableid)
@@ -103,4 +136,19 @@ function makeNameTableInsert(title, opt, colspan)
 function makeTableInsert(tag, item)
 {
 	return '<tr class="removable"><td>'+ tag+'</td><td>'+ item.U+'</td><td>'+ item.D+'</td><td>'+ item.UNK+'</td><td>'+ item.length+'</td><td>'+ percentFormat(item.U, item.length)+'</td><td>'+ percentFormat(item.D, item.length)+'</td><td>'+ percentFormat(item.UNK, item.length)+'</td><td>'+ percentFormat(item.U, item.U+item.D)+'</td><td>'+ percentFormat(item.D, item.U+item.D)+'</td></tr>';	
+}
+
+function RGBA(rgb, a)
+{
+    return 'rgba('+rgb.r+','+rgb.g+','+rgb.b+','+a+')';
+}
+
+function randRGB()
+{
+    return {r:rand(255), g:rand(255), b:rand(255)};
+}
+
+function rand(max)
+{
+    return Math.floor(Math.random() * max);
 }

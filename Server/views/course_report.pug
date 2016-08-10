@@ -4,7 +4,8 @@ block content
 	script.
 			var lec = !{JSON.stringify(student)};
 			var allLec = !{JSON.stringify(avgstudents)};
-			var table_content = '<tr><th>Tag Name</th><th>Overall Yes% (Student/Average)</th><th>Overall No% (Student / Average)</th><th>Overall Unknown% (Student / Average)</th><th>Yes% that gave an answer (Student / Average)</th><th>No% that gave an answer (Student / Average)</th></tr>';
+			var table_content = '<tr><th>Tag Name</th><th>Overall Yes%</th><th>Overall No%</th><th>Overall Unknown%</th><th>Yes% that gave an answer</th><th>No% that gave an answer</th></tr>';
+
 
 			
 			var overallColspan = 6;
@@ -16,8 +17,67 @@ block content
 				addToTable('lecture_table', lec);
 				addToTable('avg_table', allLec);
 				
+				addChart('lecture_chart', lec, 'Hard');
+				addChart('avg_chart', allLec, 'Hard');
+
 				addTableColour();
 			});
+			
+			function addChart(canvas, stats, tag_name)
+			{
+				var data = {};
+				data.labels = [];
+				data.datasets = [{}];
+				data.datasets[0].label = "Understanding";
+				data.datasets[0].borderWidth = 1;
+				data.datasets[0].borderColor = [];
+				data.datasets[0].backgroundColor = [];
+				data.datasets[0].data = [];
+
+				var cnt = 0;
+				var avg = 0;
+				Object.keys(stats).forEach(function(lecture){//each section
+					var lecVar = stats[lecture];
+
+					data.labels.push(lecture);
+
+					Object.keys(lecVar).forEach(function(section){//each section
+						var secVar = lecVar[section];
+						var tag = secVar[tag_name];
+						avg += chartFormat(tag.U, tag.U+tag.D);
+						cnt++;
+					});
+
+					var color = randRGB();
+					data.datasets[0].borderColor.push(RGBA(color, 1));
+					data.datasets[0].backgroundColor.push(RGBA(color, 0.2));
+					data.datasets[0].data.push(avg/cnt);
+				});
+
+				var myBarChart = new Chart($('#' + canvas), {
+					type: 'bar',
+					data: data,
+					options: {
+						responsive: false,
+						animation: false,
+						scales: {
+							yAxes:[{
+								ticks: {
+									min : 0,
+									max : 100,
+									maxTicksLimit: 4,
+									stepSize: 25
+								}
+							}]
+						}
+					}
+				});
+			}			
+
+			function chartFormat(score, length)
+			{
+				return ((length === 0) ? '0' :(score/length) * 100);
+			}
 
 			function createScoreData(item)
 			{
@@ -101,10 +161,35 @@ block content
 				});
 			}
 
+			function RGBA(rgb, a)
+			{
+			    return 'rgba('+rgb.r+','+rgb.g+','+rgb.b+','+a+')';
+			}
+
+			function randRGB()
+			{
+			    return {r:rand(255), g:rand(255), b:rand(255)};
+			}
+
+			function rand(max)
+			{
+			    return Math.floor(Math.random() * max);
+			}
+
+
 	div(class="container-fluid col-sm-10 col-sm-offset-1")
+		h2 Course Report
+		if (isInstructor)
+			h3 Student: #{studentid}
+
+		h4(class="underline") Progress from each Lecture
 		table(id="lecture_table", border="1")
-		p Average over all Students
+		canvas(id="lecture_chart", height="300")
+
+
+		h4(class="underline") Average Over Students
 		table(id="avg_table", border="1")
+		canvas(id="avg_chart")
 
 	include footer.pug
 

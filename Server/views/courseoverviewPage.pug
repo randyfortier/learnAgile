@@ -7,10 +7,14 @@ block content
 	script(src="js/courseoverview.js")
 
 	div(class="container-fluid col-sm-10 col-sm-offset-1")
+		h1 Course Overview
+
+		h3(class='underline') Lecture Table
 		table(border="1", id="CourseTable")
-		br
+		
+		h3(class='underline') Student Table & Chart
 		table(border="1", id="StudentTable")
-		br
+		canvas(id="student_chart")
 
 	include footer.pug
 

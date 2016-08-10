@@ -367,7 +367,7 @@ function course_report(session, response, studentid, sid)
         });
         
         //render the lectures page, send the list of lectures
-        renderPage(session, response, 'course_report', (sid)?"Course Report - " + sid:"Course Report" ,  {student: lectStats, avgstudents: allStats});
+        renderPage(session, response, 'course_report', (sid)?"Course Report - " + sid:"Course Report" , {studentid: sid, student: lectStats, avgstudents: allStats});
     });
 }
 
@@ -399,12 +399,6 @@ app.get('/lecture_overview', function(request, response){
                     renderPage(request.session, response, 'lecture_overview', 'Lecture Overview - ' + lecture,  {sections: secStats, students: studStats , lecture: lecture});
                 }
             });
-
-            //render the lectures page, send the list of lectures
-            // renderPage(request.session, response, 'lecture_overview', 'Lecture Overview - ' + lecture,  {sections: secStats, students: studStats , lecture: lecture});
-            // response.send(JSON.stringify({sections: secStats, students: studStats , lecture: lecture}));
-            // response.render('selectStudent', {sections: secStats, students: studStats , lecture: lecture});
-            // response.render("selectlecture", {lectures: lectStats, alldata: allStats});
         });
 
     }
@@ -432,31 +426,37 @@ app.get('/lecture_overview_list', function(request, response){
 
 
 //to be converted to newer version
-app.post('/lectureReport', function(request, response){
+app.get('/lectureReport', function(request, response){
     //get the lectrue from the request
-    var lecture = request.body.lecture;
-    var student;
-    if(request.session.isInstructor)
-        student = request.body.student;
-    else
-        student = request.session.userid;
-    //search for all response's for the user
-    student_binary_ResponseDB.find({lecture:lecture})
-    .then(function(results){
-        var allStats = {};
-        var studStats = {};
+    var lecture = 'AJAX, JSON, and XML - CSCI 3230u';
+    var student = 'matt';
 
-        //create a object where there exisits the name of each lecture slide
-        results.forEach(function(item){
-            lectureOverviewReport(allStats, item.section, item);
-            if(item.studentid === student)
-                lectureOverviewReport(studStats, item.section, item);
-        });
+    // if(request.session.isInstructor)
+    //     student = request.body.student;
+    // else
+    //     student = request.session.userid;
+    
+    UserDB.find({sid: student}).limit(1).select({userid:1}).then(function(results){
+        if(results.length > 0)
+        {
+            var uid = results[0].userid;
+            //search for all response's for the user
+            student_binary_ResponseDB.find({lecture:lecture})
+            .then(function(results){
+                var allStats = {};
+                var studStats = {};
 
-        UserDB.find({userid: student}).then(function(results){
-            //render the report page sending the lectrue to it
-            response.render('LectureReport', {stud_lec: {lecture: lecture, student: results[0].sid}, student_stats: studStats, all_stats: allStats, isInstructor: request.session.isInstructor});
-        });
+                //create a object where there exisits the name of each lecture slide
+                results.forEach(function(item){
+                    lectureOverviewReport(allStats, item.section, item);
+                    if(item.studentid === uid)
+                        lectureOverviewReport(studStats, item.section, item);
+                });
+        
+                //render the report page sending the lectrue to it
+                response.render('LectureReport', {stud_lec: {lecture: lecture, student: student}, student_stats: studStats, all_stats: allStats, isInstructor: request.session.isInstructor});    
+            });
+        }
     });
 
 });
@@ -698,14 +698,7 @@ io.on('connection', function(socket){
                     }
                     else//if there isn't already an item, add the item to the database
                     {
-                        //add a new result
-                        var newStudentTag = new student_binary_ResponseDB(newResponse);
-                        newStudentTag.save(function(error){
-                            if(error)
-                            {
-                                console.log("Error in adding " + session.userid + "'s account, response was " + response + ", lecture was " + lecture + ", slide number was " + slide_index);
-                            }
-                        });
+                        saveNewResponse(newResponse);
                     }
                 });
             });
@@ -722,19 +715,16 @@ io.on('connection', function(socket){
                 };
 
                 //check if ther exsits a response for a tag from the specific user
-                student_binary_ResponseDB.find(searchQuery).select({response: 1, tag_title: 1}).then(function(results){
+                student_binary_ResponseDB.find(searchQuery).select({response: 1, tag_title: 1}).exec(function(err, results){
                     if(results.length > 0)
                     {
                         var dbtags = {};
                         results.forEach(function(tag){
-
                             dbtags[tag.tag_title] = tag.response;
-
                         });
 
                         var tag_responses = [];
                         titles.forEach(function(tag){
-
                             if(dbtags.hasOwnProperty(tag))
                             {
                                 tag_responses.push({title: tag, response: dbtags[tag]});
@@ -746,19 +736,38 @@ io.on('connection', function(socket){
                                 searchQuery.tag_title = tag;
                                 searchQuery.response = -1;
 
-                                var newStudentTag = new student_binary_ResponseDB(searchQuery);
-                                newStudentTag.save(function(error){
-                                    if(error){ // if there was an error then return what print out the user, the lecture and the title of the tag
-                                        console.log("Error adding Default response for user: " + session.userid + ", lecture: " + lecture + ", title: " + title);
-                                    }
-                                });           
+                                saveNewResponse(searchQuery);
                             }
                         });
 
                         socket.emit('binary_tags_status', {tag_responses: tag_responses, section: titles_section.section});
                     }
+                    else
+                    {
+                        var tag_responses = [];
+                        titles.forEach(function(tag){
+                        
+                            //create the new record and save the record
+                            tag_responses.push({title: tag, response: -1});
+                            searchQuery.tag_title = tag;
+                            searchQuery.response = -1;
+                            
+                            saveNewResponse(searchQuery);
+                       });
+
+                        socket.emit('binary_tags_status', {tag_responses: tag_responses, section: titles_section.section});
+                    }   
                 });        
             });
+
+            function saveNewResponse(value)
+            {
+                new student_binary_ResponseDB(value).save(function(error){
+                    if(error){ // if there was an error then return what print out the user, the lecture and the title of the tag
+                        console.log("Error adding Default response for user: " + session.userid + ", lecture: " + lecture + ", title: " + title);
+                    }
+                });
+            }
         }
 
         //when disconnecting for the server, check if the user can be removed
@@ -774,10 +783,10 @@ io.on('connection', function(socket){
 });
 
 // // cleanDB();
-// student_binary_ResponseDB.find({ tag_title: 'Heart' }).remove().exec(function(){
+// student_binary_ResponseDB.find({response: -1}).remove().exec(function(){
 //     console.log("done");
 // });
-// student_binary_ResponseDB.find(/*{studentid: studentid}*/)
+// student_binary_ResponseDB.find({response: -1})
 //     .then(function(results){
 //         console.log(results);
 //     });

@@ -9,7 +9,6 @@ block content
 		var overallColspan = 6;
 		
 		$(document).ready(function(){
-
 			var secTable = 'section_table';
 			var studTable = 'student_table';
 			$('#' + secTable+ ', #' + studTable).append(table_content);
@@ -17,11 +16,59 @@ block content
 			addToTable(secTable, sect);
 			addToTable(studTable, stud, true);
 			
-			//$('.student').click(function(event){
-			//	invokePostCall('/lectureReport', 'student', StudentSIDtoID[$(event.target).text()], 'lecture', current_lecture);
-			//});
+			addChart('section_chart', sect, 'Hard');
+			addChart('student_chart', stud, 'Hard');
+
 			addTableColour();
 		});
+
+		function addChart(canvas, stats, tag_name)
+		{
+			var data = {};
+			data.labels = [];
+			data.datasets = [{}];
+			data.datasets[0].label = "Understanding";
+			data.datasets[0].borderWidth = 1;
+			data.datasets[0].borderColor = [];
+			data.datasets[0].backgroundColor = [];
+			data.datasets[0].data = [];
+
+			Object.keys(stats).forEach(function(section){//each section
+				var secVar = stats[section];
+
+				data.labels.push(section);
+
+				var tag = secVar[tag_name];
+				var color = randRGB();
+				data.datasets[0].borderColor.push(RGBA(color, 1));
+				data.datasets[0].backgroundColor.push(RGBA(color, 0.2));
+				data.datasets[0].data.push(chartFormat(tag.U, tag.U+tag.D));
+			});
+
+			var myBarChart = new Chart($('#' + canvas), {
+				type: 'bar',
+				data: data,
+				options: {
+					responsive: false,
+					animation: false,
+					scales: {
+						yAxes:[{
+							ticks: {
+								min : 0,
+								max : 100,
+								maxTicksLimit: 4,
+								stepSize: 25
+							}
+						}]
+					}
+				}
+			});
+		}			
+
+		function chartFormat(score, length)
+		{
+			return ((length === 0) ? '0' :(score/length) * 100);
+		}
 
 		function createScoreData(item)
 		{
@@ -74,9 +121,9 @@ block content
 		}
 
 		function percentFormat(score, length)
-			{
-				return ((length === 0) ? '0.00' :((score/length) * 100).toFixed(2)) + "%";
-			}
+		{
+			return ((length === 0) ? '0.00' :((score/length) * 100).toFixed(2)) + "%";
+		}
 
 		function addTableColour()
 		{
@@ -104,10 +151,32 @@ block content
 			});
 		}
 
+		function RGBA(rgb, a)
+		{
+		    return 'rgba('+rgb.r+','+rgb.g+','+rgb.b+','+a+')';
+		}
+
+		function randRGB()
+		{
+		    return {r:rand(255), g:rand(255), b:rand(255)};
+		}
+
+		function rand(max)
+		{
+		    return Math.floor(Math.random() * max);
+		}
+
 	div(class="container-fluid col-sm-10 col-sm-offset-1")
+		h2 Lecture Overview
+		h3 Lecture:  #{lecture}
+
+		h4(class="underline") Section Table & Chart
 		table(id="section_table", border="1")
+		canvas(id="section_chart")
 		
+		h4(class="underline") Student Table & Chart
 		table(id="student_table", border="1")
+		canvas(id="student_chart")
 
 
 	include footer.pug
