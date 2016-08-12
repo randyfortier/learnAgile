@@ -1,0 +1,13 @@
+extends layout
+block content
+	div(class="container-fluid col-sm-10 col-sm-offset-1")
+		h2 Lecture List
+		ul
+			each lecture in lectures
+				li
+					a(href='/lecture_summary?lecture=' + lecture + '') #{lecture}
+
+
+
+	include footer.pug
+

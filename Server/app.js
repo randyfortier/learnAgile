@@ -15,6 +15,20 @@ var io = require('socket.io')(http);
 var mongoose = require('mongoose');
 var bcrypt = require('bcrypt-nodejs');
 
+//has the Instructor set to a random value, use uuid to make the guess of the string harder
+//the change is so if the user found a way to change the isInstructor session variable to
+//a value that woule register as true in the followin statement, then they would be able to easly
+//be able to break in
+// if(request.session.isInstructor) // easly breakable if access to session data
+//the following is a bit harder, they would have to have access to the server variable data
+var instructorKey = uuid.v4();
+function isAnInstructor(session)
+{
+    if(session.isInstructor === instructorKey)
+        return true;
+    return false;
+}
+
 //setup server for saving the response data
 mongoose.connect('localhost:27018/tagging');
 var Schema = mongoose.Schema;
@@ -142,7 +156,7 @@ app.get('/registerInstructorForm', function(request, response){
 app.get('/', function(request, response){
     // //load the login page
     if(request.session.userid)
-        response.redirect('/loggedin'); // response.render('loggedin', {username: request.session.sid, isInstructor: request.session.isInstructor}); 
+        response.redirect('/loggedin');
     else
         response.redirect('/login');// response.render('login');
 });
@@ -167,7 +181,7 @@ function renderPage(session, response, page, title, params)
     //if params is empty then make it an empty object,
     var addParams = params || {};
     //set up the default parameters for the render function
-    var pageParams = {title:title, loggedin: (session.userid)?true:false, isInstructor: session.isInstructor};
+    var pageParams = {title:title, loggedin: (session.userid)?true:false, isInstructor: isAnInstructor(session)};
 
     //for each object in the params object add that object to the parameters of the render function
     Object.keys(addParams).forEach(function(item){
@@ -231,7 +245,10 @@ function register(session, sid, password, onSuccess, onFail, isInstructor)
 
                     //set user the session variables and call onSuccess()
                     session.userid = userid;
-                    session.isInstructor = userdata.isInstructor;
+                    if(userdata.isInstructor === true)
+                        session.isInstructor = instructorKey;
+                    else
+                        session.isInstructor = userdata.isInstructor;
                     session.sid = sid;
                     onSuccess();
                 }
@@ -250,7 +267,10 @@ function login(session, sid, password, onSuccess, onFail)
             console.log('Successfully Logged in User, ' + sid);
             //successful login, contiune with the login
             session.userid = results[0].userid;
-            session.isInstructor = results[0].isInstructor;
+            if(results[0].isInstructor === true)
+                session.isInstructor = instructorKey;
+            else
+                session.isInstructor = results[0].isInstructor;
             session.sid = results[0].sid;
             onSuccess();
         }
@@ -273,18 +293,18 @@ function registerInstructor(session, sid, password, onSuccess, onFail)
 
 //Report Functionality
 
-app.get('/course_overview', function(request, response){
+app.get('/course_summary', function(request, response){
     //render the Course Overview page
-    if(request.session.isInstructor)
-        renderPage(request.session, response, 'courseoverviewPage', 'Course Overview - CSCI 1040u');
+    if(isAnInstructor(request.session))
+        renderPage(request.session, response, 'coursesummaryPage', 'Course Summary - CSCI 1040u');
     else
         //if not a instructor then send them to the main page
         response.redirect('/');
 });
 
-app.post('/course_overview', function(request, response){
+app.post('/course_summary', function(request, response){
     //if the user isn't an instructor the don't allow them to see a page
-    if(request.session.isInstructor)
+    if(isAnInstructor(request.session))
     {
         // retrive all the data in the database
         student_binary_ResponseDB.find({}).then(function(results){
@@ -315,14 +335,14 @@ app.post('/course_overview', function(request, response){
                 });
             }
         });
-        console.log('course_overview_report');
+        console.log('course_summary_report');
     }
 });
 
 app.get('/course_report', function(request, response){
     //easy access to the session variable
     var session = request.session;
-    if(session.isInstructor){
+    if(isAnInstructor(session)){
         //if instructor the retrive the sid for the query data.
         var sid = request.query.sid;
 
@@ -349,7 +369,7 @@ app.get('/course_report', function(request, response){
 app.get('/course_report_list', function(request, response){
     console.log('course_report_list');
     //run only if the instructor request the page
-    if(request.session.isInstructor){
+    if(isAnInstructor(request.session)){
         //get all user that are students, retrive only the id's
         UserDB.find({isInstructor: false}).select({sid:1}).then(function(results){
             if(results.length > 0)
@@ -401,12 +421,12 @@ function course_report(session, response, studentid, sid)
     });
 }
 
-app.get('/lecture_overview', function(request, response){
+app.get('/lecture_summary', function(request, response){
     //easy access to the session data
     var session = request.session;
 
     //run only if the user is the instructor
-    if(session.isInstructor){
+    if(isAnInstructor(session)){
         //get the lecture that is wanted to be looked at
         var lecture = request.query.lecture;
 
@@ -439,7 +459,7 @@ app.get('/lecture_overview', function(request, response){
                     });
                     
                     //render the results
-                    renderPage(request.session, response, 'lecture_overview', 'Lecture Overview - ' + lecture,  {sections: secStats, students: studStats , lecture: lecture});
+                    renderPage(request.session, response, 'lecture_summary', 'Lecture Summary - ' + lecture,  {sections: secStats, students: studStats , lecture: lecture});
                 }
             });
         });
@@ -449,10 +469,10 @@ app.get('/lecture_overview', function(request, response){
         response.redirect('/');
 });
 
-app.get('/lecture_overview_list', function(request, response){
-    console.log('lecture_overview_list');
+app.get('/lecture_summary_list', function(request, response){
+    console.log('lecture_summary_list');
     //run only if the user is an instructor
-    if(request.session.isInstructor){
+    if(isAnInstructor(request.session)){
         student_binary_ResponseDB.find().select({lecture: 1}).then(function(results){
             var templectures = {};
             var lectures = [];
@@ -465,7 +485,7 @@ app.get('/lecture_overview_list', function(request, response){
                 lectures.push(item);
             });
 
-            renderPage(request.session, response, 'lecture_overview_list', 'Lecture Overview - List of Lectures',  {lectures: lectures});
+            renderPage(request.session, response, 'lecture_summary_list', 'Lecture Summary - List of Lectures',  {lectures: lectures});
         });
     }
     else
@@ -480,7 +500,7 @@ app.get('/lectureReport', function(request, response){
     var lecture = 'AJAX, JSON, and XML - CSCI 3230u';
     var student = 'matt';
 
-    // if(request.session.isInstructor)
+    // if(isAnInstructor(request.session))
     //     student = request.body.student;
     // else
     //     student = request.session.userid;
@@ -503,7 +523,7 @@ app.get('/lectureReport', function(request, response){
                 });
         
                 //render the report page sending the lectrue to it
-                response.render('LectureReport', {stud_lec: {lecture: lecture, student: student}, student_stats: studStats, all_stats: allStats, isInstructor: request.session.isInstructor});    
+                response.render('LectureReport', {stud_lec: {lecture: lecture, student: student}, student_stats: studStats, all_stats: allStats, isInstructor: isAnInstructor(request.session)});    
             });
         }
     });
@@ -662,14 +682,14 @@ io.on('connection', function(socket){
         socket.join(lecture);/*can have a function call back for any error*/
       
         //setup the functionality of the lecture 
-        socket.emit('lecture_client_setup', session.isInstructor);
+        socket.emit('lecture_client_setup', isAnInstructor(session));
 
         //use this so the functionality of the instructor is only accessable to the instructor
         /*NOTE: used isInstructor because if it was the oppsite the else statement would be for
         * the instructor and if there was no isStudent in the session data it would treat the user
         * an instructor.
         */
-        if(session.isInstructor)
+        if(isAnInstructor(session))
         {
             //hold the functionality of the instructor head
             //if the instructor move there slide, the send a siginal to the student to have
