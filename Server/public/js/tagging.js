@@ -11,7 +11,7 @@ var mobilePos = "110%"
 
 var standardTags = {
     'like': {title:'Like', src:'images/like.png'},
-    'hard': {title:'Hard', src:'images/hard.png'},
+    'difficult': {title:'Difficult', src:'images/hard.png'},
     'study': {title:'Study', src:'images/study.png'}
 };
 

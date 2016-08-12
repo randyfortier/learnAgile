@@ -36,6 +36,8 @@ Example :
 
 How to create your own tags.
 
+
+
 To create a new binary tag you will need:
 	- Tag name
 	- Tag title

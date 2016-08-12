@@ -12,7 +12,7 @@ $.post('/course_overview', function(report){
 	addToTable(studStats, 'StudentTable');
 	addToTable(lecStats, 'CourseTable');
 
-	addChart('student_chart', studStats, 'Hard');
+	addChart('student_chart', studStats, 'Difficult');
 
 	addTableColour();
 });

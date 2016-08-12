@@ -1,10 +1,13 @@
 extends layout
-block content
+
+block inhead
 	script(src="https://cdn.socket.io/socket.io-1.4.5.js")
 	script(src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.6/Chart.js")
 
 	link(rel="stylesheet", href="css/report.css")
 	script(src="js/courseoverview.js")
+
+block content
 
 	div(class="container-fluid col-sm-10 col-sm-offset-1")
 		h1 Course Overview
