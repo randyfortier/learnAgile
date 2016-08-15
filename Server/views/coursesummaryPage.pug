@@ -1,25 +1,25 @@
 extends layout
 
 block inhead
-	script(src="https://cdn.socket.io/socket.io-1.4.5.js")
-	script(src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.6/Chart.js")
+	if !error
+		script(src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.6/Chart.js")
 
-	link(rel="stylesheet", href="css/report.css")
-	script(src='js/table_func.js')
-	script(src="js/courseoverview.js")
-
+		link(rel="stylesheet", href="css/report.css")
+		script(src='js/table_func.js')
+		script(src="js/courseoverview.js")
 block content
 
-	div(class="container-fluid col-sm-10 col-sm-offset-1")
-		h1 Course Overview
+	if error
+		h3(class="text-center") Unable to generate Course Summary
+		h4(class="text-center", style="color:red")=error
+	else
+		div(class="container-fluid col-sm-10 col-sm-offset-1")
+			h1 Course Overview
 
-		h3(class='underline') Lecture Table
-		table(id="CourseTable", class="table table-striped table-bordered table-condensed")
-		
-		h3(class='underline') Student Table & Chart
-		table(id="StudentTable", class="table table-striped table-bordered table-condensed")
-		canvas(id="student_chart", style="display:inline")
-		canvas(id="student_chart_2", style="display:inline")
-
-	include footer.pug
-
+			h3(class='underline') Lecture Table
+			table(id="CourseTable", class="table table-striped table-bordered table-condensed")
+			
+			h3(class='underline') Student Table & Chart
+			table(id="StudentTable", class="table table-striped table-bordered table-condensed")
+			canvas(id="student_chart", style="display:inline")
+			canvas(id="student_chart_2", style="display:inline")

@@ -91,8 +91,8 @@ app.post('/login', function(request, response){
     //check if they can login and send the to the loggedin screen
     login(request.session, sid, password, function(){
         response.redirect('/loggedin');
-    }, function(){
-        response.redirect('/'); 
+    }, function(error){
+        renderPage(request.session, response, 'loginPage', 'Login - CSCI 1040u', {error: error});
     });
 });
 
@@ -114,7 +114,7 @@ app.post('/register', function(request, response){
     //if the password and sid are empty the redirect to the regster page
     if(sid === "" || password === "")
     {
-        response.redirect('/register');
+        renderPage(request.session, response, 'registerPage', 'Register - CSCI 1040u', {error: "Please Fill the Student ID and Password"});
         return;
     }
 
@@ -123,8 +123,8 @@ app.post('/register', function(request, response){
     //register the sid and password and redirect to login on success
     register(request.session, sid, password, function(){
         response.redirect('/loggedin'); 
-    }, function(){
-        response.redirect('/register');
+    }, function(error){
+        renderPage(request.session, response, 'registerPage', 'Register - CSCI 1040u', {error: error});
     });
 });
 
@@ -204,15 +204,20 @@ var userSchema = new Schema({
 }, {collection: 'users'});
 var UserDB = mongoose.model('user', userSchema);
 
-
 function register(session, sid, password, onSuccess, onFail, isInstructor)
 {
     console.log('registering User');
-    UserDB.find({sid: sid}).limit(1).then(function(results){
+    UserDB.find({sid: sid}).limit(1).exec(function(error, results){
+        if(error)
+        {
+            console.log("register Error: " + error, "sid: "+sid +" password:"+ password);
+            onFail("Unable to Access the database");
+            return;
+        }
         if(results.length > 0)
         {
             //if there is already a user with the sid regestered
-            onFail();
+            onFail("Error: User Aleady exsits");
             console.log('Failed To register User, User Aleady Exisits');
         }
         else
@@ -236,7 +241,7 @@ function register(session, sid, password, onSuccess, onFail, isInstructor)
                 {
                     //if the ere is a error, log it and call the onFail method
                     console.log("Error in Registering, data: " +  userdata);
-                    onFail();
+                    onFail("Unable to add Your Information");
                 }
                 else
                 {
@@ -261,7 +266,13 @@ function login(session, sid, password, onSuccess, onFail)
 {
     console.log('Logging In User');
     //check of there is user with the sid that was submitted
-    UserDB.find({sid: sid}).limit(1).then(function(results){
+    UserDB.find({sid: sid}).limit(1).exec(function(error, results){
+        if(error)
+        {
+            console.log("Login Error: " + error, "sid: "+sid +" password:"+ password);
+            onFail("Unable to process you request");
+            return;
+        }
         if((results.length > 0) && (bcrypt.compareSync(password, results[0].hashedPassword)))
         {
             console.log('Successfully Logged in User, ' + sid);
@@ -278,7 +289,7 @@ function login(session, sid, password, onSuccess, onFail)
         {
             //incorect password call the on fall method
             console.log("Login Attempt: " + sid /*+ " Password: " + password*/);
-            onFail();
+            onFail("Invalid Student ID or Password");
         }
     });
 }
@@ -347,11 +358,23 @@ app.get('/course_report', function(request, response){
         var sid = request.query.sid;
 
         //find the userid for the sid that was given
-        UserDB.find({sid: sid}).limit(1).select({userid: 1}).then(function(results){
+        UserDB.find({sid: sid}).limit(1).select({userid: 1}).exec(function(error, results){
+            if(error)
+            {
+                //if error with database register console ther DB error and render the page with an error message
+                console.log("Course Report, Instructor, find userid for sid, Error: " + error);
+                renderPage(session, response, 'course_report', "Course Report", {error: "Error searching for the Userid in the UserDB Table"});
+                return;
+            }
             if(results.length > 0)
             {
                 //render the course_report
                 course_report(session, response, results[0].userid, sid)
+            }
+            else
+            {
+                //when no student is found, render page with errror message
+                renderPage(session, response, 'course_report', "Course Report", {error: "Unable to find Student"});
             }
         }); 
     }
@@ -371,7 +394,14 @@ app.get('/course_report_list', function(request, response){
     //run only if the instructor request the page
     if(isAnInstructor(request.session)){
         //get all user that are students, retrive only the id's
-        UserDB.find({isInstructor: false}).select({sid:1}).then(function(results){
+        UserDB.find({isInstructor: false}).select({sid:1}).exec(function(error, results){
+            if(error)
+            {
+                //if error with database register console ther DB error and render the page with an error message
+                console.log("Course Report List, Instructor, find the list of userid's, Error: " + error);
+                renderPage(session, response, 'course_report', "Course Report", {error: "Error searching for the Userid in the UserDB Table"});
+                return;
+            }
             if(results.length > 0)
             {
                 //array of students
@@ -385,6 +415,9 @@ app.get('/course_report_list', function(request, response){
                 //render the course list page and send the student names there
                 renderPage(request.session, response, 'course_report_list', 'Course Report - List of Students',  {students: students});
             }
+            else
+                //when not responses in the database, send error message
+                renderPage(request.session, response, 'course_report_list', 'Course Report - List of Students',  {error: "Unable to find the users in the Database."});
         });
     }
     else
@@ -395,29 +428,41 @@ app.get('/course_report_list', function(request, response){
 function course_report(session, response, studentid, sid)
 {
     //search for all response's for the user
-    student_binary_ResponseDB.find()
-    .then(function(results){
-        //set up object the student's stats and all students stats
-        var allStats = {};
-        var studStats = {};
+    student_binary_ResponseDB.find().exec(function(error, results){
+        if(error)
+        {
+            //if error with database register console ther DB error and render the page with an error message
+            console.log("Course Report, error geting reponses from the student_binary_responseDB database, Error: " + error);
+            renderPage(session, response, 'course_report', (sid)?"Course Report - " + sid:"Course Report" , {error: "Unable to access the database."});
+            return;
+        }
+        if(results.length > 0){
+            //set up object the student's stats and all students stats
+            var allStats = {};
+            var studStats = {};
 
-        //for each db entry sort the data into the a set data structure
-        // -lecture_name
-        // --section_name
-        // ---tag_name
-        // ----U        - 1 response
-        // ----D        - 0 response
-        // ----UNK      - -1 response
-        // ----length   - the total number of responses (U+D+UNK)
-        results.forEach(function(item){
-            updateReportData(allStats, item.lecture, item);
-            //if the item's studentid matches the userid given then do a seperate calc for the student
-            if(item.studentid === studentid)
-                updateReportData(studStats, item.lecture, item);
-        });
-        
-        //render the course report with student stats and all student stats
-        renderPage(session, response, 'course_report', (sid)?"Course Report - " + sid:"Course Report" , {studentid: sid, student: studStats, avgstudents: allStats});
+            //for each db entry sort the data into the a set data structure
+            // -lecture_name
+            // --section_name
+            // ---tag_name
+            // ----U        - 1 response
+            // ----D        - 0 response
+            // ----UNK      - -1 response
+            // ----length   - the total number of responses (U+D+UNK)
+            results.forEach(function(item){
+                updateReportData(allStats, item.lecture, item);
+                //if the item's studentid matches the userid given then do a seperate calc for the student
+                if(item.studentid === studentid)
+                    updateReportData(studStats, item.lecture, item);
+            });
+            
+            //render the course report with student stats and all student stats
+            renderPage(session, response, 'course_report', (sid)?"Course Report - " + sid:"Course Report" , {studentid: sid, student: studStats, avgstudents: allStats});
+        }
+        else
+            //when not responses in the database, send error message
+            renderPage(session, response, 'course_report', (sid)?"Course Report - " + sid:"Course Report" , {error: "Unable to get responses from the database."});
+
     });
 }
 
@@ -431,37 +476,56 @@ app.get('/lecture_summary', function(request, response){
         var lecture = request.query.lecture;
 
         //get all the response that are for that lecture
-        student_binary_ResponseDB.find({lecture: lecture})
-        .then(function(results){
-            //set up object for the section Stats and the student stats
-            var secStats = {};
-            var studStats = {};
+        student_binary_ResponseDB.find({lecture: lecture}).exec(function(error, results){
+            if(error)
+            {
+                //if error accessing DB, console error, and render error message page
+                console.log("Lecture Summary, Instructor, error accessing the student_binary_responseDB database, Error: " + error);
+                renderPage(request.session, response, 'lecture_summary', 'Lecture Summary - ' + lecture,  {error:"Unable to access database."});
+                return;
+            }
+            if(results.length > 0)
+            {
+                //set up object for the section Stats and the student stats
+                var secStats = {};
+                var studStats = {};
 
-            //for each db item, sort the data into the following structure
-            // -section_name || student_id
-            // --tag_name
-            // ---U        - 1 response
-            // ---D        - 0 response
-            // ---UNK      - -1 response
-            // ---length   - the total number of responses (U+D+UNK)
-            results.forEach(function(item){
-                lectureOverviewReport(secStats, item.section, item);
-                lectureOverviewReport(studStats, item.studentid, item);
-            });
-            
-            //get all the students in the userDb
-            UserDB.find({isInstructor:false}).select({userid: 1, sid: 1}).then(function(results){
-                if(results.length > 0)
-                {
-                    //replace all userid with the equivalent sid
-                    results.forEach(function(item){
-                        _renameProperty(studStats, item.userid, item.sid);
-                    });
-                    
-                    //render the results
-                    renderPage(request.session, response, 'lecture_summary', 'Lecture Summary - ' + lecture,  {sections: secStats, students: studStats , lecture: lecture});
-                }
-            });
+                //for each db item, sort the data into the following structure
+                // -section_name || student_id
+                // --tag_name
+                // ---U        - 1 response
+                // ---D        - 0 response
+                // ---UNK      - -1 response
+                // ---length   - the total number of responses (U+D+UNK)
+                results.forEach(function(item){
+                    lectureOverviewReport(secStats, item.section, item);
+                    lectureOverviewReport(studStats, item.studentid, item);
+                });
+                
+                //get all the students in the userDb
+                UserDB.find({isInstructor:false}).select({userid: 1, sid: 1}).then(function(results){
+                    if(results.length > 0)
+                    {
+                        //replace all userid with the equivalent sid
+                        results.forEach(function(item){
+                            _renameProperty(studStats, item.userid, item.sid);
+                        });
+                        
+                        //render the results
+                        renderPage(request.session, response, 'lecture_summary', 'Lecture Summary - ' + lecture,  {sections: secStats, students: studStats , lecture: lecture});
+                    }
+                    else
+                    {
+                        //when not responses in the database, send error message
+                        renderPage(request.session, response, 'lecture_summary', 'Lecture Summary - ' + lecture,  {error:"Unable to get users from the database."});
+                    }
+                });
+            }
+            else
+            {
+                //when not responses in the database, send error message
+                renderPage(request.session, response, 'lecture_summary', 'Lecture Summary - ' + lecture,  {error:"Unable to get responses from the database."});
+            }
         });
     }
     else
@@ -473,19 +537,34 @@ app.get('/lecture_summary_list', function(request, response){
     console.log('lecture_summary_list');
     //run only if the user is an instructor
     if(isAnInstructor(request.session)){
-        student_binary_ResponseDB.find().select({lecture: 1}).then(function(results){
-            var templectures = {};
-            var lectures = [];
+        student_binary_ResponseDB.find().select({lecture: 1}).exec(function(error, results){
+            if(error)
+            {
+                //if error accessing DB, console error, and render error message page
+                console.log("Lecture Summary list, Instructor, error accessing the student_binary_responseDB database, Error: " + error);
+                renderPage(request.session, response, 'lecture_summary_list', 'Lecture Summary - List of Lectures',  {error:"Unable to access database."});
+                return;
+            }
 
-            results.forEach(function(item){
-                templectures[item.lecture] = 0;
-            });
+            if(results.length > 0)
+            {
+                var templectures = {};
+                var lectures = [];
 
-            Object.keys(templectures).forEach(function(item){
-                lectures.push(item);
-            });
+                results.forEach(function(item){
+                    templectures[item.lecture] = 0;
+                });
 
-            renderPage(request.session, response, 'lecture_summary_list', 'Lecture Summary - List of Lectures',  {lectures: lectures});
+                Object.keys(templectures).forEach(function(item){
+                    lectures.push(item);
+                });
+
+                renderPage(request.session, response, 'lecture_summary_list', 'Lecture Summary - List of Lectures',  {lectures: lectures});
+            }
+            else
+            {
+                renderPage(request.session, response, 'lecture_summary_list', 'Lecture Summary - List of Lectures',  {error:"Unable to get Lecture for database."});
+            }
         });
     }
     else
@@ -493,42 +572,72 @@ app.get('/lecture_summary_list', function(request, response){
         response.redirect('/');
 });
 
-//to be converted to newer version
-//will be untoched untill next talk with randy over reporting format
-app.get('/lectureReport', function(request, response){
-    //get the lectrue from the request
-    var lecture = 'AJAX, JSON, and XML - CSCI 3230u';
-    var student = 'matt';
-
-    // if(isAnInstructor(request.session))
-    //     student = request.body.student;
-    // else
-    //     student = request.session.userid;
+app.get('/lecture_report', function(request, response){
+    //get the lecture from the request
+    var session = request.session;
+    var lecture = request.query.lecture;
     
-    UserDB.find({sid: student}).limit(1).select({userid:1}).then(function(results){
+    if(isAnInstructor(request.session)){
+        sid = request.query.sid;
+        //find the userid for the sid that was given
+        UserDB.find({sid: sid}).limit(1).select({userid: 1}).exec(function(error, results){
+            if(error)
+            {
+                //if error accessing DB, console error, and render error message page
+                console.log("Lecture Report, Instructor, error accessing the UserDB database, Error: " + error);
+                renderPage(session, response, 'lecture_report', 'Lecture Report',  {error:"Unable to access database."});
+                return;
+            }
+            // lecture_report(session, response, lecture, sid, );
+            if(results.length > 0)
+            {
+                //render the course_report
+                lecture_report(session, response, lecture, sid, results[0].userid);
+            }
+            else
+                //no sid in the database, render page with error message
+                renderPage(request.session, response, 'lecture_report', 'Lecture Report',  {error:"Unable to find Student ID in the database"});
+        }); 
+    }
+    else{
+        lecture_report(session, response, lecture, session.sid, session.userid);
+    }
+});
+
+function lecture_report(session, response, lecture, sid, student)
+{
+    //search for all response's for the user
+    student_binary_ResponseDB.find({lecture:lecture}).exec(function(error, results){
+        if(error)
+        {
+            //if error accessing DB, console error, and render error message page
+            console.log("Lecture Report, error accessing the student_binary_responseDB database, Error: " + error);
+            renderPage(rsession, response, 'lecture_report', 'Lecture Report',  {error:"Unable to access database."});
+            return;
+        }
         if(results.length > 0)
         {
-            var uid = results[0].userid;
-            //search for all response's for the user
-            student_binary_ResponseDB.find({lecture:lecture})
-            .then(function(results){
-                var allStats = {};
-                var studStats = {};
+            var allStats = {};
+            var studStats = {};
 
-                //create a object where there exisits the name of each lecture slide
-                results.forEach(function(item){
-                    lectureOverviewReport(allStats, item.section, item);
-                    if(item.studentid === uid)
-                        lectureOverviewReport(studStats, item.section, item);
-                });
-        
-                //render the report page sending the lectrue to it
-                response.render('LectureReport', {stud_lec: {lecture: lecture, student: student}, student_stats: studStats, all_stats: allStats, isInstructor: isAnInstructor(request.session)});    
+            //create a object where there exisits the name of each lecture slide
+            results.forEach(function(item){
+                lectureOverviewReport(allStats, item.section, item);
+                if(item.studentid === student)
+                    lectureOverviewReport(studStats, item.section, item);
             });
+
+            //render the report page sending the lectrue to it
+            renderPage(session, response, 'lecture_report', 'Lecture Report - ' + lecture, {stud_lec: {lecture: lecture, student: sid}, student_stats: studStats, all_stats: allStats});
+        }
+        else
+        {
+            //no result, render page with error message
+            renderPage(session, response, 'lecture_report', 'Lecture Report',  {error:"Unable to get responses for the database database."});
         }
     });
+}
 
-});
 
 //initalize in a {} 
 // value:{}

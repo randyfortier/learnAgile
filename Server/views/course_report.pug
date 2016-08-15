@@ -1,232 +1,210 @@
 extends layout
 block inhead
-	link(rel="stylesheet", href="css/report.css")
-	script(src='js/table_func.js')
-	script.
-		var lec = !{JSON.stringify(student)};
-		var allLec = !{JSON.stringify(avgstudents)};
-		
-		$(document).ready(function(){
-			addToTable('lecture_table', lec, ['Like', 'Difficult', 'Study']);
-			addToTable('avg_table', allLec, ['Like', 'Difficult', 'Study']);
+	if !error
+		link(rel="stylesheet", href="css/report.css")
+		script(src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.6/Chart.js")
+		script(src='js/table_func.js')
+		script.
+			var lec = !{JSON.stringify(student)};
+			var allLec = !{JSON.stringify(avgstudents)};
+			var sid = '#{studentid}' || null ;
 			
-			var graph_order_N_color = [{name:'Difficult', color: {r:255, g:0, b:0}}, {name:'Like', color: {r:0, g:0, b:0}}, {name:'Study', color: {r:0, g:0, b:255}}];
-
-			addBarChart('lecture_chart_2', lec, graph_order_N_color);
-			addBarChart('avg_chart_2', allLec, graph_order_N_color);
-
-			addLineChart('lecture_chart', lec, graph_order_N_color);
-			addLineChart('avg_chart', allLec, graph_order_N_color);
-
-			addTableColour();
-		});
-
-		function addBarChart(canvas, stats, tag_names)
-		{
-			var data = {};
-			data.labels = [];
-			data.datasets = [];
-
-			tag_names.forEach(function(tag_name, index){
-				data.datasets.push({
-					label : tag_name.name,
-					borderWidth : 1,
-					borderColor : [],
-					backgroundColor : [],
-					data : []
-				});
-				var color;
-				if(tag_name.color)
-					color = tag_name.color;
-				else
-					color = randRGB();
-				for(var cnt = 0; cnt < Object.keys(stats).length; cnt++)
-				{
-					data.datasets[index].borderColor.push(RGBA(color, 1));
-					data.datasets[index].backgroundColor.push(RGBA(color, 0.2));
-				}
-			});	
-
-
-			var cnt = 0;
-			var avg = 0;
-
-			Object.keys(stats).forEach(function(lecture){//each section
-				var lecVar = stats[lecture];
-
-				data.labels.push(lecture);
-
+			$(document).ready(function(){
+				_addToTable('lecture_table', lec, ['Like', 'Difficult', 'Study']);
+				_addToTable('avg_table', allLec, ['Like', 'Difficult', 'Study']);
 				
-				tag_names.forEach(function(tag_name, index){
-					cnt = 0;
-					avg = 0;
-				
-					Object.keys(lecVar).forEach(function(section){//each section
-						var secVar = lecVar[section];
-						var tag = secVar[tag_name.name];
+				_addBarChart('lecture_chart_2', lec, graph_order_N_color);
+				_addBarChart('avg_chart_2', allLec, graph_order_N_color);
 
-						avg += chartFormat(tag.U, tag.U+tag.D);
-						cnt++;
-					});
+				_addLineChart('lecture_chart', lec, graph_order_N_color);
+				_addLineChart('avg_chart', allLec, graph_order_N_color);
 
-					data.datasets[index].data.push(avg/cnt);
-				});
+				addTableColour();
 			});
-			
-			var myBarChart = new Chart($('#' + canvas), {
-				type: 'bar',
-				data: data,
-				options: {
-					responsive: false,
-					animation: false,
-					scales: {
-						yAxes:[{
-							ticks: {
-								min : 0,
-								max : 100,
-								maxTicksLimit: 4,
-								stepSize: 25
-							}
-						}]
-					}
-				}
-			});
-		}			
-		
-		function addLineChart(canvas, stats, tag_names)
-		{
-			var data = {};
-			data.labels = [];
-			data.datasets = [];
 
-			tag_names.forEach(function(tag_name, index){
-				data.datasets.push({
-					label : tag_name.name,
-					fill: true,
-					lineTension: 0,
-					borderCapStyle: 'butt',
-					borderDash: [],
-					borderDashOffset: 0.0,
-					borderJoinStyle: 'miter',
-					pointBorderWidth: 1,
-					pointHoverRadius: 5,
-					pointHoverBorderWidth: 2,
-					pointRadius: 0,
-					borderWidth : 1,
-					borderColor : [],
-					backgroundColor : [],
-					data : []
-				});
-				
-				var color;
-				if(tag_name.color)
-					color = tag_name.color;
-				else
-					color = randRGB();
-				for(var cnt = 0; cnt < Object.keys(stats).length; cnt++)
-				{
-					data.datasets[index].borderColor.push(RGBA(color, 1));
-					data.datasets[index].backgroundColor.push(RGBA(color, 0.2));
-				}
-			});			
-			
-			var cnt = 0;
-			var avg = 0;
-			Object.keys(stats).forEach(function(lecture){//each section
-				var lecVar = stats[lecture];
-				data.labels.push(lecture);
+			function _addBarChart(canvas, stats, tag_names)
+			{
+				var data = {};
+				data.labels = [];
+				data.datasets = [];
 
 				tag_names.forEach(function(tag_name, index){
-					cnt = 0;
-					avg = 0;
-				
-					Object.keys(lecVar).forEach(function(section){//each section
-						var secVar = lecVar[section];
-						var tag = secVar[tag_name.name];
-
-						avg += chartFormat(tag.U, tag.U+tag.D);
-						cnt++;
+					data.datasets.push({
+						label : tag_name.name,
+						borderWidth : 1,
+						borderColor : [],
+						backgroundColor : [],
+						data : []
 					});
-
-					data.datasets[index].data.push(avg/cnt);
-				});
-			});
-
-			var myLineChart = new Chart($('#' + canvas), {
-				type: 'line',
-				data: data,
-				options: {
-					responsive: false,
-					animation: false,
-					scales: {
-						yAxes:[{
-							ticks: {
-								min : 0,
-								max : 100,
-								maxTicksLimit: 4,
-								stepSize: 25
-							}
-						}]
+					var color;
+					if(tag_name.color)
+						color = tag_name.color;
+					else
+						color = randRGB();
+					for(var cnt = 0; cnt < Object.keys(stats).length; cnt++)
+					{
+						data.datasets[index].borderColor.push(RGBA(color, 1));
+						data.datasets[index].backgroundColor.push(RGBA(color, 0.2));
 					}
-				}
-			});
-		}	
+				});	
 
-		function addToTable(tableid, stats, tag_order)
-		{
-			Object.keys(stats).forEach(function(lecture){
 
-				$('#' + tableid).append('<tr><th colspan="'+(1+(3*tag_order.length))+'">'+lecture+'</th></tr>');
-				_addToTable(tableid, stats[lecture], tag_order)
-			});
-		}
+				var cnt = 0;
+				var avg = 0;
 
-		function _addToTable(tableid, stats, tag_order)
-		{
+				Object.keys(stats).forEach(function(lecture){//each section
+					var lecVar = stats[lecture];
 
-			addTitletoTable(tableid, tag_order);	
+					data.labels.push(lecture);
 
-			var avg_tags = [];
-			for(var cnt = 0; cnt < tag_order.length; cnt++)
-				avg_tags.push({U:0,D:0,UNK:0,length:0, avg:0});
+					
+					tag_names.forEach(function(tag_name, index){
+						cnt = 0;
+						avg = 0;
+					
+						Object.keys(lecVar).forEach(function(section){//each section
+							var secVar = lecVar[section];
+							var tag = secVar[tag_name.name];
 
-			Object.keys(stats).forEach(function(select){
-				var tag_values = [];
+							avg += chartFormat(tag.U, tag.U+tag.D);
+							cnt++;
+						});
 
-				tag_order.forEach(function(tag_name, index){
-					tag_values.push(sec_tag_table_entry(stats[select][tag_name]));
-					addtoAvg(avg_tags[index], stats[select][tag_name],getPer(stats[select][tag_name]));
+						data.datasets[index].data.push(avg/cnt);
+					});
 				});
-				addEntryToTable(tableid, select, tag_values);
-			});
+				
+				var myBarChart = new Chart($('#' + canvas), {
+					type: 'bar',
+					data: data,
+					options: {
+						responsive: false,
+						animation: false,
+						scales: {
+							yAxes:[{
+								ticks: {
+									min : 0,
+									max : 100,
+									maxTicksLimit: 4,
+									stepSize: 25
+								}
+							}]
+						}
+					}
+				});
+			}			
+			
+			function _addLineChart(canvas, stats, tag_names)
+			{
+				var data = {};
+				data.labels = [];
+				data.datasets = [];
 
-			var secLen = Object.keys(stats).length;
-			var avg_values = [];
-			avg_tags.forEach(function(item){
-				avgOut(item, secLen);
-				avg_values.push(sec_tag_table_entry(item));
-			});
+				tag_names.forEach(function(tag_name, index){
+					data.datasets.push({
+						label : tag_name.name,
+						fill: true,
+						lineTension: 0,
+						borderCapStyle: 'butt',
+						borderDash: [],
+						borderDashOffset: 0.0,
+						borderJoinStyle: 'miter',
+						pointBorderWidth: 1,
+						pointHoverRadius: 5,
+						pointHoverBorderWidth: 2,
+						pointRadius: 0,
+						borderWidth : 1,
+						borderColor : [],
+						backgroundColor : [],
+						data : []
+					});
+					
+					var color;
+					if(tag_name.color)
+						color = tag_name.color;
+					else
+						color = randRGB();
+					for(var cnt = 0; cnt < Object.keys(stats).length; cnt++)
+					{
+						data.datasets[index].borderColor.push(RGBA(color, 1));
+						data.datasets[index].backgroundColor.push(RGBA(color, 0.2));
+					}
+				});			
+				
+				var cnt = 0;
+				var avg = 0;
+				Object.keys(stats).forEach(function(lecture){//each section
+					var lecVar = stats[lecture];
+					data.labels.push(lecture);
 
-			addEntryToTable(tableid, "AVERAGE", avg_values);
-		}
+					tag_names.forEach(function(tag_name, index){
+						cnt = 0;
+						avg = 0;
+					
+						Object.keys(lecVar).forEach(function(section){//each section
+							var secVar = lecVar[section];
+							var tag = secVar[tag_name.name];
+
+							avg += chartFormat(tag.U, tag.U+tag.D);
+							cnt++;
+						});
+
+						data.datasets[index].data.push(avg/cnt);
+					});
+				});
+
+				var myLineChart = new Chart($('#' + canvas), {
+					type: 'line',
+					data: data,
+					options: {
+						responsive: false,
+						animation: false,
+						scales: {
+							yAxes:[{
+								ticks: {
+									min : 0,
+									max : 100,
+									maxTicksLimit: 4,
+									stepSize: 25
+								}
+							}]
+						}
+					}
+				});
+			}	
+
+			function _addToTable(tableid, stats, tag_order)
+			{
+				Object.keys(stats).forEach(function(lecture){
+
+					$('#' + tableid).append('<tr><th colspan="'+(1+(3*tag_order.length))+'">'+addLectureName(lecture)+'</th></tr>');
+					addToTable(tableid, stats[lecture], tag_order)
+				});
+			}
+
+			function addLectureName(lecture)
+			{
+				return '<a href="/lecture_report?lecture='+lecture+((sid)?'&sid='+sid:'')+'">' + lecture + '</a>';
+			}
+
 
 block content
-	
-	div(class="container-fluid col-sm-10 col-sm-offset-1")
-		h2 Course Report
-		if (isInstructor)
-			h3 Student: #{studentid}
+	if error
+		h3(class="text-center") Unable to generate Course Report
+		h4(class="text-center", style="color:red")=error
+	else
+		div(class="container-fluid col-sm-10 col-sm-offset-1")
+			h2 Course Report
+			if (isInstructor)
+				h3 Student: #{studentid}
 
-		h4(class="underline") Progress from each Lecture
-		table(id="lecture_table", class="table table-striped table-bordered table-condensed")
-		canvas(id="lecture_chart", height="300", style="display:inline")
-		canvas(id="lecture_chart_2", height="300", style="display:inline")
+			h4(class="underline") Progress from each Lecture
+			table(id="lecture_table", class="table table-striped table-bordered table-condensed")
+			canvas(id="lecture_chart", height="300", style="display:inline")
+			canvas(id="lecture_chart_2", height="300", style="display:inline")
 
 
-		h4(class="underline") Average Over Students
-		table(id="avg_table", class="table table-striped table-bordered table-condensed")
-		canvas(id="avg_chart", height="300", style="display:inline")
-		canvas(id="avg_chart_2", height="300", style="display:inline")
-
-	include footer.pug
-
+			h4(class="underline") Average Over Students
+			table(id="avg_table", class="table table-striped table-bordered table-condensed")
+			canvas(id="avg_chart", height="300", style="display:inline")
+			canvas(id="avg_chart_2", height="300", style="display:inline")

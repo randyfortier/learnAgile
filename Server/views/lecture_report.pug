@@ -1,0 +1,44 @@
+extends layout
+block inhead
+	if !error
+		link(rel="stylesheet", href="css/report.css")
+		script(src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.6/Chart.js")
+		script(src='js/table_func.js')
+		script.
+			var lec_stud = !{JSON.stringify(stud_lec)};
+			var studStats = !{JSON.stringify(student_stats)};
+			var avgStats = !{JSON.stringify(all_stats)};
+			
+			$(document).ready(function(){
+
+				addToTable('section_table', studStats, ['Like', 'Difficult', 'Study']);
+				addToTable('avg_table', avgStats, ['Like', 'Difficult', 'Study']);
+
+				addBarChart('avg_chart', avgStats, graph_order_N_color);
+				addBarChart('student_chart', studStats, graph_order_N_color);
+
+				addLineChart('avg_chart_2', avgStats, graph_order_N_color);
+				addLineChart('student_chart_2', studStats, graph_order_N_color);
+
+				addTableColour();
+			});
+		
+block content
+	if error
+			h3(class="text-center") Unable to generate Lecture Report
+			h4(class="text-center", style="color:red")=error
+	else
+		div(class="container-fluid col-sm-10 col-sm-offset-1")
+			h2 Lecture Report
+			if isInstructor
+				h3(class="underline") Lecture - #{stud_lec.lecture}, Student - #{stud_lec.student}
+			else
+				h3(class="underline") Lecture - #{stud_lec.lecture}
+			table(id='section_table', class="table table-striped table-bordered table-condensed")
+			canvas(id="student_chart_2")
+			canvas(id="student_chart")
+
+			h4(class="underline") Average over all Students
+			table(id='avg_table', class="table table-striped table-bordered table-condensed")
+			canvas(id='avg_chart_2')
+			canvas(id='avg_chart')

@@ -1,6 +1,9 @@
 extends layout
 block content
 	div(class="container-fluid col-sm-10 col-sm-offset-1")
+		if error
+			h4(class="text-center", style="color:red")=error
+
 		form(class="form-horizontal", role="form", action="/login", method="post")
 			div(class="form-group")
 				label(class="control-label col-sm-2", for="sid") Student ID:
@@ -14,6 +17,3 @@ block content
 			div(class="form-group")
 				div(class="col-sm-offset-2 col-sm-10")
 					button(type="submit", class="btn btn-default") Login
-
-	include footer.pug
-

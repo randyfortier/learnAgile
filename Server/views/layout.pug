@@ -19,7 +19,6 @@ html
 
 		link(rel="stylesheet", href="styles/primary.css", type="text/css")
 		script(src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js")
-		script(src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.6/Chart.js")
 
 		block inhead
 
@@ -66,11 +65,9 @@ html
 										li 
 											a(href="/course_summary") Course Summary
 										li
-											a(href="/course_report_list") Course Report
-										li
 											a(href="/lecture_summary_list") Lecture Summary
 										li
-											a(href="/lectureReport") Lecture Report Test
+											a(href="/course_report_list") Course Report
 									else
 										li
 											a(href="/course_report") Course Report
@@ -93,3 +90,25 @@ html
 						span(class="logoText") Introduction to Computer Science
 
 		block content
+
+		footer(class="info container-fluid")
+			section(class="col-xs-12 col-sm-4 col-sm-offset-1")
+				h3 Contact
+				p(title="2000 Simcoe St. N.  Oshawa, ON  L1H 7K4")
+					| UA 2032 <br/>
+					| randy.fortier@uoit.ca <br/>
+					| 905-721-8668 ext. 2114 <br/>
+			section(class="col-xs-12 col-sm-4 col-sm-offset-2")
+				h3 Connect
+				ul
+					li
+						img(title="randy.fortier&#64;uoit.ca", src="images/social/email.png", alt="E-Mail")
+					li
+						a(href="https://plus.google.com/+RandyFortier/posts")
+							img(src="images/social/google+.png", alt="Google+")
+					li
+						a(href="https://twitter.com/randy_fortier")
+							img(src="images/social/twitter.png", alt="Twitter")
+		footer(class="copyright") &copy; Copyright - Randy J. Fortier - 2016
+
+		script(src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js", integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS", crossorigin="anonymous")
