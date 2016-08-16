@@ -15,7 +15,28 @@ var standardTags = {
     'study': {title:'Study', src:'images/study.png'}
 };
 
+//hide the multiplechoice html
+$('multiplechoice').css('display','none');
 
+//for each multiple choice html, convert it to current html
+$('multiplechoice').each(function(index){
+    //the current multiple choice object
+    var multi = this;
+
+    //add a spot for the question, and get the question text
+    $(multi).after('<div id="question_'+index+'"></div>');
+    var question = $(multi).find('question').html();
+
+    //add the question text and an ordered list
+    $('#question_'+index).append('<h2>'+question+'</h2>');
+    $('#question_'+index).append('<ol id="answers_'+index+'" title="'+$(multi).attr('title')+'"></ol>');
+
+    //for each answer in the question add it to the question div, add 2 classes, answer for adding
+    //click functionality and answer_'index' to be able to refrenece all answers in one question
+    $(multi).find('answer').each(function(a_index){
+        $('#answers_'+index).append('<li id="a_'+a_index+'" class="answer answers_'+index+'">'+$(this).text()+'</li>');
+    });
+});
 
 function setBinary_default(index, text, section)
 {
@@ -76,7 +97,6 @@ if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(naviga
 socket.emit('lecture_server_setup', $('title').text());
 
 socket.on('lecture_client_setup', function(isInstuctor){
-
     if(isInstuctor)
     {
         if(window.parent)
@@ -90,13 +110,15 @@ socket.on('lecture_client_setup', function(isInstuctor){
                 {
                     if(data.method === 'setState')
                     {
-                        sendXML(event.source, origin);
+                        if(!sendMultipleChoice(event.source, origin))
+                            sendBinaryTags(event.source, origin);
                     }
                 }
                 else
                 {
                     if(data.name){
-                        sendXML(event.source, origin);
+                        if(!sendMultipleChoice(event.source, origin))
+                            sendBinaryTags(event.source, origin);
                         lec_name = data.name;
                         Reveal.addEventListener( 'slidechanged', function( event ) {
                             //sends a siginal to the server to change the students slides
@@ -107,14 +129,46 @@ socket.on('lecture_client_setup', function(isInstuctor){
                 }
             });
 
-            function sendXML(source, origin)
+            function sendMultipleChoice(source, origin)
+            {
+                var slide = Reveal.getCurrentSlide();
+                var multi = multiChoice(slide);
+
+                if(multi.length !== -1){
+                    console.log('sendMC, TAGS:', multi);
+                    source.postMessage(JSON.stringify({
+                        MultipleChoice: multi
+                    }), origin);
+                    return true;
+                }
+                else
+                    return false;
+            }
+
+            function sendBinaryTags(source, origin)
             {
                 var slide = Reveal.getCurrentSlide();
                 var tags = checkNupdateTag(slide, Reveal.getIndices().h); 
-                console.log('sendXML, TAGS:', tags);
+                console.log('sendBT, TAGS:', tags);
                 source.postMessage(JSON.stringify({
-                    Tags: tags//checkNupdateTag(slide, Reveal.getIndices().h)
+                    BinaryTags: tags//checkNupdateTag(slide, Reveal.getIndices().h)
                 }), origin); 
+            }
+
+            function multiChoice(slide)
+            {
+                var multi = $(slide).find('multiplechoice');
+
+                if(multi.length > 0)
+                {
+                    //get div
+                    var div = $(multi).next();
+
+                    var list = $(div).find('ol')[0];
+
+                    return {title: $(list).attr('title'), length: $(list).children().length};
+                }
+                return {title: "", length: -1};
             }
 
             function checkNupdateTag(slide, hIndex)
@@ -182,6 +236,7 @@ socket.on('lecture_client_setup', function(isInstuctor){
         //when the slide changes, update the current the slide data
         Reveal.addEventListener( 'slidechanged', function( event ) {
             slide_load(event.currentSlide);
+            multiChoice(event.currentSlide);
             // if(isMobile)
             //     $(event.currentSlide).append($('<div>').text("on mobile Device"));
         });
@@ -190,6 +245,7 @@ socket.on('lecture_client_setup', function(isInstuctor){
         $(document).ready(function(){
             currentH = Reveal.getIndices().h;
             slide_load(Reveal.getCurrentSlide());
+            multiChoice(Reveal.getCurrentSlide());
         });
 
         function slide_load(slide)
@@ -353,13 +409,13 @@ socket.on('lecture_client_setup', function(isInstuctor){
             var id = clicked.attr('id').split('_');
             var title = id[0];
             var section = id[1];
-            sendTagResponse(title, section, response); 
+            sendBinaryTagResponse(title, section, response); 
         }
 
-        function sendTagResponse(title, section, response)
+        function sendBinaryTagResponse(title, section, response)
         {
             //emit to the server, the title of the tag, the slide index, and which tag state they are in
-            socket.emit('student_response', {
+            socket.emit('student_binary_response', {
                 title: title,
                 section: section,
                 response: response
@@ -376,6 +432,76 @@ socket.on('lecture_client_setup', function(isInstuctor){
         function bulidImage(src)
         {
             return '<img class="clickable" src="'+src+'" />';
-        }   
+        }
+
+        /******** Multiple Choice Functionality ********/
+
+        function highlightChoice(answer)
+        {
+            //can change to be any style
+            $(answer).attr('style', 'text-decoration: underline');
+        }
+
+        //add click functionality to the slide, remove the answer class
+        $('.answer').click(multiplechoice_click);
+        $('.answer').each(function(){
+            $(this).removeClass('answer');
+        });
+
+        function multiplechoice_click(event)
+        {
+            //get the click object and the class of that object
+            var answer = event.target;
+            var answer_class = $(answer).attr('class');
+
+            //remove the style from each answer in this question
+            $('.' + answer_class).each(function(){
+                $(this).removeAttr('style');
+            });
+
+            //can change to be any style
+            highlightChoice(answer)
+
+            //send result to the server
+            sendMultipleChoiceResponse($(answer).parent().attr("title"), $(answer).attr('id'));
+        }
+
+        function sendMultipleChoiceResponse(title, response)
+        {
+            socket.emit('student_multiple_response', {
+                title: title,
+                response: response 
+            });
+        }
+
+        function multiChoice(slide)
+        {
+            var multi = $(slide).find('multiplechoice');
+
+            if(multi.length > 0)
+            {
+                //get div
+                var div = $(multi).next();
+
+                var list = $(div).find('ol')[0];
+
+                CheckMultipleChoiceStatus($(list).attr('title'), $(list).attr('id'));
+            }
+        }
+
+        function CheckMultipleChoiceStatus(title, id)
+        {
+            socket.emit('check_multiple_choice_status', {title: title, id: id});
+        }
+
+        //get the response from the server that is the status of the tag according to what is in the database server
+        socket.on('multiple_choice_status', function(status){
+            
+            var space = $('#'+status.id);
+            var index = parseInt(status.response.replace('a_', ''));
+            var item = space.find('li')[index];
+            highlightChoice(item);
+            
+        });
     }
 });

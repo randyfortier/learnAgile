@@ -1,10 +1,3 @@
-/*
-* Icon's used are for the web here are the links to the direct soruces
-* https://image.spreadshirtmedia.com/image-server/v1/designs/11296257,width=178,height=178,version=1320836481/Smiley-Einstein-Icon-3c.png
-* https://cdn4.iconfinder.com/data/icons/ionicons/512/icon-ios7-heart-128.png
-*
-*/
-
 var express = require('express');
 var session = require('express-session');
 var bodyParser = require("body-parser");
@@ -782,7 +775,17 @@ var student_binary_tag_response_schema = new Schema({
     section: String,
     response: Number
 },{collection: 'binary_response'});
-var student_binary_ResponseDB = mongoose.model('student_response', student_binary_tag_response_schema);
+var student_binary_ResponseDB = mongoose.model('binary_response', student_binary_tag_response_schema);
+
+//schema for the response from student on the tags
+var student_multiple_choice_response_schema = new Schema({
+    lecture: String,
+    studentid: String,
+    multi_title: String,
+    response: String
+},{collection: 'multiple_response'});
+var student_multiple_choice_ResponseDB = mongoose.model('multiple_response', student_multiple_choice_response_schema);
+
 
 //setup teacher controlling slide 
 io.on('connection', function(socket){
@@ -815,7 +818,7 @@ io.on('connection', function(socket){
             });
 
             //used to get the real time data for the student
-            socket.on('get_chart_tag_data', function(request){
+            socket.on('get_chart_binary_tag_data', function(request){
                 //set a query to look for all data what matches
                 // the right lecture, slide number and tag title
                 var query = {
@@ -823,31 +826,70 @@ io.on('connection', function(socket){
                     section : request.section
                 };
 
+                //search the database for each in the lecture and seciton
                 student_binary_ResponseDB.find(query).select({response: 1, tag_title: 1}).exec(function(error, results){
+                    //if there is a response emit to instructor
                     if(results.length > 0)
                     {
+
+                        //setup object with each tag having U,D,UNK and length avaliable at tag_data[tag_title]
                         var tag_data = {};
                         request.tags.forEach(function(item, index){
                             checkNsetupTag(tag_data, item);
                             tag_data[item].index = index;
                         });
 
-                        results.forEach(function(item){                        
+                        //for each result from the db, update that respective tag with the data
+                        results.forEach(function(item){
                             if(tag_data[item.tag_title])
                                 addResponse(tag_data, item.tag_title, item.response);
                         });
                         
-                        socket.emit('chart_tag_update', tag_data);
+                        //send to the user
+                        socket.emit('chart_binary_tag_update', tag_data);
                     }
                 });
             });
+
+
+            //used to get the real time data for the student
+            socket.on('get_chart_multiple_choice_data', function(request){
+                //set a query to look for all data what matches
+                // the right lecture, slide number and tag title
+                var query = {
+                    lecture : lecture,
+                    multi_title: request.title
+                };
+
+                //search the database for each in the lecture and seciton
+                student_multiple_choice_ResponseDB.find(query).select({response: 1}).exec(function(error, results){
+                    //if there is a response emit to instructor
+                    if(results.length > 0)
+                    {
+
+                        var answers = {};
+                        var inActive = 0;
+                        results.forEach(function(item){
+                            if (item.response === 'a_-1')
+                                inActive++;
+                            else
+                                answers[item.response] = answers[item.response] + 1 || 1;
+                        });
+
+                        //send to the user
+                        socket.emit('chart_multiple_choice_update', {answers:answers, length: results.length, inactive: inActive});
+                    }
+                });
+            });
+
+
         }
         else
         {
             //holds the functionality that is unique to the student
 
             //when the student sends a response to the server, update/add that data to the code
-            socket.on('student_response', function(response_data){
+            socket.on('student_binary_response', function(response_data){
                 
                 //add to the database
                 var title = response_data.title;
@@ -868,24 +910,7 @@ io.on('connection', function(socket){
                     tag_title: title
                 };
 
-                //search to see if there is already an item with the correct id's
-                student_binary_ResponseDB.find(searchQuery).limit(1).exec(function(error, results){
-                    //if there is already an item update it
-                    if(results.length > 0)
-                    {
-                        // update the current response
-                        student_binary_ResponseDB.update(searchQuery, newResponse, {multi: false}, function(error, numAffected){
-                            if(error)
-                            {
-                                console.log("Error in updating " + session.userid + "'s account, response was " + response + ", lecture was " + lecture + ", slide number was " + slide_index);
-                            }
-                        });
-                    }
-                    else//if there isn't already an item, add the item to the database
-                    {
-                        saveNewResponse(newResponse);
-                    }
-                });
+               searchDBForResponse(student_binary_ResponseDB, searchQuery, newResponse);
             });
            
             //called when the user check for the status of there current tag
@@ -922,7 +947,7 @@ io.on('connection', function(socket){
                                 searchQuery.tag_title = tag;
                                 searchQuery.response = -1;
 
-                                saveNewResponse(searchQuery);
+                                saveNewBinaryResponse(student_binary_ResponseDB, searchQuery);
                             }
                         });
 
@@ -938,7 +963,7 @@ io.on('connection', function(socket){
                             searchQuery.tag_title = tag;
                             searchQuery.response = -1;
                             
-                            saveNewResponse(searchQuery);
+                            saveNewBinaryResponse(student_binary_ResponseDB, searchQuery);
                        });
 
                         socket.emit('binary_tags_status', {tag_responses: tag_responses, section: titles_section.section});
@@ -946,15 +971,95 @@ io.on('connection', function(socket){
                 });        
             });
 
-            function saveNewResponse(value)
+            function searchDBForResponse(DB, searchQuery, newResponse)
             {
-                //save the value to the binary response db reutrn 
-                new student_binary_ResponseDB(value).save(function(error){
-                    if(error){ // if there was an error then return what print out the user, the lecture and the title of the tag
-                        console.log("Error adding Default response for user: " + session.userid + ", lecture: " + lecture + ", title: " + title);
+                //search to see if there is already an item with the correct id's
+                DB.find(searchQuery).limit(1).exec(function(error, results){
+                    //if there is already an item update it
+                    if(results.length > 0)
+                    {
+                        // update the current response
+                        DB.update(searchQuery, newResponse, {multi: false}, function(error, numAffected){
+                            if(error)
+                            {
+                                console.log("Error in updating " + session.sid + "'s account, response was " + response + ", lecture was " + lecture + ", slide number was " + slide_index);
+                            }
+                        });
+                    }
+                    else//if there isn't already an item, add the item to the database
+                    {
+                        saveNewResponse(DB, newResponse);
                     }
                 });
             }
+
+            function saveNewResponse(DB, value)
+            {
+                //save the value to the binary response db reutrn 
+                new DB(value).save(function(error){
+                    if(error){ // if there was an error then return what print out the user, the lecture and the title of the tag
+                        console.log("Error adding Default response for user: " + session.sid + ", lecture: " + lecture + ", value: " + value + ", Error: " + error);
+                    }
+                });
+            }
+
+            //when the student sends a response to the server, update/add that data to the code
+            socket.on('student_multiple_response', function(response_data){
+                //add to the database
+                var title = response_data.title;
+
+                //setup database item
+                var newResponse = {
+                    lecture: lecture,
+                    studentid: session.userid,
+                    multi_title: title,
+                    response: response_data.response
+                };
+                //setup search item
+                var searchQuery = {
+                    lecture: lecture,
+                    studentid: session.userid,
+                    multi_title: title
+                };
+            
+                searchDBForResponse(student_multiple_choice_ResponseDB, searchQuery, newResponse);
+            });
+
+            //called when the user check for the status of there current tag
+            socket.on('check_multiple_choice_status', function(status_request){            
+                //set up the database query
+                var searchQuery = {
+                    lecture: lecture,
+                    studentid: session.userid,
+                    multi_title: status_request.title
+                };
+            
+                //check if ther exsits a response for a tag from the specific user
+               student_multiple_choice_ResponseDB.find(searchQuery).select({response: 1}).limit(1).exec(function(error, results){
+                    //if there is a response, return that response
+                    var response = 'a_-1';
+                    if(results.length > 0)
+                    {
+                        response = results[0].response;
+                    }
+                    else//if there is no response then insert one and send the result of unknown response to the user
+                    {
+                        //add unknown response to the searchQuery to turn it into a database record to be inserted
+                        searchQuery.response = response;//Unknown Response
+                        //create the new record and save the record
+                        saveNewResponse(student_multiple_choice_ResponseDB, searchQuery);
+                    }
+
+                    status_request.response = response;
+                    socket.emit('multiple_choice_status', status_request);
+                });        
+            });
+
+
+
+
+
+
         }
 
         //when disconnecting for the server, check if the user can be removed
@@ -963,10 +1068,6 @@ io.on('connection', function(socket){
             socket.leave(session.lecture);
         });
     });
-
-    // socket.on('mobile_debug', function(data){
-    //     console.log(session.sid + ": " + data);
-    // });
 });
 
 // // cleanDB();

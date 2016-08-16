@@ -72,12 +72,7 @@ function load_Lecture(lecture)
 	    {
 	    	ParseTags(tag_titles, tag_section);
 
-	        socket.on('chart_update', function(chart_data){
-	            //when the chart data comes in, parse it, and save the data
-	            updateTagChartData(chart_data);
-	        });
-
-	        socket.on('chart_tag_update', function(chart_data){
+	        socket.on('chart_binary_tag_update', function(chart_data){
 	            //when the chart data comes in, parse it, and save the data
 	            updateTagChartData(chart_data);
 	        });
@@ -88,20 +83,20 @@ function load_Lecture(lecture)
 	});
 }
 
-
-//2 post messages are send, which are identical, to the addEventListener.
-// //use onlyOnce, to stop the second message not be used.
-// var onlyOne = true;
-
 //listen for a message that contains the xml tags,
 window.addEventListener('message',function(event){
 	//parse the message data
 	var data = JSON.parse( event.data );
 	//if the Tags field exists
-	if(data.Tags){
+	if(data.BinaryTags){
 		stopTimer();
 		//send the tags to be updated
-		ParseTags(data.Tags.tags, data.Tags.section);
+		ParseTags(data.BinaryTags.tags, data.BinaryTags.section);
+	}
+	else if (data.MultipleChoice)
+	{
+		stopTimer();
+		ActivateBarChart(data.MultipleChoice.title, data.MultipleChoice.length);
 	}
 });
 
@@ -116,8 +111,8 @@ function ParseTags(tags, section)
 		tag_section = null;
 	    tag_titles = null;
 		//clean chart
-		if(radarChart !== null)
-			radarChart.destroy();
+		
+		CleanCharts();
 		return;
 	}
 
@@ -147,7 +142,6 @@ function ParseTags(tags, section)
 	}
 }
 
-
 function setupRadarData(tags, section)
 {
 	//extra
@@ -173,7 +167,7 @@ function setupRadarData(tags, section)
 
 function updateAllTagChartData(section)
 {
-	socket.emit('get_chart_tag_data', {section: section, tags: tag_titles});
+	socket.emit('get_chart_binary_tag_data', {section: section, tags: tag_titles});
 }
 
 function updateTagChartData(chart_data)
@@ -192,12 +186,13 @@ function updateTagChartData(chart_data)
 function updateRadarChart()
 {
     //if there isn't a pieChart, don't destroy it
-    if(radarChart !== null)
-        /*if it is not destroyed each time, an error occurs where
-        *mutliple graphs are on top of each other, and when moving
-        *the mouse over the graph old data will be shown along with new data
-        */
-        radarChart.destroy();
+    // if(radarChart !== null)
+    //     if it is not destroyed each time, an error occurs where
+    //     *mutliple graphs are on top of each other, and when moving
+    //     *the mouse over the graph old data will be shown along with new data
+        
+    //     radarChart.destroy();
+	CleanCharts();
 
     //if ther is property's in the chart data, do nothing
     if(Object.keys(radar_chart_data).length === 0)
@@ -267,3 +262,162 @@ function Timer()
     //start the timer over, waiting a set amount of time
     timer = setTimeout(function(){Timer();}, timerSpeed);
 }
+
+
+function CleanCharts()
+{
+	if(radarChart !== null)
+		radarChart.destroy();
+	if(barChart !== null)
+		barChart.destroy();
+}
+
+
+//timer for constantly updating the graph graph
+function Timer2()
+{
+    //a try statement so if there is a problem with the data, the timer doesn't stop
+    try
+    {
+    	if(multi_title && multi_len !== 0 && IsInstuctor){
+	        //update the char data, the display the chart
+			getBarChartDataFromServer(multi_title);
+	    	renderBarChart();
+    	}
+    }
+    catch(err)
+    {
+        //if there is an error, show it
+        console.log(err)
+    }
+    //start the timer over, waiting a set amount of time
+    timer = setTimeout(function(){Timer2();}, timerSpeed);
+}
+
+var barData = null
+var multi_title = '';
+var multi_len = 0;
+var barChart = null;
+
+function ActivateBarChart(title, length)
+{
+	//make sure that when there are no tags that nothing updates
+	if(!title || length === 0)
+	{
+		console.log("called1")
+		
+		multi_title = '';
+		multi_len = 0;
+		//clean chart
+		CleanCharts();
+		return;
+	}
+
+	if(IsInstuctor)
+	{
+		BarChartDataSetup(length);
+
+		getBarChartDataFromServer(title);   
+	    renderBarChart();
+
+	    timer = setTimeout(function(){Timer2();}, timerSpeed/4);
+	}
+
+	multi_title = title;
+	multi_len = length;
+}
+
+function getBarChartDataFromServer(title)
+{
+	socket.emit('get_chart_multiple_choice_data', {title: title});
+}
+
+socket.on('chart_multiple_choice_update', function(chart_data){
+	updateBarChartData(chart_data);
+});
+
+
+function BarChartDataSetup(length)
+{
+	var data = {};
+	data.labels = [];
+	data.datasets = [];
+
+
+	data.datasets.push({
+		
+		borderWidth : 1,
+		borderColor : [],
+		backgroundColor : [],
+		data : []
+	});
+
+
+	
+	for(var cnt = 0; cnt < length; cnt++){
+		data.labels.push('Answer '+ (cnt + 1));
+		data.datasets[0].data.push(0);
+		var color = randRGB();
+		data.datasets[0].borderColor.push(RGBA(color, 1));
+		data.datasets[0].backgroundColor.push(RGBA(color, 0.2));
+
+	}
+
+	barData = data;
+}
+
+function updateBarChartData(chart_data)
+{
+	barData.datasets[0].data = []
+	for(var cnt = 0; cnt < multi_len; cnt++)
+		barData.datasets[0].data.push(0);
+	//get active users
+	var activeUsers = chart_data.length - chart_data.inactive;
+
+	//update chart with data for server
+	Object.keys(chart_data.answers).forEach(function(item){
+		var index = parseInt(item.replace('a_', ''));
+		barData.datasets[0].data[index] = chartFormat(chart_data.answers[item], activeUsers);
+	});
+
+	barData.datasets[0].label = "# of Responses Vs. # Active Users : " + activeUsers + ' vs. '+ chart_data.length;
+}
+
+function chartFormat(score, length)
+{
+	return ((length === 0) ? 0 :(score/length) * 100);
+}
+
+function renderBarChart()
+{
+	CleanCharts();
+	barChart = new Chart(ChartHTML, {
+		type: 'bar',
+		data: barData,
+		options: {
+			responsive: false,
+			animation: false,
+			scales: {
+				yAxes:[{
+					ticks: {
+						min : 0,
+						max : 100,
+						maxTicksLimit: 4,
+						stepSize: 25
+					}
+				}]
+			}
+		}
+	});
+}
+
+
+
+
+
+
+
+
+
+
+
