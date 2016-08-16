@@ -32,10 +32,18 @@ $('.slides').children().each(function(index){
     }
     else
     {
-        found = $(this).find('.binary_tag')[0];//find the first avaible binary tag
+        found = $(this).find('.binary_tag');//find the first avaible binary tag
 
-        if(found)//if there is a binary tag add it
-            setBinary_default(index, $(found).text(), $(found).attr('binary-section'));
+        if(found.length > 0)
+            for(var cnt = 0; cnt < found.length; cnt++)
+            {
+                var bin_tag = found[cnt]
+                var section = $(bin_tag).attr('binary-section');
+                if(section){
+                    setBinary_default(index, $(bin_tag).text(), section);
+                    return;
+                }
+            }
     }   
 });
 
@@ -266,7 +274,7 @@ socket.on('lecture_client_setup', function(isInstuctor){
                 tags.titles.push(tagInfo.title);
 
                 //add to the sidebar a icon that has the title of the child title and the image that is the string location of the text in the child
-                $(sidebar).append(bulidSidebarIcon(tagInfo.title + "_" + section, "icon-disabled", tagInfo.src));
+                $(sidebar).append(bulidSidebarIcon(tagInfo.title + "_" + section.replace(' ', '_'), "icon-disabled", tagInfo.src));
             });
             if(isMobile)
             {
@@ -293,7 +301,7 @@ socket.on('lecture_client_setup', function(isInstuctor){
 
             tag_status.tag_responses.forEach(function(tag_data){
                 //get the tag by it's name
-                var tag = $('#' + tag_data.title + '_' + tag_status.section);
+                var tag = $('#' + tag_data.title + '_' + tag_status.section.replace(' ', '_'));
                 //check what state that tag was when you last used it
                 switch(tag_data.response)
                 {

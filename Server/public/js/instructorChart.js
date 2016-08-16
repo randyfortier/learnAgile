@@ -213,7 +213,9 @@ function updateRadarChart()
             scale: {
             	ticks: {
             		maxTicksLimit: 4,
-            		stepSize: 0.25
+            		stepSize: 0.25,
+					max : 1,
+					min : 0
             		// fontSize: 20            	
             	}
             }

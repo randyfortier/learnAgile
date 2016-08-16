@@ -123,7 +123,74 @@ function addLineChart(canvas, stats, tag_names)
 			}
 		}
 	});
+}
+
+function addAvgLineChart(canvas, stats, tag_names)
+{
+	var data = {};
+	data.labels = [];
+	data.datasets = [];
+
+	tag_names.forEach(function(tag_name, index){
+		data.datasets.push({
+			label : tag_name.name,
+			fill: false,
+			lineTension: 0,
+			borderCapStyle: 'butt',
+			borderDash: [10, 5],
+			borderDashOffset: 0.0,
+			borderJoinStyle: 'miter',
+			pointBorderWidth: 1,
+			pointHoverRadius: 5,
+			pointHoverBorderWidth: 2,
+			pointRadius: 0,
+			borderWidth : 1,
+			borderColor : [],
+			data : []
+		});
+		
+		var color;
+		if(tag_name.color)
+			color = tag_name.color;
+		else
+			color = randRGB();
+		for(var cnt = 0; cnt < Object.keys(stats).length; cnt++)
+		{
+			data.datasets[index].borderColor.push(RGBA(color, 1));
+		}
+	});			
+	
+	Object.keys(stats).forEach(function(section){//each section
+		var secVar = stats[section];
+
+		data.labels.push(section);
+
+		tag_names.forEach(function(tag_name, index){
+			var tag = secVar[tag_name.name];
+			data.datasets[index].data.push(chartFormat(tag.U, tag.U+tag.D));
+		});
+	});
+
+	var myBarChart = new Chart($('#' + canvas), {
+		type: 'line',
+		data: data,
+		options: {
+			responsive: false,
+			animation: false,
+			scales: {
+				yAxes:[{
+					ticks: {
+						min : 0,
+						max : 100,
+						maxTicksLimit: 4,
+						stepSize: 25
+					}
+				}]
+			}
+		}
+	});
 }	
+
 
 function addToTable(tableid, stats, tag_order)
 {
@@ -151,10 +218,6 @@ function addToTable(tableid, stats, tag_order)
 
 	addEntryToTable(tableid, "AVERAGE", avg_values);
 }
-
-
-
-
 
 function addEntryToTable(tableid, name, tags)
 {

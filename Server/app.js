@@ -318,7 +318,7 @@ app.post('/course_summary', function(request, response){
     if(isAnInstructor(request.session))
     {
         // retrive all the data in the database
-        student_binary_ResponseDB.find({}).then(function(results){
+        student_binary_ResponseDB.find({}).exec(function(error, results){
             //if there is a response send the data
             if(results.length > 0){
                 //variables for the student stats and the lecture stats
@@ -332,7 +332,7 @@ app.post('/course_summary', function(request, response){
                 });
                 
                 //change the userid that are in the data above to be the sid's equivalent
-                UserDB.find({isInstructor:false}).select({userid: 1, sid: 1}).then(function(results){
+                UserDB.find({isInstructor:false}).select({userid: 1, sid: 1}).exec(function(error, results){
                     if(results.length > 0)
                     {
                         //rename each userid to be its sid equivalent
@@ -503,7 +503,14 @@ app.get('/lecture_summary', function(request, response){
                 });
                 
                 //get all the students in the userDb
-                UserDB.find({isInstructor:false}).select({userid: 1, sid: 1}).then(function(results){
+                UserDB.find({isInstructor:false}).select({userid: 1, sid: 1}).exec(function(error, results){
+                    if(error)
+                    {
+                        //if error accessing DB, console error, and render error message page
+                        console.log("Lecture Summary, Instructor, error accessing the UserDB database, Error: " + error);
+                        renderPage(request.session, response, 'lecture_summary', 'Lecture Summary - ' + lecture,  {error:"Unable to access database."});
+                        return;
+                    }
                     if(results.length > 0)
                     {
                         //replace all userid with the equivalent sid
@@ -816,7 +823,7 @@ io.on('connection', function(socket){
                     section : request.section
                 };
 
-                student_binary_ResponseDB.find(query).select({response: 1, tag_title: 1}).then(function(results){
+                student_binary_ResponseDB.find(query).select({response: 1, tag_title: 1}).exec(function(error, results){
                     if(results.length > 0)
                     {
                         var tag_data = {};
@@ -862,7 +869,7 @@ io.on('connection', function(socket){
                 };
 
                 //search to see if there is already an item with the correct id's
-                student_binary_ResponseDB.find(searchQuery).limit(1).then(function(results){
+                student_binary_ResponseDB.find(searchQuery).limit(1).exec(function(error, results){
                     //if there is already an item update it
                     if(results.length > 0)
                     {
@@ -885,6 +892,7 @@ io.on('connection', function(socket){
             socket.on('check_binary_tags_status', function(titles_section){
                 
                 var titles = titles_section.titles;
+
                 //set up the database query
                 var searchQuery = {
                     lecture: lecture,
@@ -965,7 +973,7 @@ io.on('connection', function(socket){
 // student_binary_ResponseDB.find({}).remove().exec(function(){
 //     console.log("done");
 // });
-// student_binary_ResponseDB.find({tag_title: 'Difficult'})
+// student_binary_ResponseDB.find({section: 'Open data'})
 //     .then(function(results){
 //         console.log(results);
 //     });

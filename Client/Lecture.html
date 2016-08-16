@@ -59,12 +59,12 @@
 				</section>
 
 				<section data-transition='fade'>
-                    <script class='binary_tag' binarysection='Outline' type='text/xml'>
-                        <tags>
-                            <hard></hard>
+                    <script class='binary_tag' binary-section='Intro' type='text/xml'>
+                        <btags>
+                            <difficult></difficult>
                             <like></like>
                             <study></study>
-                        </tags>
+                        </btags>
                     </script>
 					<h2>Outline</h2>
 					<ul>
@@ -90,17 +90,24 @@
                              data-background-size="70%"
                              data-transition="fade"
                              class="title">
-                        <script class='binary_tag' binarysection='AJAX' type='text/xml'>
-                            <tags>
-                                <hard></hard>
+                        <script class='binary_tag' binary-section='Ajax' type='text/xml'>
+                            <btags>
+                                <difficult></difficult>
                                 <like></like>
-                            </tags>
+                                <study></study>
+                            </btags>
                         </script>
                         <h1 style="margin-left: 342px">AJAX, JSON, and XML</h1>
                         <h3 style="margin-left: 342px">AJAX</h3>
                     </section>
 
                     <section data-transition='fade'>
+                        <script class='binary_tag' binary-section='Ajax' type='text/xml'>
+                            <btags>
+                                <difficult></difficult>
+                                <like></like>
+                            </btags>
+                        </script>
                         <h2>AJAX</h2>
                         <ul>
                             <li>Asynchronous JavaScript and XMLHttpRequest:
@@ -114,10 +121,10 @@
                     </section>
                     
                     <section data-transition='fade'>
-                        <script class='binary_tag binary_default' binarysection='AJAX' type='text/xml'>
-                            <tags>
-                                <hard></hard>
-                            </tags>
+                        <script class='binary_tag binary_default' binary-section='Ajax' type='text/xml'>
+                            <btags>
+                                <difficult></difficult>
+                            </btags>
                         </script>
                         
                         <h2>AJAX</h2>
@@ -139,10 +146,10 @@
                     </section>
                     
                     <section data-transition='fade'>
-                        <script class='binary_tag binary_default' binarysection='AJAX' type='text/xml'>
-                            <tags>
+                        <script class='binary_tag' binary-section='Ajax' type='text/xml'>
+                            <btags>
                                 <like></like>
-                            </tags>
+                            </btags>
                         </script>
                         <h2>When to Use AJAX</h2>
                         <ul>
@@ -351,11 +358,12 @@ $.ajax("timeToLaunch.php")
                              data-background-size="70%"
                              data-transition="fade"
                              class="title">
-                        <script class='binary_tag' binarysection='JSON' type='text/xml'>
-                            <tags>
-                                <hard></hard>
+                        <script class='binary_tag' binary-section='JSON' type='text/xml'>
+                            <btags>
+                                <difficult></difficult>
                                 <like></like>
-                            </tags>
+                                <study></study>
+                            </btags>
                         </script>
                         <h1 style="margin-left: 342px">AJAX, JSON, and XML</h1>
                         <h3 style="margin-left: 342px">JSON</h3>
@@ -475,6 +483,13 @@ $.getJSON('getStats.py', function(data) {
                              data-background-size="70%"
                              data-transition="fade"
                              class="title">
+                        <script class='binary_tag' binary-section='XML' type='text/xml'>
+                            <btags>
+                                <difficult></difficult>
+                                <like></like>
+                                <study></study>
+                            </btags>
+                        </script>
                         <h1 style="margin-left: 342px">AJAX, JSON, and XML</h1>
                         <h3 style="margin-left: 342px">XML</h3>
                     </section>
@@ -630,6 +645,13 @@ $.get('inventory.xml', function(xmlDoc) {
                              data-background-size="70%"
                              data-transition="fade"
                              class="title">
+                        <script class='binary_tag' binary-section='Open data' type='text/xml'>
+                            <btags>
+                                <difficult></difficult>
+                                <like></like>
+                                <study></study>
+                            </btags>
+                        </script>
                         <h1 style="margin-left: 342px">AJAX, JSON, and XML</h1>
                         <h3 style="margin-left: 342px">Open Data</h3>
                     </section>
@@ -803,20 +825,11 @@ $.get('inventory.xml', function(xmlDoc) {
 		</script>
 		<script src="js/uoit.js"></script>
 
+
         <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
-
-        <!-- // <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.0.0/jquery.min.js"></script> -->
-
-        <!-- // <script src="js/jquery-3.0.0.js"></script> -->
-        <script src="js/jquery-3.0.0.min.js"></script>
-
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.6/Chart.js"></script>
-        
         <link rel="stylesheet" href="css/tagging.css" />
         <script type="text/javascript" src="js/tagging.js"></script>
-        
-
-
-
 	</body>
 </html>
