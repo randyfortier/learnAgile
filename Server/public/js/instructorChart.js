@@ -22,7 +22,8 @@ var radar_chart_data = {};
 //add item to show when the chart is ready, and add the chart to the screen
 $('#speaker-controls').append('<div id="loading-text" style="text-align:center">Loading</div>');
 $('#speaker-controls').append(ChartHTML);
-
+$('#speaker-controls').append('<button id="close_question">Close Question</button>');
+$('#close_question').click(Button_click);
 
 //code to repeatily look for the iframe that contians the current lecture
 function findLecture()
@@ -89,12 +90,14 @@ window.addEventListener('message',function(event){
 	var data = JSON.parse( event.data );
 	//if the Tags field exists
 	if(data.BinaryTags){
+		HideButton();
 		stopTimer();
 		//send the tags to be updated
 		ParseTags(data.BinaryTags.tags, data.BinaryTags.section);
 	}
 	else if (data.MultipleChoice)
 	{
+		HideButton();
 		stopTimer();
 		ActivateBarChart(data.MultipleChoice.title, data.MultipleChoice.length);
 	}
@@ -319,7 +322,7 @@ function ActivateBarChart(title, length)
 
 		getBarChartDataFromServer(title);   
 	    renderBarChart();
-
+		ShowButton();
 	    timer = setTimeout(function(){Timer2();}, timerSpeed/4);
 	}
 
@@ -412,12 +415,17 @@ function renderBarChart()
 }
 
 
+function HideButton()
+{
+	$('#close_question').css('display', 'none');
+}
 
+function ShowButton()
+{
+	$('#close_question').css('display', '');
+}
 
-
-
-
-
-
-
-
+function Button_click()
+{
+	socket.emit('close_multiple_choice_question', multi_title);
+}

@@ -786,6 +786,14 @@ var student_multiple_choice_response_schema = new Schema({
 },{collection: 'multiple_response'});
 var student_multiple_choice_ResponseDB = mongoose.model('multiple_response', student_multiple_choice_response_schema);
 
+//schema for the response from student on the tags
+var multiple_choice_lecture_status_schema = new Schema({
+    lecture: String,
+    title: String,
+    status: Boolean
+},{collection: 'multiple_choice_status'});
+var multiple_choice_lecture_statusDB = mongoose.model('multiple_choice_status', multiple_choice_lecture_status_schema);
+
 
 //setup teacher controlling slide 
 io.on('connection', function(socket){
@@ -881,8 +889,6 @@ io.on('connection', function(socket){
                     }
                 });
             });
-
-
         }
         else
         {
@@ -1054,12 +1060,6 @@ io.on('connection', function(socket){
                     socket.emit('multiple_choice_status', status_request);
                 });        
             });
-
-
-
-
-
-
         }
 
         //when disconnecting for the server, check if the user can be removed
@@ -1067,6 +1067,87 @@ io.on('connection', function(socket){
             //remove the user for the room
             socket.leave(session.lecture);
         });
+
+        function searchDBForResponse(DB, searchQuery, newResponse)
+        {
+            //search to see if there is already an item with the correct id's
+            DB.find(searchQuery).limit(1).exec(function(error, results){
+                //if there is already an item update it
+                if(results.length > 0)
+                {
+                    // update the current response
+                    DB.update(searchQuery, newResponse, {multi: false}, function(error, numAffected){
+                        if(error)
+                        {
+                            console.log("Error in updating " + session.sid + "'s account, response was " + response + ", lecture was " + lecture);
+                        }
+                    });
+                }
+                else//if there isn't already an item, add the item to the database
+                {
+                    saveNewResponse(DB, newResponse);
+                }
+            });
+        }
+
+        function saveNewResponse(DB, value)
+        {
+            //save the value to the binary response db reutrn 
+            new DB(value).save(function(error){
+                if(error){ // if there was an error then return what print out the user, the lecture and the title of the tag
+                    console.log("Error adding Default response for user: " + session.sid + ", lecture: " + lecture + ", value: " + value + ", Error: " + error);
+                }
+            });
+        }
+
+        socket.on('close_multiple_choice_question', function(title){
+            var searchQuery = {
+                title: title,
+                lecture: lecture
+            };
+
+            var newResponse  = {
+                title: title,
+                lecture: lecture,
+                status: false //aka closed
+            };
+
+            searchDBForResponse(multiple_choice_lecture_statusDB, searchQuery, newResponse);
+
+            // io.to(lecture).emit('close_multiple_choice_question', title);
+           //set a query to look for all data what matches
+            // the right lecture, slide number and tag title
+            var query = {
+                lecture : lecture,
+                multi_title: title
+            };
+
+            //search the database for each in the lecture and seciton
+            student_multiple_choice_ResponseDB.find(query).select({response: 1}).exec(function(error, results){
+                //if there is a response emit to instructor
+                if(results.length > 0)
+                {
+
+                    var answers = {};
+                    var inActive = 0;
+                    results.forEach(function(item){
+                        if (item.response === 'a_-1')
+                            inActive++;
+                        else
+                            answers[item.response] = answers[item.response] + 1 || 1;
+                    });
+
+                    //send to the user
+                    io.to(lecture).emit('close_multiple_choice_question', {title:title, answers:answers, length: results.length, inactive: inActive});
+                }
+            });
+
+        });
+
+
+
+
+
     });
 });
 
