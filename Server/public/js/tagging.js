@@ -28,7 +28,7 @@ $('multiplechoice').each(function(index){
     var question = $(multi).find('question').html();
 
     //add the question text and an ordered list
-    $('#question_'+index).append('<h2>'+question+'</h2>');
+    $('#question_'+index).append('<h2 id="'+$(multi).attr('title').replace(' ', '_')+'">'+question+'</h2>');
     $('#question_'+index).append('<ol id="answers_'+index+'" title="'+$(multi).attr('title')+'"></ol>');
 
     //for each answer in the question add it to the question div, add 2 classes, answer for adding
@@ -504,4 +504,107 @@ socket.on('lecture_client_setup', function(isInstuctor){
             
         });
     }
+    socket.on('close_multiple_choice_question', function(chart_data){
+        console.log(chart_data.title);
+
+        var title = chart_data.title.replace(' ', '_');
+
+        var len = $('#'+title).next().children().length;
+
+        $('#'+title).next().remove();
+
+        $('#'+title).after('<canvas id="'+title+'_chart" style="test-align: left"></canvas>');
+
+        createChart(chart_data, $('#'+title+'_chart'), len);
+
+    });
+
+
+    function createChart(chart_data, canvas, length)
+    {
+        var data = {};
+        data.labels = [];
+        data.datasets = [];
+
+        data.datasets.push({
+            
+            borderWidth : 1,
+            borderColor : [],
+            backgroundColor : [],
+            data : []
+        });
+
+        for(var cnt = 0; cnt < length; cnt++){
+            data.labels.push('Answer '+ (cnt + 1));
+            data.datasets[0].data.push(0);
+            var color = randRGB();
+            data.datasets[0].borderColor.push(RGBA(color, 1));
+            data.datasets[0].backgroundColor.push(RGBA(color, 0.2));
+
+        }
+
+        data.datasets[0].data = []
+        for(var cnt = 0; cnt < length; cnt++)
+            data.datasets[0].data.push(0);
+        //get active users
+        var activeUsers = chart_data.length - chart_data.inactive;
+
+        //update chart with data for server
+        Object.keys(chart_data.answers).forEach(function(item){
+            var index = parseInt(item.replace('a_', ''));
+            data.datasets[0].data[index] = chartFormat(chart_data.answers[item], activeUsers);
+        });
+
+        data.datasets[0].label = "# of Responses Vs. # Active Users : " + activeUsers + ' vs. '+ chart_data.length;
+
+
+
+        var barChart = new Chart(canvas, {
+            type: 'bar',
+            data: data,
+            options: {
+                responsive: false,
+                animation: false,
+                scales: {
+                    yAxes:[{
+                        ticks: {
+                            min : 0,
+                            max : 100,
+                            maxTicksLimit: 4,
+                            stepSize: 25
+                        }
+                    }]
+                }
+            }
+        });
+    }
+
+    function chartFormat(score, length)
+    {
+        return ((length === 0) ? 0 :(score/length) * 100);
+    }
+
+    //return the format of chart.js rgba color
+    function RGBA(rgb, a)
+    {
+        return 'rgba('+rgb.r+','+rgb.g+','+rgb.b+','+a+')';
+    }
+
+    //randomaly generate a color
+    function randRGB()
+    {
+        return {r:rand(255), g:rand(255), b:rand(255)};
+    }
+
+    //random function that get the color from 0 to the max
+    function rand(max)
+    {
+        return Math.floor(Math.random() * max);
+    }
+
+
+
+
+
+
 });
