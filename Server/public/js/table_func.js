@@ -1,4 +1,8 @@
-var graph_order_N_color = [{name:'Difficult', color: {r:255, g:0, b:0}}, {name:'Like', color: {r:0, g:0, b:0}}, {name:'Study', color: {r:0, g:0, b:255}}];
+var graph_order_N_color = [
+	{name:'Difficult', color: {r:255, g:0, b:0}},
+	{name:'Like', color: {r:0, g:0, b:0}},
+	{name:'Study', color: {r:0, g:0, b:255}}
+];
 
 function addBarChart(canvas, stats, tag_names)
 {

@@ -295,7 +295,7 @@ function registerInstructor(session, sid, password, onSuccess, onFail)
     register(session, sid, password, onSuccess, onFail, true);
 }
 
-//Report Functionality
+/******** Report Functionality ********/
 
 app.get('/course_summary', function(request, response){
     //render the Course Overview page
@@ -826,7 +826,7 @@ io.on('connection', function(socket){
             });
 
             //used to get the real time data for the student
-            socket.on('get_chart_binary_tag_data', function(request){
+            socket.on('get_YNRQ_chart_data', function(request){
                 //set a query to look for all data what matches
                 // the right lecture, slide number and tag title
                 var query = {
@@ -854,7 +854,7 @@ io.on('connection', function(socket){
                         });
                         
                         //send to the user
-                        socket.emit('chart_binary_tag_update', tag_data);
+                        socket.emit('YNRQ_chart_data', tag_data);
                     }
                 });
             });
@@ -895,7 +895,7 @@ io.on('connection', function(socket){
             //holds the functionality that is unique to the student
 
             //when the student sends a response to the server, update/add that data to the code
-            socket.on('student_binary_response', function(response_data){
+            socket.on('YNRQ_response', function(response_data){
                 
                 //add to the database
                 var title = response_data.title;
@@ -920,7 +920,7 @@ io.on('connection', function(socket){
             });
            
             //called when the user check for the status of there current tag
-            socket.on('check_binary_tags_status', function(titles_section){
+            socket.on('check_YNRQs_status', function(titles_section){
                 
                 var titles = titles_section.titles;
 
@@ -956,8 +956,6 @@ io.on('connection', function(socket){
                                 saveNewBinaryResponse(student_binary_ResponseDB, searchQuery);
                             }
                         });
-
-                        socket.emit('binary_tags_status', {tag_responses: tag_responses, section: titles_section.section});
                     }
                     else
                     {
@@ -971,9 +969,9 @@ io.on('connection', function(socket){
                             
                             saveNewBinaryResponse(student_binary_ResponseDB, searchQuery);
                        });
-
-                        socket.emit('binary_tags_status', {tag_responses: tag_responses, section: titles_section.section});
                     }   
+
+                    socket.emit('YNRQs_status', {tag_responses: tag_responses, section: titles_section.section});
                 });        
             });
 
@@ -1144,11 +1142,14 @@ io.on('connection', function(socket){
 
         });
 
-
-
-
-
     });
+    // socket.on("mobile_debug", function(data){
+    //     if(typeof data === "Object")
+    //         console.log(session.sid + ': ', JSON.stringify(data));            
+    //     else
+    //         console.log(session.sid + ': ', data);
+    // });
+
 });
 
 // // cleanDB();
@@ -1156,7 +1157,7 @@ io.on('connection', function(socket){
 //     console.log("done");
 // });
 // student_binary_ResponseDB.find({section: 'Open data'})
-//     .then(function(results){
+//     .exec(function(error, results){
 //         console.log(results);
 //     });
 

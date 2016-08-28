@@ -19,6 +19,7 @@
 
 		<link rel="stylesheet" href="css/reveal.css" />
 		<link rel="stylesheet" href="css/theme/black.css" id="theme" />
+        <link rel="stylesheet" href="css/tagging.css" />
 
 		<!-- Printing and PDF exports -->
 		<script>
@@ -59,12 +60,10 @@
 				</section>
 
 				<section data-transition='fade'>
-                    <script class='binary_tag' binary-section='Intro' type='text/xml'>
-                        <btags>
-                            <difficult></difficult>
-                            <like></like>
-                            <study></study>
-                        </btags>
+                    <script id="test3" class='YNRQuestion YNRQuestion-default' YNRQuestion YNRQuestion-section='Intro' type='text/xml'>       
+                        <difficult></difficult>
+                        <like></like>
+                        <study></study>
                     </script>
 					<h2>Outline</h2>
 					<ul>
@@ -90,23 +89,21 @@
                              data-background-size="70%"
                              data-transition="fade"
                              class="title">
-                        <script class='binary_tag' binary-section='Ajax' type='text/xml'>
-                            <btags>
-                                <difficult></difficult>
-                                <like></like>
-                                <study></study>
-                            </btags>
+                        <script class='YNRQuestion YNRQuestion-default' YNRQuestion-section='Ajax' type='text/xml'>
+                            <difficult></difficult>
+                            <like></like>
+                            <study></study>
                         </script>
                         <h1 style="margin-left: 342px">AJAX, JSON, and XML</h1>
                         <h3 style="margin-left: 342px">AJAX</h3>
                     </section>
 
                     <section data-transition='fade'>
-                        <script class='binary_tag' binary-section='Ajax' type='text/xml'>
-                            <btags>
+                        <script class='YNRQuestion' YNRQuestion-section='Ajax' type='text/xml'>
+                            
                                 <difficult></difficult>
                                 <like></like>
-                            </btags>
+                            
                         </script>
                         <h2>AJAX</h2>
                         <ul>
@@ -121,10 +118,10 @@
                     </section>
                     
                     <section data-transition='fade'>
-                        <script class='binary_tag binary_default' binary-section='Ajax' type='text/xml'>
-                            <btags>
+                        <script class='YNRQuestion' YNRQuestion-section='Ajax' type='text/xml'>
+                            
                                 <difficult></difficult>
-                            </btags>
+                            
                         </script>
                         
                         <h2>AJAX</h2>
@@ -146,10 +143,10 @@
                     </section>
                     
                     <section data-transition='fade'>
-                        <script class='binary_tag' binary-section='Ajax' type='text/xml'>
-                            <btags>
+                        <script class='YNRQuestion' YNRQuestion-section='Ajax' type='text/xml'>
+                            
                                 <like></like>
-                            </btags>
+                            
                         </script>
                         <h2>When to Use AJAX</h2>
                         <ul>
@@ -358,12 +355,10 @@ $.ajax("timeToLaunch.php")
                              data-background-size="70%"
                              data-transition="fade"
                              class="title">
-                        <script class='binary_tag' binary-section='JSON' type='text/xml'>
-                            <btags>
-                                <difficult></difficult>
-                                <like></like>
-                                <study></study>
-                            </btags>
+                        <script class='YNRQuestion  YNRQuestion-default' YNRQuestion-section='JSON' type='text/xml'>                            
+                            <difficult></difficult>
+                            <like></like>
+                            <study></study>
                         </script>
                         <h1 style="margin-left: 342px">AJAX, JSON, and XML</h1>
                         <h3 style="margin-left: 342px">JSON</h3>
@@ -483,12 +478,10 @@ $.getJSON('getStats.py', function(data) {
                              data-background-size="70%"
                              data-transition="fade"
                              class="title">
-                        <script class='binary_tag' binary-section='XML' type='text/xml'>
-                            <btags>
-                                <difficult></difficult>
-                                <like></like>
-                                <study></study>
-                            </btags>
+                        <script class='YNRQuestion YNRQuestion-default' YNRQuestion-section='XML' type='text/xml'>                            
+                            <difficult></difficult>
+                            <like></like>
+                            <study></study>
                         </script>
                         <h1 style="margin-left: 342px">AJAX, JSON, and XML</h1>
                         <h3 style="margin-left: 342px">XML</h3>
@@ -645,12 +638,10 @@ $.get('inventory.xml', function(xmlDoc) {
                              data-background-size="70%"
                              data-transition="fade"
                              class="title">
-                        <script class='binary_tag' binary-section='Open data' type='text/xml'>
-                            <btags>
-                                <difficult></difficult>
-                                <like></like>
-                                <study></study>
-                            </btags>
+                        <script class='YNRQuestion YNRQuestion-default' YNRQuestion-section='Open data' type='text/xml'>
+                            <difficult></difficult>
+                            <like></like>
+                            <study></study>
                         </script>
                         <h1 style="margin-left: 342px">AJAX, JSON, and XML</h1>
                         <h3 style="margin-left: 342px">Open Data</h3>
@@ -851,7 +842,6 @@ $.get('inventory.xml', function(xmlDoc) {
         <script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
         <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.6/Chart.js"></script>
-        <link rel="stylesheet" href="css/tagging.css" />
         <script type="text/javascript" src="js/tagging.js"></script>
 	</body>
 </html>

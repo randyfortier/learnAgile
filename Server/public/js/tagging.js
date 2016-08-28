@@ -1,18 +1,17 @@
 var socket = io();//'http://sci54.science.uoit.ca:3000');
-var binary_default = {};
-var currentH = 0;
-var isDefault = false;
-var currentSection = "";
+var YNRQuestion_section_default = {};
 var ActionFunc = null;
 var isMobile = false;
 var mobileSize = 110;
 var mobilePos = "110%"
 // var cnt = 0;
 
-var standardTags = {
-    'like': {title:'Like', src:'images/like.png'},
-    'difficult': {title:'Difficult', src:'images/hard.png'},
-    'study': {title:'Study', src:'images/study.png'}
+//YNRQuestion/YNRQ - Yes No Response Question
+
+var standardYNRQuestions = {
+    'like': {title:'Like', src:'images/like.png', tip:'I find this content interesting'},
+    'difficult': {title:'Difficult', src:'images/hard.png', tip:'I find this content difficult'},
+    'study': {title:'Study', src:'images/study.png', tip:'I think I should study this for the test'}
 };
 
 //hide the multiplechoice html
@@ -38,45 +37,31 @@ $('multiplechoice').each(function(index){
     });
 });
 
-function setBinary_default(index, text, section)
+function setYNRQ_section_default(index, text, section, tip)
 {
-    binary_default['h_' + index] = {xml: text, section:section};
+    YNRQuestion_section_default['h_' + index] = {xml: text, section:section};
 }
 
 $('.slides').children().each(function(index){
-    //check for the instances of binary_tags
-    var found = $(this).find('.binary_default');
+    //check for the instances of YNRQs
+    var found = $(this).find('.YNRQuestion-default');
     //if an item is found
     if(found[0])
     {
-        setBinary_default(index, $(found[0]).text(), $(found).attr('binary-section'));// add the first binary_default to the default map
+        setYNRQ_section_default(index, $(found[0]).text(), $(found).attr('YNRQuestion-section'));// add the first YNRQuestion_section_default to the default map
     }
-    else
-    {
-        found = $(this).find('.binary_tag');//find the first avaible binary tag
-
-        if(found.length > 0)
-            for(var cnt = 0; cnt < found.length; cnt++)
-            {
-                var bin_tag = found[cnt]
-                var section = $(bin_tag).attr('binary-section');
-                if(section){
-                    setBinary_default(index, $(bin_tag).text(), section);
-                    return;
-                }
-            }
-    }   
 });
 
 function getXMLData(item)
 {
-    var standard = standardTags[$(item)[0].tagName.toLowerCase()];
+    var standard = standardYNRQuestions[$(item)[0].tagName.toLowerCase()];
 
     if(!standard)
     {
         var title = $(item).attr('title');
         var src = $(item).attr('src');
-        return {title: title, src:src};
+        var tip = $(item).attr('tip');
+        return {title: title, src:src, tip: tip};
     }
     else
         return standard;
@@ -87,7 +72,7 @@ function tagAction()
     if(ActionFunc !== null)
         ActionFunc();
 }
-//4
+
 if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
     isMobile = true;   
 }
@@ -111,14 +96,14 @@ socket.on('lecture_client_setup', function(isInstuctor){
                     if(data.method === 'setState')
                     {
                         if(!sendMultipleChoice(event.source, origin))
-                            sendBinaryTags(event.source, origin);
+                            sendYNRQs(event.source, origin);
                     }
                 }
                 else
                 {
                     if(data.name){
                         if(!sendMultipleChoice(event.source, origin))
-                            sendBinaryTags(event.source, origin);
+                            sendYNRQs(event.source, origin);
                         lec_name = data.name;
                         Reveal.addEventListener( 'slidechanged', function( event ) {
                             //sends a siginal to the server to change the students slides
@@ -145,13 +130,12 @@ socket.on('lecture_client_setup', function(isInstuctor){
                     return false;
             }
 
-            function sendBinaryTags(source, origin)
+            function sendYNRQs(source, origin)
             {
                 var slide = Reveal.getCurrentSlide();
-                var tags = checkNupdateTag(slide, Reveal.getIndices().h); 
-                console.log('sendBT, TAGS:', tags);
+                var YNRQs = checkNretriveYNRQ(slide, Reveal.getIndices().h);
                 source.postMessage(JSON.stringify({
-                    BinaryTags: tags//checkNupdateTag(slide, Reveal.getIndices().h)
+                    YNRQuestion: YNRQs
                 }), origin); 
             }
 
@@ -170,37 +154,34 @@ socket.on('lecture_client_setup', function(isInstuctor){
                 }
                 return {title: "", length: -1};
             }
-
-            function checkNupdateTag(slide, hIndex)
+            
+            function checkNretriveYNRQ(slide, hIndex)
             {
-                //check for xml data
-                var rawxml = $(slide).find('.binary_tag');
-                //use !== 0 beacuse find returns a empty array
-                //if !0 then there is a tag there
-                if(rawxml.length !== 0)
+                //search for any Script Tag with the class YNRQuestion in it
+                var YNRQuestions = $(slide).find('.YNRQuestion');
+                
+                //if there is a Script Tag with YNRQuestion class
+                if(YNRQuestions.length > 0)
                 {
-                    //NOTE: have script be type='text/xml', also parseXML didn't work and gave error
-                    //add the buuton to the screen and update the onclick method with the tag data and index of slide
-                    return {tags: bulidListfromXML($(rawxml[0]).text()) , section: $(rawxml).attr('binary-section')};
-                    
+                    //update the YNRQSidebar with the Tags that are available in this slide
+                    return {YNRQs: bulidListofYNRQs($(YNRQuestions[0]).text()), section:$(YNRQuestions).attr('YNRQuestion-section')};
                 }
                 else
                 {
-                     //check to see if the a default exists, if so then add the default
-                    if(binary_default.hasOwnProperty('h_' + hIndex)){
-                        return {tags: bulidListfromXML(binary_default['h_'+hIndex].xml) , section: binary_default['h_'+hIndex].section};
-                        // updateTagTitles(binary_default['h_'+hIndex].xml, binary_default['h_'+hIndex].section);
-                        // return true;
+                    //check to see if the a default exists, if so then add the default
+                    if(YNRQuestion_section_default.hasOwnProperty('h_' + hIndex)){
+                        return {YNRQs: bulidListofYNRQs(YNRQuestion_section_default['h_'+hIndex].xml) , section: YNRQuestion_section_default['h_'+hIndex].section};
                     }
                 }
                 return {tag: null, section: null};
             }
 
-            function bulidListfromXML(xml)
+            function bulidListofYNRQs(xml)
             {
-                var list = [];
+                var list = [];                
+                var wrapper = "<YNRQ>"+xml+"</YNRQ>";
                 //for each child in the xml get the title
-                $(xml).children().each(function(){
+                $(wrapper).children().each(function(){
                     //push the name in the list
                     var data = getXMLData($(this));
                     if(!data.title || !data.src)
@@ -213,10 +194,10 @@ socket.on('lecture_client_setup', function(isInstuctor){
     }
     else
     {
-        var UNKNOWN_RESPONSE = -1;
-        var DONTUNDERSTAND_RESPONSE = 0;
-        var UNDERSTAND_RESPONSE = 1;
-        var tagSidebar = $('<div id="sidebar"></div>');
+        var UNKNOWN_YN_RESPONSE = -1;
+        var DONTUNDERSTAND_YN_RESPONSE = 0;
+        var UNDERSTAND_YN_RESPONSE = 1;
+        var YNRQuestionSidebar = $('<div id="sidebar"></div>');
         var follow_Instructors_Slides = false;
 
         ActionFunc = function()
@@ -225,157 +206,174 @@ socket.on('lecture_client_setup', function(isInstuctor){
         }
 
         //NOTE: when adding sidebar, height at 100% only matches the height of the text on the screen
-        //adjusts that when adding to a new slide, fixed in the removeNaddsidebar function
+        //adjusts that when adding to a new slide, fixed in the moveYNRQSidebar function
 
         //moves to the slide that the server send, to the teachers slide
         socket.on('student-moveslide', function(indexies){
-            if(follow_Instructors_Slides)//ask randy/ken best practice
+            //follow the instrcutor only if the 'f' key is pressed
+            if(follow_Instructors_Slides)
+                //navigate to the corrent slide, [h, v] is data format
                 Reveal.slide(indexies[0], indexies[1], 0);
         });
 
         //when the slide changes, update the current the slide data
         Reveal.addEventListener( 'slidechanged', function( event ) {
-            slide_load(event.currentSlide);
-            multiChoice(event.currentSlide);
-            // if(isMobile)
-            //     $(event.currentSlide).append($('<div>').text("on mobile Device"));
+            //invoke the slide_change function on the current slide
+            slide_change(event.currentSlide);
         });
 
         //when the doucument is ready load the current slide
         $(document).ready(function(){
-            currentH = Reveal.getIndices().h;
-            slide_load(Reveal.getCurrentSlide());
-            multiChoice(Reveal.getCurrentSlide());
+            //invoke the slide_change function on the current slide
+            slide_change(Reveal.getCurrentSlide());
         });
 
-        function slide_load(slide)
-        {
-            //have a vertical sidebar to show the tags for the 
-            //add the sidebar to the slide
-            removeNAddSidebar(slide, [$('.slides').height(), slide.offsetTop]);
+        $(window).resize(function(){
+            //when the size of the windows changes, change the locaiton of the sidebar
+            KeepYNRQSidbarOnRight();
+        })
 
-            currentH = Reveal.getIndices().h;
-            //check if there is a tag avaiable in the current slide, if ther is load it
-            var change = checkNloadCurrentSlideXML(slide);
-            
-            if(!change)
-                //load the default if no change
-                loadDefaultBinaryTag(currentH);
+        function KeepYNRQSidbarOnRight()
+        {
+            if(isMobile){
+                YNRQuestionSidebar.css("left", mobilePos);
+            }
+            else{
+                if( parseInt($('.slides').css('margin-left')) > 0)
+                    $('#sidebar').css('left', (parseInt($('.slides').width()) + parseInt($('.slides').css('margin-left'))) - $('.YNRQ').width());
+                else
+                    $('#sidebar').css('left', '99%');
+            }
         }
 
-        function loadDefaultBinaryTag(index)
+        /*when ever a slide is loaded onto the screen,
+            - move the YNRQ sidebar to the currentslide
+            - Load the Load the sidebar with the YNRQuestion icons
+         */
+        function slide_change(slide)
+        {
+            //testing new code
+            multiChoice(slide);
+         
+            //move the YNRQsidebar from to the current slide, and set it's position
+            moveYNRQSidebar(slide, [$('.slides').height(), slide.offsetTop]);
+
+            //update the YNRquestion that are available in the Sidebar
+            UpdateYNRQuestionsInSidebar(slide);
+
+            KeepYNRQSidbarOnRight();
+        }
+
+        function moveYNRQSidebar(slide, adjustvalues = [])
+        {
+            //gets ride of the old sidebar on the previous slide
+            $('#sidebar').remove();
+
+            if(adjustvalues.length > 0){
+                //adjusts the height to be the height of the slide and location to be starting at the top of the slide
+                YNRQuestionSidebar.height(0.975*adjustvalues[0]);
+                YNRQuestionSidebar.css('top', -adjustvalues[1]);
+            }
+            //add the sidebar onto the current slide
+            $(slide).prepend(YNRQuestionSidebar);
+        }
+
+        function UpdateYNRQuestionsInSidebar(slide)
+        {
+            //Update the YNRQSidebar with YNRQs from the slide, if it fails, update the YNRQSidbar with the default YNRQs
+            if(!UpdateYNRQSidebarWithYNRQsFromSlide(slide))
+                //Update the YNRQSidbar with the default YNRQs
+                UpdateYNRQSidebarWithYNRQsDefaults(Reveal.getIndices().h);
+        }
+
+        function UpdateYNRQSidebarWithYNRQsDefaults(index)
         {
             //check to see if the a default exists, if so then add the default
             var hIndex = 'h_' + index;
-            if(binary_default.hasOwnProperty(hIndex))
-                updateCurrentTags(binary_default[hIndex].xml, binary_default[hIndex].section);
+            if(YNRQuestion_section_default.hasOwnProperty(hIndex))
+                appendYNRQsToSidebar(YNRQuestion_section_default[hIndex].xml, YNRQuestion_section_default[hIndex].section);
             else // else remove the previous tags
-                removeTags();
+                removeYNRQuestions();
         }
 
-        function checkNloadCurrentSlideXML(slide)
+        function UpdateYNRQSidebarWithYNRQsFromSlide(slide)
         {
-            //check for xml data
-            var rawxml = $(slide).find('.binary_tag');
-            //use !== 0 beacuse find returns a empty array
-            //if !0 then there is a tag there
-            if(rawxml.length !== 0)
+            //search for any Script Tag with the class YNRQuestion in it
+            var YNRQuestions = $(slide).find('.YNRQuestion');
+            
+            //if there is a Script Tag with YNRQuestion class
+            if(YNRQuestions.length > 0)
             {
-                //NOTE: have script be type='text/xml', also parseXML didn't work and gave error
-                //add the buuton to the screen and update the onclick method with the tag data and index of slide
-                updateCurrentTags($(rawxml[0]).text(), $(rawxml).attr('binary-section'));
+                //update the YNRQSidebar with the Tags that are available in this slide
+                appendYNRQsToSidebar($(YNRQuestions[0]).text(), $(YNRQuestions).attr('YNRQuestion-section'));
                 return true;
             }
             return false;
         }
 
-        function removeNAddSidebar(slide, adjustvalues = [])
+        function removeYNRQuestions()
         {
-            //gets ride of the old sidebar on the previous slide
-            $('#tagSidebar').remove();
-
-            if(adjustvalues.length > 0){
-                //adjusts the height to be the height of the slide and location to be starting at the top of the slide
-                tagSidebar.height(0.975*adjustvalues[0]);
-                tagSidebar.css('top', -adjustvalues[1]);
-            }
-            //add the sidebar onto the current slide
-            $(slide).prepend(tagSidebar);
+            //remove the previous YNRQs
+            $('.YNRQ').remove();
         }
 
-        function removeTags()
+        function appendYNRQsToSidebar(xml, section)
         {
-            //remove the previous tags
-            $('.tagged').remove();
+            removeYNRQuestions();
+            //bulid the YNRQs that are in the xml
+            bulidYNRQs(xml, section);
         }
 
-        function updateCurrentTags(xml, section)
+        function bulidYNRQs(xml, section)
         {
-            removeTags();
-            //bulid the tags that are in the xml
-            bulidTag(xml, section);
-        }
-
-        function bulidTag(xml, section)
-        {
-            //variable for the name of each of the tags
-            var tags = {section: section};
-            tags.titles = [];
-            //for each child in the xml make a tag out of it
-            $(xml).children().each(function(){
-
-                var tagInfo = getXMLData($(this));
-                if(!tagInfo.title || !tagInfo.src)
-                    return;
-                tags.titles.push(tagInfo.title);
-
-                //add to the sidebar a icon that has the title of the child title and the image that is the string location of the text in the child
-                $(sidebar).append(bulidSidebarIcon(tagInfo.title + "_" + section.replace(' ', '_'), "icon-disabled", tagInfo.src));
-            });
-            if(isMobile)
+            try
             {
-                $('.tagged').css("height", mobileSize);
-                $('.tagged').css("width", mobileSize);
-                tagSidebar.css("left", mobilePos);
+                //variable for the name of each of the YNRQs
+                var YNRQs = {section: section};
+                YNRQs.titles = [];
+                var wrapper = "<YNRQ>"+xml+"</YNRQ>";
+                //for each child in the xml make a YNRQ out of it
+                $(wrapper).children().each(function(){
+                    var YNRQInfo = getXMLData($(this));
+                    if(!YNRQInfo.title || !YNRQInfo.src)
+                        return;
+                    YNRQs.titles.push(YNRQInfo.title);
 
-            }
-
-            //check the status of each of the tags, base on what the server has
-            CheckTagStatus(tags);
-
-            //add the click function of the images
-            $('.tagged').click(tag_click);
-        }
-
-        function CheckTagStatus(tags)
-        {
-            socket.emit('check_binary_tags_status', tags);
-        }
-
-        //get the response from the server that is the status of the tag according to what is in the database server
-        socket.on('binary_tags_status', function(tag_status){
-
-            tag_status.tag_responses.forEach(function(tag_data){
-                //get the tag by it's name
-                var tag = $('#' + tag_data.title + '_' + tag_status.section.replace(' ', '_'));
-                //check what state that tag was when you last used it
-                switch(tag_data.response)
+                    //add to the sidebar a icon that has the title of the child title and the image that is the string location of the text in the child
+                    $(sidebar).append(bulidSidebarIcon(YNRQInfo.title + "_" + section.replace(' ', '_'), "icon-disabled", YNRQInfo.src, YNRQInfo.tip));
+                });
+                if(isMobile)
                 {
-                    case 1:
-                        tag.addClass('clicked'); // it was on
-                        tag.removeClass('icon-disabled');
-                        break;
-                    //no default beacause it has the default is coded into tag_click and bulid tag
+                    //adjust the size of the YNRQs when on the mobile device
+                    $('.YNRQ').css("height", mobileSize);
+                    $('.YNRQ').css("width", mobileSize);
                 }
-            });
-        });
+
+                //check the status of each of the YNRQs, base on what the server has
+                requestYNRQsStatus(YNRQs);
+
+                //add the click function of the images
+                $('.YNRQ').click(YNRQ_click);
+            }
+            catch(error)
+            {
+                console.log(xml, section);
+                console.log(error);
+            }
+        
+        }
+
+        function requestYNRQsStatus(tags)
+        {
+            socket.emit('check_YNRQs_status', tags);
+        }
 
         //when the tag item is clicked
-        function tag_click(event)
+        function YNRQ_click(event)
         {
             //this is the text item that was clicked
             var clicked = $(event.target);
-            var response = UNKNOWN_RESPONSE;
+            var response = UNKNOWN_YN_RESPONSE;
             var added = "";
             var removed = "";
 
@@ -388,14 +386,14 @@ socket.on('lecture_client_setup', function(isInstuctor){
             {
                 removed = 'icon-disabled';
                 added = 'clicked';
-                response = UNDERSTAND_RESPONSE;
+                response = UNDERSTAND_YN_RESPONSE;
             }
             //if the div has clicked then switch the classes and set the response to dontunderstand
             else if(clicked.hasClass('clicked'))//clicked class
             {
                 removed = 'clicked';
                 added = 'icon-disabled';
-                response = DONTUNDERSTAND_RESPONSE;
+                response = DONTUNDERSTAND_YN_RESPONSE;
             }
             else
                 //if the wrong item was clicked, do nothing
@@ -409,13 +407,33 @@ socket.on('lecture_client_setup', function(isInstuctor){
             var id = clicked.attr('id').split('_');
             var title = id[0];
             var section = id[1];
-            sendBinaryTagResponse(title, section, response); 
+            sendYNRQResponse(title, section, response); 
         }
 
-        function sendBinaryTagResponse(title, section, response)
+        //get the response from the server that is the status of the tag according to what is in the database server
+        socket.on('YNRQs_status', function(tag_status){
+
+            tag_status.tag_responses.forEach(function(tag_data){
+                //get the tag by it's name
+                var tag = $('#' + tag_data.title + '_' + tag_status.section.replace(' ', '_'));
+                //check what state that tag was when you last used it
+                switch(tag_data.response)
+                {
+                    case 1:
+                        tag.addClass('clicked'); // it was on
+                        tag.removeClass('icon-disabled');
+                        break;
+                    //no default beacause it has the default is coded into YNRQ_click and bulid tag
+                }
+            });
+        });
+
+       
+
+        function sendYNRQResponse(title, section, response)
         {
             //emit to the server, the title of the tag, the slide index, and which tag state they are in
-            socket.emit('student_binary_response', {
+            socket.emit('YNRQ_response', {
                 title: title,
                 section: section,
                 response: response
@@ -423,16 +441,18 @@ socket.on('lecture_client_setup', function(isInstuctor){
         }
 
         //template for the sidebar's items
-        function bulidSidebarIcon(id, tag_class, src)
+        function bulidSidebarIcon(id, tag_class, src, tip)
         {
-            return $('<div id="'+id+'"class="tagged '+tag_class+'"> '+ bulidImage(src) +'</div>');
+            return $('<div id="'+id+'"class="YNRQ '+tag_class+'"> '+ bulidImage(src, tip) +'</div>');
         }
 
         //template for the sidebar image
-        function bulidImage(src)
+        function bulidImage(src, tip)
         {
-            return '<img class="clickable" src="'+src+'" />';
+            return '<img class="clickable" src="'+src+'" title="'+tip+'" />';
         }
+
+
 
         /******** Multiple Choice Functionality ********/
 
@@ -504,6 +524,7 @@ socket.on('lecture_client_setup', function(isInstuctor){
             
         });
     }
+
     socket.on('close_multiple_choice_question', function(chart_data){
         console.log(chart_data.title);
 
@@ -601,10 +622,4 @@ socket.on('lecture_client_setup', function(isInstuctor){
     {
         return Math.floor(Math.random() * max);
     }
-
-
-
-
-
-
 });

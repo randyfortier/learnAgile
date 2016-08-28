@@ -18,12 +18,12 @@ var timer = null;
 var radarChart = null;
 var radar_chart_data = {};
 
+//debug purpose
+var cnt = 0;
 
 //add item to show when the chart is ready, and add the chart to the screen
 $('#speaker-controls').append('<div id="loading-text" style="text-align:center">Loading</div>');
-$('#speaker-controls').append(ChartHTML);
-$('#speaker-controls').append('<button id="close_question">Close Question</button>');
-$('#close_question').click(Button_click);
+
 
 //code to repeatily look for the iframe that contians the current lecture
 function findLecture()
@@ -35,7 +35,7 @@ function findLecture()
 	if(lecture.length === 0)
 	{
 		//continue searching for the lecture
-		temp = setTimeout(findLecture, 1000);
+		findLecture_timer = setTimeout(findLecture, 1000);
 		return;
 	}
 	else
@@ -46,7 +46,7 @@ function findLecture()
 }
 
 //inital look for the currect_slide iframe
-var temp = setTimeout(findLecture, 2000);
+var findLecture_timer = setTimeout(findLecture, 2000);
 
 //setup the info for the current_leccture slide,
 //handles:
@@ -62,6 +62,9 @@ function load_Lecture(lecture)
     
     //send the loading text to show that the slide is ready
     $('#loading-text').text("Ready");
+	$('#speaker-controls').append(ChartHTML);
+	$('#speaker-controls').append('<button style="display:none" id="close_question">Close Question</button>');
+	$('#close_question').click(Button_click);
 	
 	//send the user the lecture id
 	socket.emit('lecture_server_setup', $(lecture).contents().find('title').text());
@@ -73,13 +76,10 @@ function load_Lecture(lecture)
 	    {
 	    	ParseTags(tag_titles, tag_section);
 
-	        socket.on('chart_binary_tag_update', function(chart_data){
+	        socket.on('YNRQ_chart_data', function(chart_data){
 	            //when the chart data comes in, parse it, and save the data
 	            updateTagChartData(chart_data);
 	        });
-
-	        //start timer to refresh the chart
-			// Timer();
 	    }
 	});
 }
@@ -89,11 +89,11 @@ window.addEventListener('message',function(event){
 	//parse the message data
 	var data = JSON.parse( event.data );
 	//if the Tags field exists
-	if(data.BinaryTags){
+	if(data.YNRQuestion){
 		HideButton();
 		stopTimer();
 		//send the tags to be updated
-		ParseTags(data.BinaryTags.tags, data.BinaryTags.section);
+		ParseTags(data.YNRQuestion.YNRQs, data.YNRQuestion.section);
 	}
 	else if (data.MultipleChoice)
 	{
@@ -170,7 +170,7 @@ function setupRadarData(tags, section)
 
 function updateAllTagChartData(section)
 {
-	socket.emit('get_chart_binary_tag_data', {section: section, tags: tag_titles});
+	socket.emit('get_YNRQ_chart_data', {section: section, tags: tag_titles});
 }
 
 function updateTagChartData(chart_data)

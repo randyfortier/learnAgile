@@ -2,7 +2,7 @@
 	background-color: transparent;
 	color: white;
 	position: fixed;
-	left: 99%;
+	left: 100%;
 	border-radius: 5px;
 	display: flex;
 	align-items: center;
@@ -10,7 +10,7 @@
 	justify-content: center;
 }
 
-.tagged {
+.YNRQ{
 	position: relative;
 	background-color: transparent;
 	display:block;
@@ -42,7 +42,6 @@
 	height: 400;
 	position: fixed;
 	background-color: white;
-	border:1px solid #000000;
 	left: 80%;
 }
 
