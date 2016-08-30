@@ -195,7 +195,6 @@ function addAvgLineChart(canvas, stats, tag_names)
 	});
 }	
 
-
 function addToTable(tableid, stats, tag_order)
 {
 	addTitletoTable(tableid, tag_order);	
@@ -248,10 +247,10 @@ function addTitletoTable(tableid, tag_order)
 	$('#' + tableid).append(linetwo + "</tr>");
 }
 
-function sec_tag_table_entry(item)		
+function sec_tag_table_entry(item)	
 {
 	if(item.avg)
-		return "<td>"+(item.U+item.D)+"</td><td>"+item.U+"</td><td>"+item.avg.toFixed(2)+"%</td>";
+		return "<td>"+(item.U+item.D).toFixed(2)+"</td><td>"+item.U.toFixed(2)+"</td><td>"+item.avg.toFixed(2)+"%</td>";
 
 	var len = item.U+item.D;
 	return "<td>"+len+"</td><td>"+item.U+"</td><td>"+percentFormat(item.U, len)+"</td>"

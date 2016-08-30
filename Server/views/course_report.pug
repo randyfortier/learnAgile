@@ -22,6 +22,14 @@ block inhead
 				addTableColour();
 			});
 
+			function pushLecture(labels, lecture)
+			{
+				var lec = lecture.slice();
+				if(lecture.length > 9)
+					lec = lec.substring(0, 4) + "..." + lec.substring(lec.length - 5, lec.length);
+				labels.push(lec);
+			}
+
 			function _addBarChart(canvas, stats, tag_names)
 			{
 				var data = {};
@@ -52,10 +60,10 @@ block inhead
 				var cnt = 0;
 				var avg = 0;
 
-				Object.keys(stats).forEach(function(lecture){//each section
+				Object.keys(stats).forEach(function(lecture){//each lecture
 					var lecVar = stats[lecture];
 
-					data.labels.push(lecture);
+					pushLecture(data.labels, lecture);
 
 					
 					tag_names.forEach(function(tag_name, index){
@@ -73,6 +81,8 @@ block inhead
 						data.datasets[index].data.push(avg/cnt);
 					});
 				});
+
+				console.log(data);
 				
 				var myBarChart = new Chart($('#' + canvas), {
 					type: 'bar',
@@ -135,7 +145,7 @@ block inhead
 				var avg = 0;
 				Object.keys(stats).forEach(function(lecture){//each section
 					var lecVar = stats[lecture];
-					data.labels.push(lecture);
+					pushLecture(data.labels, lecture);
 
 					tag_names.forEach(function(tag_name, index){
 						cnt = 0;

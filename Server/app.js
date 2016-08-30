@@ -23,7 +23,7 @@ function isAnInstructor(session)
 }
 
 //setup server for saving the response data
-mongoose.connect('localhost:27018/tagging');
+mongoose.connect('localhost:27018/Response_System');
 var Schema = mongoose.Schema;
 
 //be able to parse post data
@@ -61,7 +61,7 @@ function cleanDB()
     UserDB.remove({}, function(err) { 
         console.log('collection removed') 
     });
-    student_binary_ResponseDB.remove({}, function(err) { 
+    student_YNRQ_DB.remove({}, function(err) { 
         console.log('collection removed') 
     });
 }
@@ -311,7 +311,7 @@ app.post('/course_summary', function(request, response){
     if(isAnInstructor(request.session))
     {
         // retrive all the data in the database
-        student_binary_ResponseDB.find({}).exec(function(error, results){
+        student_YNRQ_DB.find({}).exec(function(error, results){
             //if there is a response send the data
             if(results.length > 0){
                 //variables for the student stats and the lecture stats
@@ -405,6 +405,8 @@ app.get('/course_report_list', function(request, response){
                     students.push(item.sid);
                 });
 
+                students.sort();
+
                 //render the course list page and send the student names there
                 renderPage(request.session, response, 'course_report_list', 'Course Report - List of Students',  {students: students});
             }
@@ -421,7 +423,7 @@ app.get('/course_report_list', function(request, response){
 function course_report(session, response, studentid, sid)
 {
     //search for all response's for the user
-    student_binary_ResponseDB.find().exec(function(error, results){
+    student_YNRQ_DB.find().exec(function(error, results){
         if(error)
         {
             //if error with database register console ther DB error and render the page with an error message
@@ -469,7 +471,7 @@ app.get('/lecture_summary', function(request, response){
         var lecture = request.query.lecture;
 
         //get all the response that are for that lecture
-        student_binary_ResponseDB.find({lecture: lecture}).exec(function(error, results){
+        student_YNRQ_DB.find({lecture: lecture}).exec(function(error, results){
             if(error)
             {
                 //if error accessing DB, console error, and render error message page
@@ -537,7 +539,7 @@ app.get('/lecture_summary_list', function(request, response){
     console.log('lecture_summary_list');
     //run only if the user is an instructor
     if(isAnInstructor(request.session)){
-        student_binary_ResponseDB.find().select({lecture: 1}).exec(function(error, results){
+        student_YNRQ_DB.find().select({lecture: 1}).exec(function(error, results){
             if(error)
             {
                 //if error accessing DB, console error, and render error message page
@@ -558,6 +560,8 @@ app.get('/lecture_summary_list', function(request, response){
                 Object.keys(templectures).forEach(function(item){
                     lectures.push(item);
                 });
+
+                lectures.sort();
 
                 renderPage(request.session, response, 'lecture_summary_list', 'Lecture Summary - List of Lectures',  {lectures: lectures});
             }
@@ -607,7 +611,7 @@ app.get('/lecture_report', function(request, response){
 function lecture_report(session, response, lecture, sid, student)
 {
     //search for all response's for the user
-    student_binary_ResponseDB.find({lecture:lecture}).exec(function(error, results){
+    student_YNRQ_DB.find({lecture:lecture}).exec(function(error, results){
         if(error)
         {
             //if error accessing DB, console error, and render error message page
@@ -768,14 +772,14 @@ function renameProperty(object, oldname, newname)
 }
 
 //schema for the response from student on the tags
-var student_binary_tag_response_schema = new Schema({
+var student_YNRQ_schema = new Schema({
     lecture: String,
     studentid: String,
     tag_title: String,
     section: String,
     response: Number
-},{collection: 'binary_response'});
-var student_binary_ResponseDB = mongoose.model('binary_response', student_binary_tag_response_schema);
+},{collection: 'yesno_response'});
+var student_YNRQ_DB = mongoose.model('yesno_response', student_YNRQ_schema);
 
 //schema for the response from student on the tags
 var student_multiple_choice_response_schema = new Schema({
@@ -835,7 +839,7 @@ io.on('connection', function(socket){
                 };
 
                 //search the database for each in the lecture and seciton
-                student_binary_ResponseDB.find(query).select({response: 1, tag_title: 1}).exec(function(error, results){
+                student_YNRQ_DB.find(query).select({response: 1, tag_title: 1}).exec(function(error, results){
                     //if there is a response emit to instructor
                     if(results.length > 0)
                     {
@@ -916,7 +920,7 @@ io.on('connection', function(socket){
                     tag_title: title
                 };
 
-               searchDBForResponse(student_binary_ResponseDB, searchQuery, newResponse);
+               searchDBForResponse(student_YNRQ_DB, searchQuery, newResponse);
             });
            
             //called when the user check for the status of there current tag
@@ -932,7 +936,7 @@ io.on('connection', function(socket){
                 };
 
                 //check if ther exsits a response for a tag from the specific user
-                student_binary_ResponseDB.find(searchQuery).select({response: 1, tag_title: 1}).exec(function(err, results){
+                student_YNRQ_DB.find(searchQuery).select({response: 1, tag_title: 1}).exec(function(err, results){
                     if(results.length > 0)
                     {
                         var dbtags = {};
@@ -953,7 +957,7 @@ io.on('connection', function(socket){
                                 searchQuery.tag_title = tag;
                                 searchQuery.response = -1;
 
-                                saveNewBinaryResponse(student_binary_ResponseDB, searchQuery);
+                                saveNewResponse(student_YNRQ_DB, searchQuery);
                             }
                         });
                     }
@@ -967,7 +971,7 @@ io.on('connection', function(socket){
                             searchQuery.tag_title = tag;
                             searchQuery.response = -1;
                             
-                            saveNewBinaryResponse(student_binary_ResponseDB, searchQuery);
+                            saveNewResponse(student_YNRQ_DB, searchQuery);
                        });
                     }   
 
@@ -1149,20 +1153,214 @@ io.on('connection', function(socket){
     //     else
     //         console.log(session.sid + ': ', data);
     // });
-
 });
 
-// // cleanDB();
-// student_binary_ResponseDB.find({}).remove().exec(function(){
+// cleanDB();
+// student_YNRQ_DB.find({}).remove().exec(function(){
 //     console.log("done");
 // });
-// student_binary_ResponseDB.find({section: 'Open data'})
+// student_YNRQ_DB.find({section: 'Open data'})
 //     .exec(function(error, results){
 //         console.log(results);
 //     });
+
+
+
+// var YNRQs = ['Difficult', 'Like', 'Study'];
+
+// var lectures = {
+//     "Agile Lecturing with Real-time Learning Analytics" : {
+//         'Agile Lecturing' : YNRQs.slice(),
+//         'Real-time feedback' : YNRQs.slice(),
+//         'learnAgile' : YNRQs.slice()
+//     },
+//     "AJAX, JSON, and XML - CSCI 3230u" : {
+//         'Intro' : YNRQs.slice(),
+//         'Ajax' : YNRQs.slice(),
+//         'JSON' : YNRQs.slice(),
+//         'XML' : YNRQs.slice(),
+//         'Open data' : YNRQs.slice()
+//     },
+//     "AJAX, JSON, and XML - CSCI 3230u2" : {
+//         'Intro' : YNRQs.slice(),
+//         'Ajax' : YNRQs.slice(),
+//         'JSON' : YNRQs.slice(),
+//         'XML' : YNRQs.slice(),
+//         'Open data' : YNRQs.slice()
+//     },
+//     "AJAX, JSON, and XML - CSCI 3230u3" : {
+//         'Intro' : YNRQs.slice(),
+//         'Ajax' : YNRQs.slice(),
+//         'JSON' : YNRQs.slice(),
+//         'XML' : YNRQs.slice(),
+//         'Open data' : YNRQs.slice()
+//     },
+//     "AJAX, JSON, and XML - CSCI 3230u4" : {
+//         'Intro' : YNRQs.slice(),
+//         'Ajax' : YNRQs.slice(),
+//         'JSON' : YNRQs.slice(),
+//         'XML' : YNRQs.slice(),
+//         'Open data' : YNRQs.slice()
+//     },
+//     "AJAX, JSON, and XML - CSCI 3230u5" : {
+//         'Intro' : YNRQs.slice(),
+//         'Ajax' : YNRQs.slice(),
+//         'JSON' : YNRQs.slice(),
+//         'XML' : YNRQs.slice(),
+//         'Open data' : YNRQs.slice()
+//     },
+//     "AJAX, JSON, and XML - CSCI 3230u6" : {
+//         'Intro' : YNRQs.slice(),
+//         'Ajax' : YNRQs.slice(),
+//         'JSON' : YNRQs.slice(),
+//         'XML' : YNRQs.slice(),
+//         'Open data' : YNRQs.slice()
+//     },
+//     "AJAX, JSON, and XML - CSCI 3230u7" : {
+//         'Intro' : YNRQs.slice(),
+//         'Ajax' : YNRQs.slice(),
+//         'JSON' : YNRQs.slice(),
+//         'XML' : YNRQs.slice(),
+//         'Open data' : YNRQs.slice()
+//     },
+//     "AJAX, JSON, and XML - CSCI 3230u8" : {
+//         'Intro' : YNRQs.slice(),
+//         'Ajax' : YNRQs.slice(),
+//         'JSON' : YNRQs.slice(),
+//         'XML' : YNRQs.slice(),
+//         'Open data' : YNRQs.slice()
+//     },
+//     "AJAX, JSON, and XML - CSCI 3230u9" : {
+//         'Intro' : YNRQs.slice(),
+//         'Ajax' : YNRQs.slice(),
+//         'JSON' : YNRQs.slice(),
+//         'XML' : YNRQs.slice(),
+//         'Open data' : YNRQs.slice()
+//     }
+// };
+
+// cleanDB();
+
+
+// function AddUser(sid, password, isInstructor)
+// {
+//     //generate a uuid for the user and has the password
+//     var userid = uuid.v4();
+//     var hash = bcrypt.hashSync(password);
+
+//     //setup the record for saving the new user
+//     var userdata = {
+//         userid: userid,
+//         sid: sid,
+//         hashedPassword: hash,
+//         isInstructor: isInstructor || false
+//     };           
+
+//     //declare a new user and save the user
+//     var newUser = new UserDB(userdata);
+//     newUser.save(function(error){
+//         if(error)
+//         {
+//             //if the ere is a error, log it and call the onFail method
+//             console.log("Error in Registering, data: " +  JSON.stringify(userdata));
+//         }
+//         else
+//         {
+//             //if succefully added, log the username
+//             console.log("User Added: " + JSON.stringify(userdata));
+//         }
+//     });
+
+//     if(userdata.isInstructor)
+//         return;
+
+//     Object.keys(lectures).forEach(function(lecture){
+//         Object.keys(lectures[lecture]).forEach(function(section){
+//             lectures[lecture][section].forEach(function(YNRQ){
+//                 var response = Math.random();
+
+//                 if(response <= 0.3333)
+//                     response = 1;
+//                 else if(response <= 0.6666)
+//                     response = 0;
+//                 else
+//                     response = -1;
+//                 saveNewResponse(student_YNRQ_DB, {
+//                     lecture: lecture,
+//                     studentid: userid,
+//                     section: section,
+//                     tag_title: YNRQ,
+//                     response: response
+//                 });
+//             });
+//         });
+//     });
+// }
+
+// function saveNewResponse(DB, value)
+// {
+//     //save the value to the binary response db reutrn 
+//     new DB(value).save(function(error){
+//         if(error){ // if there was an error then return what print out the user, the lecture and the title of the tag
+//             console.log("Error adding Default response for user: " + session.sid + ", lecture: " + lecture + ", value: " + value + ", Error: " + error);
+//         }
+//     });
+// }
+
+// setTimeout(function(){
+//     for(var cnt = 1; cnt <= 200; cnt++)
+//     {
+//         var num = cnt;
+//         if(num <= 9)
+//             num = "00" + num;
+//         else if(num <= 99)
+//             num = "0" + num;
+
+//         var sid = "200000" + num;
+        
+
+//         AddUser(sid, "demo");
+//     }
+//     AddUser("Matt", "temp", true);
+//     setTimeout(function(){
+//         // UserDB.find().exec(function(err, results){
+//         //     console.log("UserDB:", results);
+//         // })
+
+//         // student_YNRQ_DB.find().exec(function(error, results){
+//         //     console.log("YNRQ DB:", results);
+//         // });
+//         console.log('done');
+//     }, 500);
+// }, 1000);
+
+
+
 
 
 //listen for a connection
 http.listen(app.get('port'), function(){
     console.log('Server started. Listening at *:' + app.get('port'));
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

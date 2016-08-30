@@ -428,8 +428,6 @@ socket.on('lecture_client_setup', function(isInstuctor){
             });
         });
 
-       
-
         function sendYNRQResponse(title, section, response)
         {
             //emit to the server, the title of the tag, the slide index, and which tag state they are in
@@ -516,12 +514,13 @@ socket.on('lecture_client_setup', function(isInstuctor){
 
         //get the response from the server that is the status of the tag according to what is in the database server
         socket.on('multiple_choice_status', function(status){
-            
-            var space = $('#'+status.id);
-            var index = parseInt(status.response.replace('a_', ''));
-            var item = space.find('li')[index];
-            highlightChoice(item);
-            
+            if(status.response !== 'a_-1')
+            {
+                var space = $('#'+status.id);
+                var index = parseInt(status.response.replace('a_', ''));
+                var item = space.find('li')[index];
+                highlightChoice(item);
+            }
         });
     }
 
