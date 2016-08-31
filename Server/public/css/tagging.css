@@ -2,7 +2,9 @@
 	background-color: transparent;
 	color: white;
 	position: fixed;
-	left: 100%;
+	/*position: absolute;*/
+	/*left: 100%;*/
+	right: 0em;
 	border-radius: 5px;
 	display: flex;
 	align-items: center;

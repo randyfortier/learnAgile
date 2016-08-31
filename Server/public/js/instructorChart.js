@@ -301,6 +301,20 @@ var barData = null
 var multi_title = '';
 var multi_len = 0;
 var barChart = null;
+var options = {
+	responsive: false,
+	animation: false,
+	scales: {
+		yAxes:[{
+			ticks: {
+				min : 0,
+				max : 100,
+				maxTicksLimit: 4,
+				stepSize: 25
+			}
+		}]
+	}
+}
 
 function ActivateBarChart(title, length)
 {
@@ -383,7 +397,12 @@ function updateBarChartData(chart_data)
 		barData.datasets[0].data[index] = chartFormat(chart_data.answers[item], activeUsers);
 	});
 
-	barData.datasets[0].label = "# of Responses Vs. # Active Users : " + activeUsers + ' vs. '+ chart_data.length;
+	barData.datasets[0].label = '% of Responses';
+
+	options.title = {
+        display: true,
+        text: "# of Responses Vs. # Active Users: " + activeUsers + ' vs. '+ chart_data.length
+    }
 }
 
 function chartFormat(score, length)
@@ -397,20 +416,7 @@ function renderBarChart()
 	barChart = new Chart(ChartHTML, {
 		type: 'bar',
 		data: barData,
-		options: {
-			responsive: false,
-			animation: false,
-			scales: {
-				yAxes:[{
-					ticks: {
-						min : 0,
-						max : 100,
-						maxTicksLimit: 4,
-						stepSize: 25
-					}
-				}]
-			}
-		}
+		options: options
 	});
 }
 

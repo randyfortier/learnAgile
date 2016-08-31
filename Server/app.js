@@ -48,7 +48,7 @@ var sessionMiddleware = session({
     resave: false,             // save only when changed
     saveUninitialized: false,  // save even when no data
     // this is used when signing the session cookie
-    //cookie: { secure: true; }, // encrypted cookies only
+    // cookie: { secure: true }, // encrypted cookies only
     secret: 'apollo slackware prepositional expectations'
 });
 
@@ -310,29 +310,37 @@ app.post('/course_summary', function(request, response){
     //if the user isn't an instructor the don't allow them to see a page
     if(isAnInstructor(request.session))
     {
+        var start = new Date().getTime();
         // retrive all the data in the database
         student_YNRQ_DB.find({}).exec(function(error, results){
+            console.log("Get all responses, Time:", new Date().getTime() - start);
             //if there is a response send the data
             if(results.length > 0){
                 //variables for the student stats and the lecture stats
                 var studStats = {};
                 var lecStats = {};
 
+                console.log("Num of Results:", results.length);
                 //update the student and lecture stats wth each results
+                start = new Date().getTime();
                 results.forEach(function(item){
                     updateCourseOverviewReportData(lecStats, item.lecture, item.tag_title, item.response);
                     updateCourseOverviewReportData(studStats, item.studentid, item.tag_title, item.response);     
                 });
                 
+                console.log("Structure Data, Time:", new Date().getTime() - start);
+                start = new Date().getTime();
                 //change the userid that are in the data above to be the sid's equivalent
                 UserDB.find({isInstructor:false}).select({userid: 1, sid: 1}).exec(function(error, results){
+                    console.log("Get Usernames, Time:", new Date().getTime() - start);
                     if(results.length > 0)
                     {
+                        start = new Date().getTime();
                         //rename each userid to be its sid equivalent
                         results.forEach(function(item){
                             _renameProperty(studStats, item.userid, item.sid);
                         });
-                        
+                        console.log("Insert Usernames, Time:", new Date().getTime() - start);
                         //send the results to the Instructor
                         response.send({studStats: studStats, lecStats: lecStats});        
                     }
@@ -792,9 +800,10 @@ var student_multiple_choice_ResponseDB = mongoose.model('multiple_response', stu
 
 //schema for the response from student on the tags
 var multiple_choice_lecture_status_schema = new Schema({
-    lecture: String,
     title: String,
-    status: Boolean
+    lecture: String,
+    status: Boolean,
+    answer: Number
 },{collection: 'multiple_choice_status'});
 var multiple_choice_lecture_statusDB = mongoose.model('multiple_choice_status', multiple_choice_lecture_status_schema);
 
@@ -1006,7 +1015,7 @@ io.on('connection', function(socket){
                 //save the value to the binary response db reutrn 
                 new DB(value).save(function(error){
                     if(error){ // if there was an error then return what print out the user, the lecture and the title of the tag
-                        console.log("Error adding Default response for user: " + session.sid + ", lecture: " + lecture + ", value: " + value + ", Error: " + error);
+                        console.log("Error adding Default response for user: " + session.sid + ", lecture: " + lecture + ", value: " + JSON.stringify(value) + ", Error: " + error);
                     }
                 });
             }
@@ -1064,12 +1073,6 @@ io.on('connection', function(socket){
             });
         }
 
-        //when disconnecting for the server, check if the user can be removed
-        socket.on('disconnect', function(){
-            //remove the user for the room
-            socket.leave(session.lecture);
-        });
-
         function searchDBForResponse(DB, searchQuery, newResponse)
         {
             //search to see if there is already an item with the correct id's
@@ -1097,10 +1100,33 @@ io.on('connection', function(socket){
             //save the value to the binary response db reutrn 
             new DB(value).save(function(error){
                 if(error){ // if there was an error then return what print out the user, the lecture and the title of the tag
-                    console.log("Error adding Default response for user: " + session.sid + ", lecture: " + lecture + ", value: " + value + ", Error: " + error);
+                    console.log("Error adding Default response for user: " + session.sid + ", lecture: " + lecture + ", value: " + JSON.stringify(value) + ", Error: " + error);
                 }
             });
         }
+
+        socket.on('check_multiple_choice_question', function(request){
+            
+            var searchQuery = {
+                title: request.title,
+                lecture: lecture
+            };
+
+            //search to see if there is already an item with the correct id's
+            multiple_choice_lecture_statusDB.find(searchQuery).limit(1).exec(function(error, results){
+                //if there is already an item update it
+                if(results.length > 0)
+                {
+                    if(!results[0].status){
+                        SendMutipleChoiceResults(title);
+                    }
+                    return;
+                }
+                searchQuery.status = true;
+                searchQuery.answer = request.answer;
+                saveNewResponse(multiple_choice_lecture_statusDB, searchQuery);
+            });
+        });
 
         socket.on('close_multiple_choice_question', function(title){
             var searchQuery = {
@@ -1116,8 +1142,11 @@ io.on('connection', function(socket){
 
             searchDBForResponse(multiple_choice_lecture_statusDB, searchQuery, newResponse);
 
-            // io.to(lecture).emit('close_multiple_choice_question', title);
-           //set a query to look for all data what matches
+            SendMutipleChoiceResults(title);
+        });
+
+        function SendMutipleChoiceResults(title)
+        {
             // the right lecture, slide number and tag title
             var query = {
                 lecture : lecture,
@@ -1143,7 +1172,12 @@ io.on('connection', function(socket){
                     io.to(lecture).emit('close_multiple_choice_question', {title:title, answers:answers, length: results.length, inactive: inActive});
                 }
             });
+        }
 
+        //when disconnecting for the server, check if the user can be removed
+        socket.on('disconnect', function(){
+            //remove the user for the room
+            socket.leave(session.lecture);
         });
 
     });
@@ -1156,8 +1190,11 @@ io.on('connection', function(socket){
 });
 
 // cleanDB();
-// student_YNRQ_DB.find({}).remove().exec(function(){
+// multiple_choice_lecture_statusDB.find({}).remove().exec(function(){
 //     console.log("done");
+//     multiple_choice_lecture_statusDB.find({}).exec(function(error, results){
+//                 console.log("done", results);
+//             });
 // });
 // student_YNRQ_DB.find({section: 'Open data'})
 //     .exec(function(error, results){
@@ -1167,6 +1204,7 @@ io.on('connection', function(socket){
 
 
 // var YNRQs = ['Difficult', 'Like', 'Study'];
+
 
 // var lectures = {
 //     "Agile Lecturing with Real-time Learning Analytics" : {
@@ -1180,63 +1218,133 @@ io.on('connection', function(socket){
 //         'JSON' : YNRQs.slice(),
 //         'XML' : YNRQs.slice(),
 //         'Open data' : YNRQs.slice()
-//     },
-//     "AJAX, JSON, and XML - CSCI 3230u2" : {
-//         'Intro' : YNRQs.slice(),
-//         'Ajax' : YNRQs.slice(),
-//         'JSON' : YNRQs.slice(),
-//         'XML' : YNRQs.slice(),
-//         'Open data' : YNRQs.slice()
-//     },
-//     "AJAX, JSON, and XML - CSCI 3230u3" : {
-//         'Intro' : YNRQs.slice(),
-//         'Ajax' : YNRQs.slice(),
-//         'JSON' : YNRQs.slice(),
-//         'XML' : YNRQs.slice(),
-//         'Open data' : YNRQs.slice()
-//     },
-//     "AJAX, JSON, and XML - CSCI 3230u4" : {
-//         'Intro' : YNRQs.slice(),
-//         'Ajax' : YNRQs.slice(),
-//         'JSON' : YNRQs.slice(),
-//         'XML' : YNRQs.slice(),
-//         'Open data' : YNRQs.slice()
-//     },
-//     "AJAX, JSON, and XML - CSCI 3230u5" : {
-//         'Intro' : YNRQs.slice(),
-//         'Ajax' : YNRQs.slice(),
-//         'JSON' : YNRQs.slice(),
-//         'XML' : YNRQs.slice(),
-//         'Open data' : YNRQs.slice()
-//     },
-//     "AJAX, JSON, and XML - CSCI 3230u6" : {
-//         'Intro' : YNRQs.slice(),
-//         'Ajax' : YNRQs.slice(),
-//         'JSON' : YNRQs.slice(),
-//         'XML' : YNRQs.slice(),
-//         'Open data' : YNRQs.slice()
-//     },
-//     "AJAX, JSON, and XML - CSCI 3230u7" : {
-//         'Intro' : YNRQs.slice(),
-//         'Ajax' : YNRQs.slice(),
-//         'JSON' : YNRQs.slice(),
-//         'XML' : YNRQs.slice(),
-//         'Open data' : YNRQs.slice()
-//     },
-//     "AJAX, JSON, and XML - CSCI 3230u8" : {
-//         'Intro' : YNRQs.slice(),
-//         'Ajax' : YNRQs.slice(),
-//         'JSON' : YNRQs.slice(),
-//         'XML' : YNRQs.slice(),
-//         'Open data' : YNRQs.slice()
-//     },
-//     "AJAX, JSON, and XML - CSCI 3230u9" : {
-//         'Intro' : YNRQs.slice(),
-//         'Ajax' : YNRQs.slice(),
-//         'JSON' : YNRQs.slice(),
-//         'XML' : YNRQs.slice(),
-//         'Open data' : YNRQs.slice()
 //     }
+//     // "AJAX, JSON, and XML - CSCI 3230u2" : {
+//     //     'Intro' : YNRQs.slice(),
+//     //     'Ajax' : YNRQs.slice(),
+//     //     'JSON' : YNRQs.slice(),
+//     //     'XML' : YNRQs.slice(),
+//     //     'Open data' : YNRQs.slice()
+//     // },
+//     // "AJAX, JSON, and XML - CSCI 3230u3" : {
+//     //     'Intro' : YNRQs.slice(),
+//     //     'Ajax' : YNRQs.slice(),
+//     //     'JSON' : YNRQs.slice(),
+//     //     'XML' : YNRQs.slice(),
+//     //     'Open data' : YNRQs.slice()
+//     // },
+//     // "AJAX, JSON, and XML - CSCI 3230u4" : {
+//     //     'Intro' : YNRQs.slice(),
+//     //     'Ajax' : YNRQs.slice(),
+//     //     'JSON' : YNRQs.slice(),
+//     //     'XML' : YNRQs.slice(),
+//     //     'Open data' : YNRQs.slice()
+//     // },
+//     // "AJAX, JSON, and XML - CSCI 3230u5" : {
+//     //     'Intro' : YNRQs.slice(),
+//     //     'Ajax' : YNRQs.slice(),
+//     //     'JSON' : YNRQs.slice(),
+//     //     'XML' : YNRQs.slice(),
+//     //     'Open data' : YNRQs.slice()
+//     // },
+//     // "AJAX, JSON, and XML - CSCI 3230u6" : {
+//     //     'Intro' : YNRQs.slice(),
+//     //     'Ajax' : YNRQs.slice(),
+//     //     'JSON' : YNRQs.slice(),
+//     //     'XML' : YNRQs.slice(),
+//     //     'Open data' : YNRQs.slice()
+//     // },
+//     // "AJAX, JSON, and XML - CSCI 3230u7" : {
+//     //     'Intro' : YNRQs.slice(),
+//     //     'Ajax' : YNRQs.slice(),
+//     //     'JSON' : YNRQs.slice(),
+//     //     'XML' : YNRQs.slice(),
+//     //     'Open data' : YNRQs.slice()
+//     // },
+//     // "AJAX, JSON, and XML - CSCI 3230u8" : {
+//     //     'Intro' : YNRQs.slice(),
+//     //     'Ajax' : YNRQs.slice(),
+//     //     'JSON' : YNRQs.slice(),
+//     //     'XML' : YNRQs.slice(),
+//     //     'Open data' : YNRQs.slice()
+//     // },
+//     // "AJAX, JSON, and XML - CSCI 3230u9" : {
+//     //     'Intro' : YNRQs.slice(),
+//     //     'Ajax' : YNRQs.slice(),
+//     //     'JSON' : YNRQs.slice(),
+//     //     'XML' : YNRQs.slice(),
+//     //     'Open data' : YNRQs.slice()
+//     // },
+//     // "AJAX, JSON, and XML - CSCI 3230u10" : {
+//     //     'Intro' : YNRQs.slice(),
+//     //     'Ajax' : YNRQs.slice(),
+//     //     'JSON' : YNRQs.slice(),
+//     //     'XML' : YNRQs.slice(),
+//     //     'Open data' : YNRQs.slice()
+//     // },
+//     // "AJAX, JSON, and XML - CSCI 3230u11" : {
+//     //     'Intro' : YNRQs.slice(),
+//     //     'Ajax' : YNRQs.slice(),
+//     //     'JSON' : YNRQs.slice(),
+//     //     'XML' : YNRQs.slice(),
+//     //     'Open data' : YNRQs.slice()
+//     // },
+//     // "AJAX, JSON, and XML - CSCI 3230u12" : {
+//     //     'Intro' : YNRQs.slice(),
+//     //     'Ajax' : YNRQs.slice(),
+//     //     'JSON' : YNRQs.slice(),
+//     //     'XML' : YNRQs.slice(),
+//     //     'Open data' : YNRQs.slice()
+//     // },
+//     // "AJAX, JSON, and XML - CSCI 3230u13" : {
+//     //     'Intro' : YNRQs.slice(),
+//     //     'Ajax' : YNRQs.slice(),
+//     //     'JSON' : YNRQs.slice(),
+//     //     'XML' : YNRQs.slice(),
+//     //     'Open data' : YNRQs.slice()
+//     // },
+//     // "AJAX, JSON, and XML - CSCI 3230u14" : {
+//     //     'Intro' : YNRQs.slice(),
+//     //     'Ajax' : YNRQs.slice(),
+//     //     'JSON' : YNRQs.slice(),
+//     //     'XML' : YNRQs.slice(),
+//     //     'Open data' : YNRQs.slice()
+//     // },
+//     // "AJAX, JSON, and XML - CSCI 3230u15" : {
+//     //     'Intro' : YNRQs.slice(),
+//     //     'Ajax' : YNRQs.slice(),
+//     //     'JSON' : YNRQs.slice(),
+//     //     'XML' : YNRQs.slice(),
+//     //     'Open data' : YNRQs.slice()
+//     // },
+//     // "AJAX, JSON, and XML - CSCI 3230u16" : {
+//     //     'Intro' : YNRQs.slice(),
+//     //     'Ajax' : YNRQs.slice(),
+//     //     'JSON' : YNRQs.slice(),
+//     //     'XML' : YNRQs.slice(),
+//     //     'Open data' : YNRQs.slice()
+//     // },
+//     // "AJAX, JSON, and XML - CSCI 3230u17" : {
+//     //     'Intro' : YNRQs.slice(),
+//     //     'Ajax' : YNRQs.slice(),
+//     //     'JSON' : YNRQs.slice(),
+//     //     'XML' : YNRQs.slice(),
+//     //     'Open data' : YNRQs.slice()
+//     // },
+//     // "AJAX, JSON, and XML - CSCI 3230u18" : {
+//     //     'Intro' : YNRQs.slice(),
+//     //     'Ajax' : YNRQs.slice(),
+//     //     'JSON' : YNRQs.slice(),
+//     //     'XML' : YNRQs.slice(),
+//     //     'Open data' : YNRQs.slice()
+//     // },
+//     // "AJAX, JSON, and XML - CSCI 3230u19" : {
+//     //     'Intro' : YNRQs.slice(),
+//     //     'Ajax' : YNRQs.slice(),
+//     //     'JSON' : YNRQs.slice(),
+//     //     'XML' : YNRQs.slice(),
+//     //     'Open data' : YNRQs.slice()
+//     // }
 // };
 
 // cleanDB();
@@ -1302,25 +1410,26 @@ io.on('connection', function(socket){
 //     //save the value to the binary response db reutrn 
 //     new DB(value).save(function(error){
 //         if(error){ // if there was an error then return what print out the user, the lecture and the title of the tag
-//             console.log("Error adding Default response for user: " + session.sid + ", lecture: " + lecture + ", value: " + value + ", Error: " + error);
+//             console.log("Error adding Default response for user: " + session.sid + ", lecture: " + lecture + ", value: " + JSON.stringify(value) + ", Error: " + error);
 //         }
 //     });
 // }
 
 // setTimeout(function(){
-//     for(var cnt = 1; cnt <= 200; cnt++)
+//     for(var cnt = 1; cnt <= 40; cnt++)
 //     {
 //         var num = cnt;
 //         if(num <= 9)
-//             num = "00" + num;
-//         else if(num <= 99)
 //             num = "0" + num;
+//         // else if(num <= 99)
+//         //     num = "0" + num;
 
-//         var sid = "200000" + num;
+//         var sid = "2000000" + num;
         
 
 //         AddUser(sid, "demo");
 //     }
+//     AddUser("100539147", "csci1040", true);
 //     AddUser("Matt", "temp", true);
 //     setTimeout(function(){
 //         // UserDB.find().exec(function(err, results){
@@ -1336,31 +1445,7 @@ io.on('connection', function(socket){
 
 
 
-
-
 //listen for a connection
 http.listen(app.get('port'), function(){
     console.log('Server started. Listening at *:' + app.get('port'));
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

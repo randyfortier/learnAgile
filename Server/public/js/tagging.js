@@ -1,5 +1,8 @@
 var socket = io();//'http://sci54.science.uoit.ca:3000');
 var YNRQuestion_section_default = {};
+var MCRQ_correct_answer = {};
+// var MCRQ_title = [];
+var MCRQ_title = {};
 var ActionFunc = null;
 var isMobile = false;
 var mobileSize = 110;
@@ -21,19 +24,28 @@ $('multiplechoice').css('display','none');
 $('multiplechoice').each(function(index){
     //the current multiple choice object
     var multi = this;
+    var title = $(multi).attr('title');
 
+    var id = title.replace(/ /g, '_');
+    // MCRQ_title.push(title);
+    MCRQ_title[title] = $(multi).attr('ca');
+
+    //Get the correct answer
+    MCRQ_correct_answer[id] = $(multi).attr('ca');
+    $(multi).attr('ca', '-1');
+    
     //add a spot for the question, and get the question text
-    $(multi).after('<div id="question_'+index+'"></div>');
+    $(multi).after('<div id="question_'+id+'"></div>');
     var question = $(multi).find('question').html();
-
+    
     //add the question text and an ordered list
-    $('#question_'+index).append('<h2 id="'+$(multi).attr('title').replace(' ', '_')+'">'+question+'</h2>');
-    $('#question_'+index).append('<ol id="answers_'+index+'" title="'+$(multi).attr('title')+'"></ol>');
+    $('#question_'+id).append('<h2 id="'+id+'">'+question+'</h2>');
+    $('#question_'+id).append('<ol id="answers_'+id+'" title="'+title+'"></ol>');
 
     //for each answer in the question add it to the question div, add 2 classes, answer for adding
     //click functionality and answer_'index' to be able to refrenece all answers in one question
     $(multi).find('answer').each(function(a_index){
-        $('#answers_'+index).append('<li id="a_'+a_index+'" class="answer answers_'+index+'">'+$(this).text()+'</li>');
+        $('#answers_'+id).append('<li id="a_'+a_index+'" class="answer answers_'+index+'">'+$(this).text()+'</li>');
     });
 });
 
@@ -142,6 +154,7 @@ socket.on('lecture_client_setup', function(isInstuctor){
             function multiChoice(slide)
             {
                 var multi = $(slide).find('multiplechoice');
+                console.log(multi);
 
                 if(multi.length > 0)
                 {
@@ -225,6 +238,7 @@ socket.on('lecture_client_setup', function(isInstuctor){
         //when the doucument is ready load the current slide
         $(document).ready(function(){
             //invoke the slide_change function on the current slide
+            // $($('.slide-background .present')[0]).append(YNRQuestionSidebar);
             slide_change(Reveal.getCurrentSlide());
         });
 
@@ -233,6 +247,7 @@ socket.on('lecture_client_setup', function(isInstuctor){
             KeepYNRQSidbarOnRight();
         })
 
+   
         function KeepYNRQSidbarOnRight()
         {
             if(isMobile){
@@ -242,7 +257,12 @@ socket.on('lecture_client_setup', function(isInstuctor){
                 if( parseInt($('.slides').css('margin-left')) > 0)
                     $('#sidebar').css('left', (parseInt($('.slides').width()) + parseInt($('.slides').css('margin-left'))) - $('.YNRQ').width());
                 else
-                    $('#sidebar').css('left', '99%');
+                {
+                    // console.log($($('.slide-background .present')[0]).width());
+
+                    // $('#sidebar').css('left', $($('.slide-background .present')[0]).width());
+                    $('#sidebar').css('left', '110%');
+                }
             }
         }
 
@@ -254,7 +274,7 @@ socket.on('lecture_client_setup', function(isInstuctor){
         {
             //testing new code
             multiChoice(slide);
-         
+
             //move the YNRQsidebar from to the current slide, and set it's position
             moveYNRQSidebar(slide, [$('.slides').height(), slide.offsetTop]);
 
@@ -340,7 +360,7 @@ socket.on('lecture_client_setup', function(isInstuctor){
                     YNRQs.titles.push(YNRQInfo.title);
 
                     //add to the sidebar a icon that has the title of the child title and the image that is the string location of the text in the child
-                    $(sidebar).append(bulidSidebarIcon(YNRQInfo.title + "_" + section.replace(' ', '_'), "icon-disabled", YNRQInfo.src, YNRQInfo.tip));
+                    $(sidebar).append(bulidSidebarIcon(YNRQInfo.title + "_" + section.replace(/ /g, '_'), "icon-disabled", YNRQInfo.src, YNRQInfo.tip));
                 });
                 if(isMobile)
                 {
@@ -415,7 +435,7 @@ socket.on('lecture_client_setup', function(isInstuctor){
 
             tag_status.tag_responses.forEach(function(tag_data){
                 //get the tag by it's name
-                var tag = $('#' + tag_data.title + '_' + tag_status.section.replace(' ', '_'));
+                var tag = $('#' + tag_data.title + '_' + tag_status.section.replace(/ /g, '_'));
                 //check what state that tag was when you last used it
                 switch(tag_data.response)
                 {
@@ -524,24 +544,33 @@ socket.on('lecture_client_setup', function(isInstuctor){
         });
     }
 
+    Object.keys(MCRQ_title).forEach(function(item){
+        socket.emit('check_multiple_choice_question', {title:item, answer: MCRQ_title[item]});
+        MCRQ_title[item] = 0;
+    });
+
+
     socket.on('close_multiple_choice_question', function(chart_data){
-        console.log(chart_data.title);
+        
+        if(MCRQ_title[chart_data.title] === 0){
+            MCRQ_title[chart_data.title] = 1;
 
-        var title = chart_data.title.replace(' ', '_');
+            var title = chart_data.title.replace(/ /g, '_');
 
-        var len = $('#'+title).next().children().length;
+            var len = $('#'+title).next().children().length;
 
-        $('#'+title).next().remove();
+            $('#'+title).next().css('display', 'none');
 
-        $('#'+title).after('<canvas id="'+title+'_chart" style="test-align: left"></canvas>');
+            $('#'+title).after('<canvas id="'+title+'_chart" height="300" width="300" style="padding-left: 0;padding-right: 0;margin-left: auto;margin-right: auto;display: block;"></canvas>');
 
-        createChart(chart_data, $('#'+title+'_chart'), len);
-
+            createChart(chart_data, $('#'+title+'_chart'), len);
+        }
     });
 
 
     function createChart(chart_data, canvas, length)
     {
+        var title = chart_data.title.replace(/ /g, '_');
         var data = {};
         data.labels = [];
         data.datasets = [];
@@ -557,10 +586,18 @@ socket.on('lecture_client_setup', function(isInstuctor){
         for(var cnt = 0; cnt < length; cnt++){
             data.labels.push('Answer '+ (cnt + 1));
             data.datasets[0].data.push(0);
-            var color = randRGB();
-            data.datasets[0].borderColor.push(RGBA(color, 1));
-            data.datasets[0].backgroundColor.push(RGBA(color, 0.2));
-
+            
+            if(MCRQ_correct_answer[title] === ""+(cnt+1))
+            {
+                var color = {r:0,g:255,b:0};
+                data.datasets[0].borderColor.push(RGBA(color, 1));
+                data.datasets[0].backgroundColor.push(RGBA(color, 0.2));
+            }
+            else{
+                var color = {r:0,g:0,b:0};
+                data.datasets[0].borderColor.push(RGBA(color, 1));
+                data.datasets[0].backgroundColor.push(RGBA(color, 0.2));
+            }
         }
 
         data.datasets[0].data = []
@@ -575,7 +612,7 @@ socket.on('lecture_client_setup', function(isInstuctor){
             data.datasets[0].data[index] = chartFormat(chart_data.answers[item], activeUsers);
         });
 
-        data.datasets[0].label = "# of Responses Vs. # Active Users : " + activeUsers + ' vs. '+ chart_data.length;
+        data.datasets[0].label = "% of Responses: "
 
 
 
@@ -594,6 +631,10 @@ socket.on('lecture_client_setup', function(isInstuctor){
                             stepSize: 25
                         }
                     }]
+                },
+                title: {
+                    display: true,
+                    text: "# of Responses Vs. # Active Users : " + activeUsers + ' vs. '+ chart_data.length
                 }
             }
         });
