@@ -1,0 +1,112 @@
+2016-08-31T15:40:36.570-0400 [initandlisten] MongoDB starting : pid=30513 port=27018 dbpath=/home/matrim/Work/learnAgile/Server/./data/db 64-bit host=matrim-GA-78LMT-USB3
+2016-08-31T15:40:36.570-0400 [initandlisten] db version v2.6.10
+2016-08-31T15:40:36.570-0400 [initandlisten] git version: nogitversion
+2016-08-31T15:40:36.570-0400 [initandlisten] OpenSSL version: OpenSSL 1.0.2g-fips  1 Mar 2016
+2016-08-31T15:40:36.570-0400 [initandlisten] build info: Linux lgw01-12 3.19.0-25-generic #26~14.04.1-Ubuntu SMP Fri Jul 24 21:16:20 UTC 2015 x86_64 BOOST_LIB_VERSION=1_58
+2016-08-31T15:40:36.570-0400 [initandlisten] allocator: tcmalloc
+2016-08-31T15:40:36.570-0400 [initandlisten] options: { net: { port: 27018 }, processManagement: { fork: true }, storage: { dbPath: "./data/db", smallFiles: true }, systemLog: { destination: "file", path: "./log/mongod.log" } }
+2016-08-31T15:40:36.595-0400 [initandlisten] journal dir=/home/matrim/Work/learnAgile/Server/./data/db/journal
+2016-08-31T15:40:36.595-0400 [initandlisten] recover : no journal files present, no recovery needed
+2016-08-31T15:40:36.660-0400 [initandlisten] waiting for connections on port 27018
+2016-08-31T15:40:43.288-0400 [initandlisten] connection accepted from 127.0.0.1:38946 #1 (1 connection now open)
+2016-08-31T15:40:43.308-0400 [initandlisten] connection accepted from 127.0.0.1:38948 #2 (2 connections now open)
+2016-08-31T15:40:43.308-0400 [conn1] allocating new ns file /home/matrim/Work/learnAgile/Server/./data/db/Response_System.ns, filling with zeroes...
+2016-08-31T15:40:43.567-0400 [FileAllocator] allocating new datafile /home/matrim/Work/learnAgile/Server/./data/db/Response_System.0, filling with zeroes...
+2016-08-31T15:40:43.567-0400 [FileAllocator] creating directory /home/matrim/Work/learnAgile/Server/./data/db/_tmp
+2016-08-31T15:40:43.600-0400 [FileAllocator] done allocating datafile /home/matrim/Work/learnAgile/Server/./data/db/Response_System.0, size: 16MB,  took 0.016 secs
+2016-08-31T15:40:43.601-0400 [conn1] build index on: Response_System.users properties: { v: 1, key: { _id: 1 }, name: "_id_", ns: "Response_System.users" }
+2016-08-31T15:40:43.601-0400 [conn1] 	 added index to empty collection
+2016-08-31T15:40:43.602-0400 [conn1] build index on: Response_System.users properties: { v: 1, unique: true, key: { userid: 1 }, name: "userid_1", ns: "Response_System.users", background: true }
+2016-08-31T15:40:43.602-0400 [conn1] 	 added index to empty collection
+2016-08-31T15:40:43.602-0400 [conn1] command Response_System.$cmd command: createIndexes { createIndexes: "users", indexes: [ { name: "userid_1", key: { userid: 1 }, unique: true, background: true } ], writeConcern: { w: 1 } } keyUpdates:0 numYields:0 locks(micros) r:11 w:293837 reslen:113 293ms
+2016-08-31T15:40:43.610-0400 [conn1] build index on: Response_System.users properties: { v: 1, unique: true, key: { sid: 1 }, name: "sid_1", ns: "Response_System.users", background: true }
+2016-08-31T15:40:43.610-0400 [conn1] 	 added index to empty collection
+2016-08-31T15:40:59.344-0400 [conn1] end connection 127.0.0.1:38946 (1 connection now open)
+2016-08-31T15:40:59.344-0400 [conn2] end connection 127.0.0.1:38948 (1 connection now open)
+2016-08-31T15:41:10.525-0400 [initandlisten] connection accepted from 127.0.0.1:38976 #3 (1 connection now open)
+2016-08-31T15:41:10.546-0400 [initandlisten] connection accepted from 127.0.0.1:38978 #4 (2 connections now open)
+2016-08-31T15:41:10.548-0400 [initandlisten] connection accepted from 127.0.0.1:38980 #5 (3 connections now open)
+2016-08-31T15:41:25.490-0400 [conn5] build index on: Response_System.yesno_response properties: { v: 1, key: { _id: 1 }, name: "_id_", ns: "Response_System.yesno_response" }
+2016-08-31T15:41:25.490-0400 [conn5] 	 added index to empty collection
+2016-08-31T15:41:25.706-0400 [initandlisten] connection accepted from 127.0.0.1:39000 #6 (4 connections now open)
+2016-08-31T15:41:25.713-0400 [initandlisten] connection accepted from 127.0.0.1:39002 #7 (5 connections now open)
+2016-08-31T15:41:31.875-0400 [conn7] build index on: Response_System.multiple_choice_status properties: { v: 1, key: { _id: 1 }, name: "_id_", ns: "Response_System.multiple_choice_status" }
+2016-08-31T15:41:31.876-0400 [conn7] 	 added index to empty collection
+2016-08-31T15:41:36.661-0400 [clientcursormon] mem (MB) res:41 virt:449
+2016-08-31T15:41:36.661-0400 [clientcursormon]  mapped (incl journal view):224
+2016-08-31T15:41:36.661-0400 [clientcursormon]  connections:5
+2016-08-31T15:42:28.518-0400 [conn7] end connection 127.0.0.1:39002 (4 connections now open)
+2016-08-31T15:42:28.518-0400 [conn6] end connection 127.0.0.1:39000 (4 connections now open)
+2016-08-31T15:42:28.518-0400 [conn5] end connection 127.0.0.1:38980 (4 connections now open)
+2016-08-31T15:42:28.519-0400 [conn4] end connection 127.0.0.1:38978 (1 connection now open)
+2016-08-31T15:42:28.519-0400 [conn3] end connection 127.0.0.1:38976 (1 connection now open)
+2016-08-31T15:42:36.335-0400 [initandlisten] connection accepted from 127.0.0.1:39154 #8 (1 connection now open)
+2016-08-31T15:42:36.356-0400 [initandlisten] connection accepted from 127.0.0.1:39156 #9 (2 connections now open)
+2016-08-31T15:42:42.505-0400 [initandlisten] connection accepted from 127.0.0.1:39172 #10 (3 connections now open)
+2016-08-31T15:43:39.562-0400 [conn10] end connection 127.0.0.1:39172 (2 connections now open)
+2016-08-31T15:43:39.562-0400 [conn9] end connection 127.0.0.1:39156 (2 connections now open)
+2016-08-31T15:43:39.562-0400 [conn8] end connection 127.0.0.1:39154 (0 connections now open)
+2016-08-31T15:43:42.213-0400 [initandlisten] connection accepted from 127.0.0.1:39244 #11 (1 connection now open)
+2016-08-31T15:44:03.288-0400 [conn11] end connection 127.0.0.1:39244 (0 connections now open)
+2016-08-31T15:44:04.295-0400 [initandlisten] connection accepted from 127.0.0.1:39268 #12 (1 connection now open)
+2016-08-31T15:46:36.676-0400 [clientcursormon] mem (MB) res:41 virt:449
+2016-08-31T15:46:36.676-0400 [clientcursormon]  mapped (incl journal view):224
+2016-08-31T15:46:36.676-0400 [clientcursormon]  connections:1
+2016-08-31T15:51:36.691-0400 [clientcursormon] mem (MB) res:41 virt:449
+2016-08-31T15:51:36.691-0400 [clientcursormon]  mapped (incl journal view):224
+2016-08-31T15:51:36.691-0400 [clientcursormon]  connections:1
+2016-08-31T15:56:36.706-0400 [clientcursormon] mem (MB) res:41 virt:449
+2016-08-31T15:56:36.706-0400 [clientcursormon]  mapped (incl journal view):224
+2016-08-31T15:56:36.706-0400 [clientcursormon]  connections:1
+2016-08-31T16:01:36.721-0400 [clientcursormon] mem (MB) res:41 virt:449
+2016-08-31T16:01:36.721-0400 [clientcursormon]  mapped (incl journal view):224
+2016-08-31T16:01:36.722-0400 [clientcursormon]  connections:1
+2016-08-31T16:06:36.737-0400 [clientcursormon] mem (MB) res:41 virt:449
+2016-08-31T16:06:36.737-0400 [clientcursormon]  mapped (incl journal view):224
+2016-08-31T16:06:36.737-0400 [clientcursormon]  connections:1
+2016-08-31T16:11:36.752-0400 [clientcursormon] mem (MB) res:41 virt:449
+2016-08-31T16:11:36.752-0400 [clientcursormon]  mapped (incl journal view):224
+2016-08-31T16:11:36.752-0400 [clientcursormon]  connections:1
+2016-08-31T16:16:36.769-0400 [clientcursormon] mem (MB) res:41 virt:449
+2016-08-31T16:16:36.769-0400 [clientcursormon]  mapped (incl journal view):224
+2016-08-31T16:16:36.769-0400 [clientcursormon]  connections:1
+2016-08-31T16:21:36.784-0400 [clientcursormon] mem (MB) res:45 virt:449
+2016-08-31T16:21:36.784-0400 [clientcursormon]  mapped (incl journal view):224
+2016-08-31T16:21:36.784-0400 [clientcursormon]  connections:1
+2016-08-31T16:26:36.799-0400 [clientcursormon] mem (MB) res:45 virt:449
+2016-08-31T16:26:36.799-0400 [clientcursormon]  mapped (incl journal view):224
+2016-08-31T16:26:36.799-0400 [clientcursormon]  connections:1
+2016-08-31T16:31:36.814-0400 [clientcursormon] mem (MB) res:45 virt:449
+2016-08-31T16:31:36.814-0400 [clientcursormon]  mapped (incl journal view):224
+2016-08-31T16:31:36.814-0400 [clientcursormon]  connections:1
+2016-08-31T16:36:36.830-0400 [clientcursormon] mem (MB) res:45 virt:449
+2016-08-31T16:36:36.830-0400 [clientcursormon]  mapped (incl journal view):224
+2016-08-31T16:36:36.830-0400 [clientcursormon]  connections:1
+2016-08-31T16:41:36.845-0400 [clientcursormon] mem (MB) res:45 virt:449
+2016-08-31T16:41:36.845-0400 [clientcursormon]  mapped (incl journal view):224
+2016-08-31T16:41:36.845-0400 [clientcursormon]  connections:1
+2016-08-31T16:46:36.860-0400 [clientcursormon] mem (MB) res:45 virt:449
+2016-08-31T16:46:36.860-0400 [clientcursormon]  mapped (incl journal view):224
+2016-08-31T16:46:36.860-0400 [clientcursormon]  connections:1
+2016-08-31T16:51:36.874-0400 [clientcursormon] mem (MB) res:45 virt:449
+2016-08-31T16:51:36.874-0400 [clientcursormon]  mapped (incl journal view):224
+2016-08-31T16:51:36.874-0400 [clientcursormon]  connections:1
+2016-08-31T16:54:00.703-0400 [conn12] end connection 127.0.0.1:39268 (0 connections now open)
+2016-08-31T16:55:51.597-0400 [signalProcessingThread] got signal 15 (Terminated), will terminate after current cmd ends
+2016-08-31T16:55:51.597-0400 [signalProcessingThread] now exiting
+2016-08-31T16:55:51.597-0400 [signalProcessingThread] dbexit: 
+2016-08-31T16:55:51.597-0400 [signalProcessingThread] shutdown: going to close listening sockets...
+2016-08-31T16:55:51.597-0400 [signalProcessingThread] closing listening socket: 8
+2016-08-31T16:55:51.597-0400 [signalProcessingThread] closing listening socket: 9
+2016-08-31T16:55:51.597-0400 [signalProcessingThread] removing socket file: /tmp/mongodb-27018.sock
+2016-08-31T16:55:51.597-0400 [signalProcessingThread] shutdown: going to flush diaglog...
+2016-08-31T16:55:51.597-0400 [signalProcessingThread] shutdown: going to close sockets...
+2016-08-31T16:55:51.597-0400 [signalProcessingThread] shutdown: waiting for fs preallocator...
+2016-08-31T16:55:51.597-0400 [signalProcessingThread] shutdown: lock for final commit...
+2016-08-31T16:55:51.597-0400 [signalProcessingThread] shutdown: final commit...
+2016-08-31T16:55:51.612-0400 [signalProcessingThread] shutdown: closing all files...
+2016-08-31T16:55:51.613-0400 [signalProcessingThread] closeAllFiles() finished
+2016-08-31T16:55:51.613-0400 [signalProcessingThread] journalCleanup...
+2016-08-31T16:55:51.613-0400 [signalProcessingThread] removeJournalFiles
+2016-08-31T16:55:51.654-0400 [signalProcessingThread] shutdown: removing fs lock...
+2016-08-31T16:55:51.654-0400 [signalProcessingThread] dbexit: really exiting now

@@ -22,9 +22,83 @@ function isAnInstructor(session)
     return false;
 }
 
+/**** Databases ****/
+
 //setup server for saving the response data
 mongoose.connect('localhost:27018/Response_System');
 var Schema = mongoose.Schema;
+
+/**** Yes No Response Question - Response Database ****
+* lecture - the Lecture ID
+* studentid - the UUID that of the student that sent the response
+* tag_title - the title of the YNRQ that was sent
+* section - the section in the lecture that the YNRQ is in
+* response - the value of the response that was sent in (1 - yes,0 - no,-1 - unknown)
+*******************************************************/
+var student_YNRQ_schema = new Schema({
+    lecture: String,
+    studentid: String,
+    tag_title: String,
+    section: String,
+    response: Number
+},{collection: 'yesno_response'});
+var student_YNRQ_DB = mongoose.model('yesno_response', student_YNRQ_schema);
+
+/**** Lecture ID To Name - Database ****
+* lectureID - the Lecture ID
+* lecture_title - the title of the lecture
+*******************************************************/
+var Lecture_ID_Name_schema = new Schema({
+    lectureID: String,
+    lecture_title: String
+},{collection: 'lecture_id_to_name'});
+var Lecture_ID_Name = mongoose.model('lecture_id_to_name', Lecture_ID_Name_schema);
+
+/**** Multiple Choice Response Question - Response Database ****
+* lecture - the Lecture ID
+* studentid - the UUID that of the student that sent the response
+* multi_title - the title of the MCRQ that was sent
+* response - the value of the response that was sent in (Answer is in the from of a "Q" followed by the number of the question)
+****************************************************************/
+var student_multiple_choice_response_schema = new Schema({
+    lecture: String,
+    studentid: String,
+    multi_title: String,
+    response: String
+},{collection: 'multiple_response'});
+var student_multiple_choice_ResponseDB = mongoose.model('multiple_response', student_multiple_choice_response_schema);
+
+/**** Multiple Choice Response Question - Question Stats Database ****
+* title - title of the MCRQ
+* lecture - the Lecture ID of the MCRQ
+* status - true, if the answer is open. false, if the answer is closed.
+* answer - The correct answer to the question
+**********************************************************************/
+var multiple_choice_lecture_status_schema = new Schema({
+    title: String,
+    lecture: String,
+    status: Boolean,
+    answer: Number
+},{collection: 'multiple_choice_status'});
+var multiple_choice_lecture_statusDB = mongoose.model('multiple_choice_status', multiple_choice_lecture_status_schema);
+
+/**** User - Database ****
+* userid - a UUID unique to the the student id
+* sid - the students/instructor ID number
+* hashedPassword - the students password that was Hashed by the bcrypt plugin
+* isInstructor - if the User is an Instructor or not
+**************************/
+var userSchema = new Schema({
+    userid: {type: String, 
+              unique: true,
+              index: true},
+    sid: {type: String,
+        unique: true},
+    hashedPassword: String,
+    isInstructor: Boolean
+}, {collection: 'users'});
+var UserDB = mongoose.model('user', userSchema);
+
 
 //be able to parse post data
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -58,6 +132,9 @@ app.use(sessionMiddleware);
 //added to erase the database when needed
 function cleanDB()
 {
+    Lecture_ID_Name.remove({}, function(err) { 
+        console.log('collection removed') 
+    });
     UserDB.remove({}, function(err) { 
         console.log('collection removed') 
     });
@@ -185,18 +262,6 @@ function renderPage(session, response, page, title, params)
     response.render(page, pageParams);  
 }
 
-//mongodb login functionality
-var userSchema = new Schema({
-    userid: {type: String, 
-              unique: true,
-              index: true},
-    sid: {type: String,
-        unique: true},
-    hashedPassword: String,
-    isInstructor: Boolean
-}, {collection: 'users'});
-var UserDB = mongoose.model('user', userSchema);
-
 function register(session, sid, password, onSuccess, onFail, isInstructor)
 {
     console.log('registering User');
@@ -310,29 +375,23 @@ app.post('/course_summary', function(request, response){
     //if the user isn't an instructor the don't allow them to see a page
     if(isAnInstructor(request.session))
     {
-        var start = new Date().getTime();
         // retrive all the data in the database
         student_YNRQ_DB.find({}).exec(function(error, results){
-            console.log("Get all responses, Time:", new Date().getTime() - start);
+
             //if there is a response send the data
             if(results.length > 0){
                 //variables for the student stats and the lecture stats
                 var studStats = {};
                 var lecStats = {};
 
-                console.log("Num of Results:", results.length);
                 //update the student and lecture stats wth each results
-                start = new Date().getTime();
                 results.forEach(function(item){
                     updateCourseOverviewReportData(lecStats, item.lecture, item.tag_title, item.response);
                     updateCourseOverviewReportData(studStats, item.studentid, item.tag_title, item.response);     
                 });
                 
-                console.log("Structure Data, Time:", new Date().getTime() - start);
-                start = new Date().getTime();
                 //change the userid that are in the data above to be the sid's equivalent
                 UserDB.find({isInstructor:false}).select({userid: 1, sid: 1}).exec(function(error, results){
-                    console.log("Get Usernames, Time:", new Date().getTime() - start);
                     if(results.length > 0)
                     {
                         start = new Date().getTime();
@@ -340,9 +399,18 @@ app.post('/course_summary', function(request, response){
                         results.forEach(function(item){
                             _renameProperty(studStats, item.userid, item.sid);
                         });
-                        console.log("Insert Usernames, Time:", new Date().getTime() - start);
-                        //send the results to the Instructor
-                        response.send({studStats: studStats, lecStats: lecStats});        
+
+                        Lecture_ID_Name.find().exec(function(error, results){
+                            if(results.length > 0)
+                            {
+                                //rename each lectureID to lecture title
+                                results.forEach(function(item){
+                                    _renameProperty(lecStats, item.lectureID, item.lecture_title);
+                                });
+                                //send the results to the Instructor
+                                response.send({studStats: studStats, lecStats: lecStats});        
+                            }
+                        });
                     }
                 });
             }
@@ -458,9 +526,20 @@ function course_report(session, response, studentid, sid)
                 if(item.studentid === studentid)
                     updateReportData(studStats, item.lecture, item);
             });
-            
-            //render the course report with student stats and all student stats
-            renderPage(session, response, 'course_report', (sid)?"Course Report - " + sid:"Course Report" , {studentid: sid, student: studStats, avgstudents: allStats});
+
+            Lecture_ID_Name.find().exec(function(error, results){
+                if(results.length > 0)
+                {
+                    //rename each lectureID to lecture title
+                    results.forEach(function(item){
+                        _renameProperty(studStats, item.lectureID, item.lecture_title);
+
+                        _renameProperty(allStats, item.lectureID, item.lecture_title);
+                    });
+                    //render the course report with student stats and all student stats
+                    renderPage(session, response, 'course_report', (sid)?"Course Report - " + sid:"Course Report" , {studentid: sid, student: studStats, avgstudents: allStats});
+                }
+            });    
         }
         else
             //when not responses in the database, send error message
@@ -476,67 +555,74 @@ app.get('/lecture_summary', function(request, response){
     //run only if the user is the instructor
     if(isAnInstructor(session)){
         //get the lecture that is wanted to be looked at
-        var lecture = request.query.lecture;
+        var lecture_title = request.query.lecture;
 
-        //get all the response that are for that lecture
-        student_YNRQ_DB.find({lecture: lecture}).exec(function(error, results){
-            if(error)
-            {
-                //if error accessing DB, console error, and render error message page
-                console.log("Lecture Summary, Instructor, error accessing the student_binary_responseDB database, Error: " + error);
-                renderPage(request.session, response, 'lecture_summary', 'Lecture Summary - ' + lecture,  {error:"Unable to access database."});
-                return;
-            }
+        Lecture_ID_Name.find({lecture_title: lecture_title}).select({lectureID: 1}).exec(function(error, results){
             if(results.length > 0)
             {
-                //set up object for the section Stats and the student stats
-                var secStats = {};
-                var studStats = {};
-
-                //for each db item, sort the data into the following structure
-                // -section_name || student_id
-                // --tag_name
-                // ---U        - 1 response
-                // ---D        - 0 response
-                // ---UNK      - -1 response
-                // ---length   - the total number of responses (U+D+UNK)
-                results.forEach(function(item){
-                    lectureOverviewReport(secStats, item.section, item);
-                    lectureOverviewReport(studStats, item.studentid, item);
-                });
-                
-                //get all the students in the userDb
-                UserDB.find({isInstructor:false}).select({userid: 1, sid: 1}).exec(function(error, results){
+                var lecture = results[0].lectureID;
+                //get all the response that are for that lecture
+                student_YNRQ_DB.find({lecture: lecture}).exec(function(error, results){
                     if(error)
                     {
                         //if error accessing DB, console error, and render error message page
-                        console.log("Lecture Summary, Instructor, error accessing the UserDB database, Error: " + error);
+                        console.log("Lecture Summary, Instructor, error accessing the student_binary_responseDB database, Error: " + error);
                         renderPage(request.session, response, 'lecture_summary', 'Lecture Summary - ' + lecture,  {error:"Unable to access database."});
                         return;
                     }
                     if(results.length > 0)
                     {
-                        //replace all userid with the equivalent sid
+                        //set up object for the section Stats and the student stats
+                        var secStats = {};
+                        var studStats = {};
+
+                        //for each db item, sort the data into the following structure
+                        // -section_name || student_id
+                        // --tag_name
+                        // ---U        - 1 response
+                        // ---D        - 0 response
+                        // ---UNK      - -1 response
+                        // ---length   - the total number of responses (U+D+UNK)
                         results.forEach(function(item){
-                            _renameProperty(studStats, item.userid, item.sid);
+                            lectureOverviewReport(secStats, item.section, item);
+                            lectureOverviewReport(studStats, item.studentid, item);
                         });
                         
-                        //render the results
-                        renderPage(request.session, response, 'lecture_summary', 'Lecture Summary - ' + lecture,  {sections: secStats, students: studStats , lecture: lecture});
+                        //get all the students in the userDb
+                        UserDB.find({isInstructor:false}).select({userid: 1, sid: 1}).exec(function(error, results){
+                            if(error)
+                            {
+                                //if error accessing DB, console error, and render error message page
+                                console.log("Lecture Summary, Instructor, error accessing the UserDB database, Error: " + error);
+                                renderPage(request.session, response, 'lecture_summary', 'Lecture Summary - ' + lecture,  {error:"Unable to access database."});
+                                return;
+                            }
+                            if(results.length > 0)
+                            {
+                                //replace all userid with the equivalent sid
+                                results.forEach(function(item){
+                                    _renameProperty(studStats, item.userid, item.sid);
+                                });
+                                
+                                //render the results
+                                renderPage(request.session, response, 'lecture_summary', 'Lecture Summary - ' + lecture,  {sections: secStats, students: studStats , lecture: lecture_title});
+                            }
+                            else
+                            {
+                                //when not responses in the database, send error message
+                                renderPage(request.session, response, 'lecture_summary', 'Lecture Summary - ' + lecture,  {error:"Unable to get users from the database."});
+                            }
+                        });
                     }
                     else
                     {
                         //when not responses in the database, send error message
-                        renderPage(request.session, response, 'lecture_summary', 'Lecture Summary - ' + lecture,  {error:"Unable to get users from the database."});
+                        renderPage(request.session, response, 'lecture_summary', 'Lecture Summary - ' + lecture,  {error:"Unable to get responses from the database."});
                     }
                 });
             }
-            else
-            {
-                //when not responses in the database, send error message
-                renderPage(request.session, response, 'lecture_summary', 'Lecture Summary - ' + lecture,  {error:"Unable to get responses from the database."});
-            }
         });
+
     }
     else
         //send the user back to the main page
@@ -547,7 +633,8 @@ app.get('/lecture_summary_list', function(request, response){
     console.log('lecture_summary_list');
     //run only if the user is an instructor
     if(isAnInstructor(request.session)){
-        student_YNRQ_DB.find().select({lecture: 1}).exec(function(error, results){
+        Lecture_ID_Name.find().exec(function(error, results){
+            console.log(results);
             if(error)
             {
                 //if error accessing DB, console error, and render error message page
@@ -558,19 +645,13 @@ app.get('/lecture_summary_list', function(request, response){
 
             if(results.length > 0)
             {
-                var templectures = {};
                 var lectures = [];
 
                 results.forEach(function(item){
-                    templectures[item.lecture] = 0;
-                });
-
-                Object.keys(templectures).forEach(function(item){
-                    lectures.push(item);
+                    lectures.push(item.lecture_title);
                 });
 
                 lectures.sort();
-
                 renderPage(request.session, response, 'lecture_summary_list', 'Lecture Summary - List of Lectures',  {lectures: lectures});
             }
             else
@@ -616,36 +697,42 @@ app.get('/lecture_report', function(request, response){
     }
 });
 
-function lecture_report(session, response, lecture, sid, student)
+function lecture_report(session, response, lecture_title, sid, student)
 {
-    //search for all response's for the user
-    student_YNRQ_DB.find({lecture:lecture}).exec(function(error, results){
-        if(error)
-        {
-            //if error accessing DB, console error, and render error message page
-            console.log("Lecture Report, error accessing the student_binary_responseDB database, Error: " + error);
-            renderPage(rsession, response, 'lecture_report', 'Lecture Report',  {error:"Unable to access database."});
-            return;
-        }
+    Lecture_ID_Name.find({lecture_title: lecture_title}).select({lectureID: 1}).exec(function(error, results){
         if(results.length > 0)
         {
-            var allStats = {};
-            var studStats = {};
+            var lecture = results[0].lectureID;
+            //search for all response's for the user
+            student_YNRQ_DB.find({lecture:lecture}).exec(function(error, results){
+                if(error)
+                {
+                    //if error accessing DB, console error, and render error message page
+                    console.log("Lecture Report, error accessing the student_binary_responseDB database, Error: " + error);
+                    renderPage(rsession, response, 'lecture_report', 'Lecture Report',  {error:"Unable to access database."});
+                    return;
+                }
+                if(results.length > 0)
+                {
+                    var allStats = {};
+                    var studStats = {};
 
-            //create a object where there exisits the name of each lecture slide
-            results.forEach(function(item){
-                lectureOverviewReport(allStats, item.section, item);
-                if(item.studentid === student)
-                    lectureOverviewReport(studStats, item.section, item);
+                    //create a object where there exisits the name of each lecture slide
+                    results.forEach(function(item){
+                        lectureOverviewReport(allStats, item.section, item);
+                        if(item.studentid === student)
+                            lectureOverviewReport(studStats, item.section, item);
+                    });
+
+                    //render the report page sending the lectrue to it
+                    renderPage(session, response, 'lecture_report', 'Lecture Report - ' + lecture, {stud_lec: {lecture: lecture_title, student: sid}, student_stats: studStats, all_stats: allStats});
+                }
+                else
+                {
+                    //no result, render page with error message
+                    renderPage(session, response, 'lecture_report', 'Lecture Report',  {error:"Unable to get responses for the database database."});
+                }
             });
-
-            //render the report page sending the lectrue to it
-            renderPage(session, response, 'lecture_report', 'Lecture Report - ' + lecture, {stud_lec: {lecture: lecture, student: sid}, student_stats: studStats, all_stats: allStats});
-        }
-        else
-        {
-            //no result, render page with error message
-            renderPage(session, response, 'lecture_report', 'Lecture Report',  {error:"Unable to get responses for the database database."});
         }
     });
 }
@@ -779,34 +866,37 @@ function renameProperty(object, oldname, newname)
         object[newname] = 0;
 }
 
-//schema for the response from student on the tags
-var student_YNRQ_schema = new Schema({
-    lecture: String,
-    studentid: String,
-    tag_title: String,
-    section: String,
-    response: Number
-},{collection: 'yesno_response'});
-var student_YNRQ_DB = mongoose.model('yesno_response', student_YNRQ_schema);
+function searchDBForResponse(DB, searchQuery, newResponse)
+{
+    //search to see if there is already an item with the correct id's
+    DB.find(searchQuery).limit(1).exec(function(error, results){
+        //if there is already an item update it
+        if(results.length > 0)
+        {
+            // update the current response
+            DB.update(searchQuery, newResponse, {multi: false}, function(error, numAffected){
+                if(error)
+                {
+                    console.log("Error in updating " + session.sid + "'s account, response was " + response + ", lecture was " + lecture + ", slide number was " + slide_index);
+                }
+            });
+        }
+        else//if there isn't already an item, add the item to the database
+        {
+            saveNewResponse(DB, newResponse);
+        }
+    });
+}
 
-//schema for the response from student on the tags
-var student_multiple_choice_response_schema = new Schema({
-    lecture: String,
-    studentid: String,
-    multi_title: String,
-    response: String
-},{collection: 'multiple_response'});
-var student_multiple_choice_ResponseDB = mongoose.model('multiple_response', student_multiple_choice_response_schema);
-
-//schema for the response from student on the tags
-var multiple_choice_lecture_status_schema = new Schema({
-    title: String,
-    lecture: String,
-    status: Boolean,
-    answer: Number
-},{collection: 'multiple_choice_status'});
-var multiple_choice_lecture_statusDB = mongoose.model('multiple_choice_status', multiple_choice_lecture_status_schema);
-
+function saveNewResponse(DB, value)
+{
+    //save the value to the binary response db reutrn 
+    new DB(value).save(function(error){
+        if(error){ // if there was an error then return what print out the user, the lecture and the title of the tag
+            console.log("Error adding Default response for user: " + session.sid + ", lecture: " + lecture + ", value: " + JSON.stringify(value) + ", Error: " + error);
+        }
+    });
+}
 
 //setup teacher controlling slide 
 io.on('connection', function(socket){
@@ -816,7 +906,14 @@ io.on('connection', function(socket){
         return;
 
     //set up the server connection, by having the lecture id sent to the server
-    socket.on('lecture_server_setup', function(lecture){
+    socket.on('lecture_server_setup', function(lectureDetails){
+
+        var lecture = lectureDetails.lectureID;
+        var lecture_title = lectureDetails.title;
+
+        //if the lecture title/ID isn't in the DB add it, this is to have the name and ID combo for the reports
+        searchDBForResponse(Lecture_ID_Name, {lectureID: lecture}, {lectureID: lecture, lecture_title: lecture_title});
+
         //send user to right room
         // in this room it is easier to send a message to all students
         socket.join(lecture);/*can have a function call back for any error*/
@@ -988,38 +1085,6 @@ io.on('connection', function(socket){
                 });        
             });
 
-            function searchDBForResponse(DB, searchQuery, newResponse)
-            {
-                //search to see if there is already an item with the correct id's
-                DB.find(searchQuery).limit(1).exec(function(error, results){
-                    //if there is already an item update it
-                    if(results.length > 0)
-                    {
-                        // update the current response
-                        DB.update(searchQuery, newResponse, {multi: false}, function(error, numAffected){
-                            if(error)
-                            {
-                                console.log("Error in updating " + session.sid + "'s account, response was " + response + ", lecture was " + lecture + ", slide number was " + slide_index);
-                            }
-                        });
-                    }
-                    else//if there isn't already an item, add the item to the database
-                    {
-                        saveNewResponse(DB, newResponse);
-                    }
-                });
-            }
-
-            function saveNewResponse(DB, value)
-            {
-                //save the value to the binary response db reutrn 
-                new DB(value).save(function(error){
-                    if(error){ // if there was an error then return what print out the user, the lecture and the title of the tag
-                        console.log("Error adding Default response for user: " + session.sid + ", lecture: " + lecture + ", value: " + JSON.stringify(value) + ", Error: " + error);
-                    }
-                });
-            }
-
             //when the student sends a response to the server, update/add that data to the code
             socket.on('student_multiple_response', function(response_data){
                 //add to the database
@@ -1043,7 +1108,7 @@ io.on('connection', function(socket){
             });
 
             //called when the user check for the status of there current tag
-            socket.on('check_multiple_choice_status', function(status_request){            
+            socket.on('check_multiple_choice_status', function(status_request){
                 //set up the database query
                 var searchQuery = {
                     lecture: lecture,
@@ -1070,38 +1135,6 @@ io.on('connection', function(socket){
                     status_request.response = response;
                     socket.emit('multiple_choice_status', status_request);
                 });        
-            });
-        }
-
-        function searchDBForResponse(DB, searchQuery, newResponse)
-        {
-            //search to see if there is already an item with the correct id's
-            DB.find(searchQuery).limit(1).exec(function(error, results){
-                //if there is already an item update it
-                if(results.length > 0)
-                {
-                    // update the current response
-                    DB.update(searchQuery, newResponse, {multi: false}, function(error, numAffected){
-                        if(error)
-                        {
-                            console.log("Error in updating " + session.sid + "'s account, response was " + response + ", lecture was " + lecture);
-                        }
-                    });
-                }
-                else//if there isn't already an item, add the item to the database
-                {
-                    saveNewResponse(DB, newResponse);
-                }
-            });
-        }
-
-        function saveNewResponse(DB, value)
-        {
-            //save the value to the binary response db reutrn 
-            new DB(value).save(function(error){
-                if(error){ // if there was an error then return what print out the user, the lecture and the title of the tag
-                    console.log("Error adding Default response for user: " + session.sid + ", lecture: " + lecture + ", value: " + JSON.stringify(value) + ", Error: " + error);
-                }
             });
         }
 
@@ -1179,7 +1212,6 @@ io.on('connection', function(socket){
             //remove the user for the room
             socket.leave(session.lecture);
         });
-
     });
     // socket.on("mobile_debug", function(data){
     //     if(typeof data === "Object")
@@ -1208,11 +1240,13 @@ io.on('connection', function(socket){
 
 // var lectures = {
 //     "Agile Lecturing with Real-time Learning Analytics" : {
+//         lectureID: "a163b376-9b64-475e-85a4-dd805243367e",
 //         'Agile Lecturing' : YNRQs.slice(),
 //         'Real-time feedback' : YNRQs.slice(),
 //         'learnAgile' : YNRQs.slice()
 //     },
 //     "AJAX, JSON, and XML - CSCI 3230u" : {
+//         lectureID: "747969ea-8d7f-4a0f-807f-a2f8cee86eed",
 //         'Intro' : YNRQs.slice(),
 //         'Ajax' : YNRQs.slice(),
 //         'JSON' : YNRQs.slice(),
@@ -1369,7 +1403,7 @@ io.on('connection', function(socket){
 //     newUser.save(function(error){
 //         if(error)
 //         {
-//             //if the ere is a error, log it and call the onFail method
+//             //if there is a error, log it and call the onFail method
 //             console.log("Error in Registering, data: " +  JSON.stringify(userdata));
 //         }
 //         else
@@ -1383,7 +1417,12 @@ io.on('connection', function(socket){
 //         return;
 
 //     Object.keys(lectures).forEach(function(lecture){
+//         var lectureID = lectures[lecture].lectureID;
+//         // saveNewResponse(Lecture_ID_Name, {lectureID: lectureID}, {lecture_ID: lectureID, lecture_title: lecture});
 //         Object.keys(lectures[lecture]).forEach(function(section){
+//             if(section === "lectureID"){
+//                 return;
+//             }
 //             lectures[lecture][section].forEach(function(YNRQ){
 //                 var response = Math.random();
 
@@ -1394,7 +1433,7 @@ io.on('connection', function(socket){
 //                 else
 //                     response = -1;
 //                 saveNewResponse(student_YNRQ_DB, {
-//                     lecture: lecture,
+//                     lecture: lectureID,
 //                     studentid: userid,
 //                     section: section,
 //                     tag_title: YNRQ,
@@ -1429,6 +1468,10 @@ io.on('connection', function(socket){
 
 //         AddUser(sid, "demo");
 //     }
+//     Object.keys(lectures).forEach(function(lecture){
+//         var lectureID = lectures[lecture].lectureID;
+//         saveNewResponse(Lecture_ID_Name, {lectureID: lectureID, lecture_title: lecture});
+//     });
 //     AddUser("100539147", "csci1040", true);
 //     AddUser("Matt", "temp", true);
 //     setTimeout(function(){
