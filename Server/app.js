@@ -8,24 +8,10 @@ var io = require('socket.io')(http);
 var mongoose = require('mongoose');
 var bcrypt = require('bcrypt-nodejs');
 
-//has the Instructor set to a random value, use uuid to make the guess of the string harder
-//the change is so if the user found a way to change the isInstructor session variable to
-//a value that woule register as true in the followin statement, then they would be able to easly
-//be able to break in
-// if(request.session.isInstructor) // easly breakable if access to session data
-//the following is a bit harder, they would have to have access to the server variable data
-var instructorKey = uuid.v4();
-function isAnInstructor(session)
-{
-    if(session.isInstructor === instructorKey)
-        return true;
-    return false;
-}
 
-/**** Databases ****/
-
-//setup server for saving the response data
-mongoose.connect('localhost:27018/Response_System');
+/****************************************
+            Database Structures
+****************************************/
 var Schema = mongoose.Schema;
 
 /**** Yes No Response Question - Response Database ****
@@ -47,7 +33,7 @@ var student_YNRQ_DB = mongoose.model('yesno_response', student_YNRQ_schema);
 /**** Lecture ID To Name - Database ****
 * lectureID - the Lecture ID
 * lecture_title - the title of the lecture
-*******************************************************/
+****************************************/
 var Lecture_ID_Name_schema = new Schema({
     lectureID: String,
     lecture_title: String
@@ -65,8 +51,8 @@ var student_multiple_choice_response_schema = new Schema({
     studentid: String,
     multi_title: String,
     response: String
-},{collection: 'multiple_response'});
-var student_multiple_choice_ResponseDB = mongoose.model('multiple_response', student_multiple_choice_response_schema);
+},{collection: 'multiple_choice_response'});
+var student_multiple_choice_ResponseDB = mongoose.model('multiple_choice_response', student_multiple_choice_response_schema);
 
 /**** Multiple Choice Response Question - Question Stats Database ****
 * title - title of the MCRQ
@@ -100,6 +86,52 @@ var userSchema = new Schema({
 var UserDB = mongoose.model('user', userSchema);
 
 
+
+
+
+
+
+/****************************************
+            Extra
+****************************************/
+
+
+//has the Instructor set to a random value, use uuid to make the guess of the string harder
+//the change is so if the user found a way to change the isInstructor session variable to
+//a value that woule register as true in the followin statement, then they would be able to easly
+//be able to break in
+// if(request.session.isInstructor) // easly breakable if access to session data
+//the following is a bit harder, they would have to have access to the server variable data
+var instructorKey = uuid.v4();
+function isAnInstructor(session)
+{
+    if(session.isInstructor === instructorKey)
+        return true;
+    return false;
+}
+
+
+
+
+
+app.get('/', function(request, response){
+    // //load the login page
+    if(request.session.userid)
+        response.redirect('/loggedin');
+    else
+        response.redirect('/login');// response.render('login');
+});
+
+
+
+
+/****************************************
+            Server Setup
+****************************************/
+
+//setup server for saving the response data
+mongoose.connect('localhost:27018/Response_System');
+
 //be able to parse post data
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -129,19 +161,39 @@ var sessionMiddleware = session({
 //use the session data that is above
 app.use(sessionMiddleware);
 
-//added to erase the database when needed
-function cleanDB()
+//this is used to give socket.io access to the session data,
+//i don't know if this is the best practice, but it works, if it isn't 
+//the best practice, i will change it to the best practice.
+io.use(function(socket, next){
+    sessionMiddleware(socket.request, socket.request.res, next);
+});
+
+
+
+/***************************************
+        Page Render Functionality
+****************************************/
+
+function renderPage(session, response, page, title, params)
 {
-    Lecture_ID_Name.remove({}, function(err) { 
-        console.log('collection removed') 
+    //if params is empty then make it an empty object,
+    var addParams = params || {};
+    //set up the default parameters for the render function
+    var pageParams = {title:title, loggedin: (session.userid)?true:false, isInstructor: isAnInstructor(session)};
+
+    //for each object in the params object add that object to the parameters of the render function
+    Object.keys(addParams).forEach(function(item){
+        pageParams[item] = params[item];
     });
-    UserDB.remove({}, function(err) { 
-        console.log('collection removed') 
-    });
-    student_YNRQ_DB.remove({}, function(err) { 
-        console.log('collection removed') 
-    });
+
+    //render the page with its parameters
+    response.render(page, pageParams);  
 }
+
+
+/****************************************
+        Sign In Funcitonality
+****************************************/
 
 //show that your are logged in, can be changed to redirect another site
 app.get('/loggedin', function(request, response){
@@ -151,6 +203,21 @@ app.get('/loggedin', function(request, response){
 
     //redirect to lecture note for now, may change later. intent in to send user to a welcome page
     response.redirect('/lecture_notes')
+});
+
+app.get('/logout', function(request, response){
+    //delete the userid sid and isInstructor for the session data, redirect to the main page
+    var session = request.session;
+    delete session.userid;
+    delete session.isInstructor;
+    delete session.sid;
+    response.redirect('/');
+    console.log('User Logged Out');
+});
+
+app.get('/login', function(request, response){
+    //load the login page
+    renderPage(request.session, response, 'loginPage', 'Login - CSCI 1040u');
 });
 
 app.post('/login', function(request, response){
@@ -166,15 +233,53 @@ app.post('/login', function(request, response){
     });
 });
 
-app.get('/logout', function(request, response){
-    //delete the userid sid and isInstructor for the session data, redirect to the main page
-    var session = request.session;
-    delete session.userid;
-    delete session.isInstructor;
-    delete session.sid;
-    response.redirect('/');
-    console.log('User Logged Out');
+function login(session, sid, password, onSuccess, onFail)
+{
+    console.log('Logging In User');
+    //check of there is user with the sid that was submitted
+    UserDB.find({sid: sid}).limit(1).exec(function(error, results){
+        if(error)
+        {
+            console.log("Login Error: " + error, "sid: "+sid +" password:"+ password);
+            onFail("Unable to process you request");
+            return;
+        }
+        if((results.length > 0) && (bcrypt.compareSync(password, results[0].hashedPassword)))
+        {
+            console.log('Successfully Logged in User, ' + sid);
+            //successful login, contiune with the login
+            session.userid = results[0].userid;
+            if(results[0].isInstructor === true)
+                session.isInstructor = instructorKey;
+            else
+                session.isInstructor = results[0].isInstructor;
+            session.sid = results[0].sid;
+            onSuccess();
+        }
+        else
+        {
+            //incorect password call the on fall method
+            console.log("Login Attempt: " + sid /*+ " Password: " + password*/);
+            onFail("Invalid Student ID or Password");
+        }
+    });
+}
+
+
+/****************************************
+        Register Funcitonality
+****************************************/
+
+app.get('/registerInstructorForm', function(request, response){
+    //render the register page
+    response.render('instructorRegister');
 });
+
+app.get('/register', function(request, response){
+    //load the register page
+    renderPage(request.session, response, 'registerPage', 'Register - CSCI 1040u');
+});
+
 
 app.post('/register', function(request, response){
     //get the sid and password for the request
@@ -218,49 +323,6 @@ app.post('/registerInstructor', function(request, response){
     });
 });
 
-app.get('/registerInstructorForm', function(request, response){
-    //render the register page
-    response.render('instructorRegister');
-});
-
-app.get('/', function(request, response){
-    // //load the login page
-    if(request.session.userid)
-        response.redirect('/loggedin');
-    else
-        response.redirect('/login');// response.render('login');
-});
-
-app.get('/login', function(request, response){
-    //load the login page
-    renderPage(request.session, response, 'loginPage', 'Login - CSCI 1040u');
-});
-
-app.get('/register', function(request, response){
-    //load the register page
-    renderPage(request.session, response, 'registerPage', 'Register - CSCI 1040u');
-});
-
-app.get('/lecture_notes', function(request, response){
-    //load the lecture_notes page
-    renderPage(request.session, response, 'lecturenotesPage', 'Lecture Notes - CSCI 1040u');
-});
-
-function renderPage(session, response, page, title, params)
-{
-    //if params is empty then make it an empty object,
-    var addParams = params || {};
-    //set up the default parameters for the render function
-    var pageParams = {title:title, loggedin: (session.userid)?true:false, isInstructor: isAnInstructor(session)};
-
-    //for each object in the params object add that object to the parameters of the render function
-    Object.keys(addParams).forEach(function(item){
-        pageParams[item] = params[item];
-    });
-
-    //render the page with its parameters
-    response.render(page, pageParams);  
-}
 
 function register(session, sid, password, onSuccess, onFail, isInstructor)
 {
@@ -320,38 +382,6 @@ function register(session, sid, password, onSuccess, onFail, isInstructor)
     });
 }
 
-function login(session, sid, password, onSuccess, onFail)
-{
-    console.log('Logging In User');
-    //check of there is user with the sid that was submitted
-    UserDB.find({sid: sid}).limit(1).exec(function(error, results){
-        if(error)
-        {
-            console.log("Login Error: " + error, "sid: "+sid +" password:"+ password);
-            onFail("Unable to process you request");
-            return;
-        }
-        if((results.length > 0) && (bcrypt.compareSync(password, results[0].hashedPassword)))
-        {
-            console.log('Successfully Logged in User, ' + sid);
-            //successful login, contiune with the login
-            session.userid = results[0].userid;
-            if(results[0].isInstructor === true)
-                session.isInstructor = instructorKey;
-            else
-                session.isInstructor = results[0].isInstructor;
-            session.sid = results[0].sid;
-            onSuccess();
-        }
-        else
-        {
-            //incorect password call the on fall method
-            console.log("Login Attempt: " + sid /*+ " Password: " + password*/);
-            onFail("Invalid Student ID or Password");
-        }
-    });
-}
-
 //when registering a instructor
 function registerInstructor(session, sid, password, onSuccess, onFail)
 {
@@ -360,7 +390,24 @@ function registerInstructor(session, sid, password, onSuccess, onFail)
     register(session, sid, password, onSuccess, onFail, true);
 }
 
+
+
+/****************************************
+    Render Lecture Notes Funcitonality
+****************************************/
+
+app.get('/lecture_notes', function(request, response){
+    //load the lecture_notes page
+    renderPage(request.session, response, 'lecturenotesPage', 'Lecture Notes - CSCI 1040u');
+});
+
+
 /******** Report Functionality ********/
+
+
+/***************************************
+            Course Summary
+****************************************/
 
 app.get('/course_summary', function(request, response){
     //render the Course Overview page
@@ -418,6 +465,11 @@ app.post('/course_summary', function(request, response){
         console.log('course_summary_report');
     }
 });
+
+
+/***************************************
+            Course Report
+****************************************/
 
 app.get('/course_report', function(request, response){
     //easy access to the session variable
@@ -548,6 +600,11 @@ function course_report(session, response, studentid, sid)
     });
 }
 
+
+/***************************************
+            Lecture Summary
+****************************************/
+
 app.get('/lecture_summary', function(request, response){
     //easy access to the session data
     var session = request.session;
@@ -665,6 +722,11 @@ app.get('/lecture_summary_list', function(request, response){
         response.redirect('/');
 });
 
+
+/***************************************
+            Lecture Report
+****************************************/
+
 app.get('/lecture_report', function(request, response){
     //get the lecture from the request
     var session = request.session;
@@ -737,6 +799,11 @@ function lecture_report(session, response, lecture_title, sid, student)
     });
 }
 
+
+
+/***************************************
+        Build JSON Data Structure
+****************************************/
 
 //initalize in a {} 
 // value:{}
@@ -836,16 +903,6 @@ function updateReportData(stats, type, item)
     _updateReportData(stats, type, item.section, item.tag_title, item.response);
 }
 
-//Socket.IO Functionality
-
-//this is used to give socket.io access to the session data,
-//i don't know if this is the best practice, but it works, if it isn't 
-//the best practice, i will change it to the best practice.
-io.use(function(socket, next){
-    sessionMiddleware(socket.request, socket.request.res, next);
-});
-
-
 //change the name of a property in an object
 function _renameProperty(object, oldname, newname)
 {
@@ -865,6 +922,11 @@ function renameProperty(object, oldname, newname)
     if(!_renameProperty(object, oldname, newname))
         object[newname] = 0;
 }
+
+
+/***************************************
+        DB Insert Functionality
+****************************************/
 
 function searchDBForResponse(DB, searchQuery, newResponse)
 {
@@ -898,7 +960,11 @@ function saveNewResponse(DB, value)
     });
 }
 
-//setup teacher controlling slide 
+
+/***************************************
+        Socket.IO Functionality
+****************************************/
+
 io.on('connection', function(socket){
     var session = socket.request.session;
     //if there is no userid then don't allow any functionality
@@ -1213,280 +1279,12 @@ io.on('connection', function(socket){
             socket.leave(session.lecture);
         });
     });
-    // socket.on("mobile_debug", function(data){
-    //     if(typeof data === "Object")
-    //         console.log(session.sid + ': ', JSON.stringify(data));            
-    //     else
-    //         console.log(session.sid + ': ', data);
-    // });
 });
 
-// cleanDB();
-// multiple_choice_lecture_statusDB.find({}).remove().exec(function(){
-//     console.log("done");
-//     multiple_choice_lecture_statusDB.find({}).exec(function(error, results){
-//                 console.log("done", results);
-//             });
-// });
-// student_YNRQ_DB.find({section: 'Open data'})
-//     .exec(function(error, results){
-//         console.log(results);
-//     });
 
-
-
-// var YNRQs = ['Difficult', 'Like', 'Study'];
-
-
-// var lectures = {
-//     "Agile Lecturing with Real-time Learning Analytics" : {
-//         lectureID: "a163b376-9b64-475e-85a4-dd805243367e",
-//         'Agile Lecturing' : YNRQs.slice(),
-//         'Real-time feedback' : YNRQs.slice(),
-//         'learnAgile' : YNRQs.slice()
-//     },
-//     "AJAX, JSON, and XML - CSCI 3230u" : {
-//         lectureID: "747969ea-8d7f-4a0f-807f-a2f8cee86eed",
-//         'Intro' : YNRQs.slice(),
-//         'Ajax' : YNRQs.slice(),
-//         'JSON' : YNRQs.slice(),
-//         'XML' : YNRQs.slice(),
-//         'Open data' : YNRQs.slice()
-//     }
-//     // "AJAX, JSON, and XML - CSCI 3230u2" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // },
-//     // "AJAX, JSON, and XML - CSCI 3230u3" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // },
-//     // "AJAX, JSON, and XML - CSCI 3230u4" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // },
-//     // "AJAX, JSON, and XML - CSCI 3230u5" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // },
-//     // "AJAX, JSON, and XML - CSCI 3230u6" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // },
-//     // "AJAX, JSON, and XML - CSCI 3230u7" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // },
-//     // "AJAX, JSON, and XML - CSCI 3230u8" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // },
-//     // "AJAX, JSON, and XML - CSCI 3230u9" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // },
-//     // "AJAX, JSON, and XML - CSCI 3230u10" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // },
-//     // "AJAX, JSON, and XML - CSCI 3230u11" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // },
-//     // "AJAX, JSON, and XML - CSCI 3230u12" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // },
-//     // "AJAX, JSON, and XML - CSCI 3230u13" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // },
-//     // "AJAX, JSON, and XML - CSCI 3230u14" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // },
-//     // "AJAX, JSON, and XML - CSCI 3230u15" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // },
-//     // "AJAX, JSON, and XML - CSCI 3230u16" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // },
-//     // "AJAX, JSON, and XML - CSCI 3230u17" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // },
-//     // "AJAX, JSON, and XML - CSCI 3230u18" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // },
-//     // "AJAX, JSON, and XML - CSCI 3230u19" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // }
-// };
-
-// cleanDB();
-
-
-// function AddUser(sid, password, isInstructor)
-// {
-//     //generate a uuid for the user and has the password
-//     var userid = uuid.v4();
-//     var hash = bcrypt.hashSync(password);
-
-//     //setup the record for saving the new user
-//     var userdata = {
-//         userid: userid,
-//         sid: sid,
-//         hashedPassword: hash,
-//         isInstructor: isInstructor || false
-//     };           
-
-//     //declare a new user and save the user
-//     var newUser = new UserDB(userdata);
-//     newUser.save(function(error){
-//         if(error)
-//         {
-//             //if there is a error, log it and call the onFail method
-//             console.log("Error in Registering, data: " +  JSON.stringify(userdata));
-//         }
-//         else
-//         {
-//             //if succefully added, log the username
-//             console.log("User Added: " + JSON.stringify(userdata));
-//         }
-//     });
-
-//     if(userdata.isInstructor)
-//         return;
-
-//     Object.keys(lectures).forEach(function(lecture){
-//         var lectureID = lectures[lecture].lectureID;
-//         // saveNewResponse(Lecture_ID_Name, {lectureID: lectureID}, {lecture_ID: lectureID, lecture_title: lecture});
-//         Object.keys(lectures[lecture]).forEach(function(section){
-//             if(section === "lectureID"){
-//                 return;
-//             }
-//             lectures[lecture][section].forEach(function(YNRQ){
-//                 var response = Math.random();
-
-//                 if(response <= 0.3333)
-//                     response = 1;
-//                 else if(response <= 0.6666)
-//                     response = 0;
-//                 else
-//                     response = -1;
-//                 saveNewResponse(student_YNRQ_DB, {
-//                     lecture: lectureID,
-//                     studentid: userid,
-//                     section: section,
-//                     tag_title: YNRQ,
-//                     response: response
-//                 });
-//             });
-//         });
-//     });
-// }
-
-// function saveNewResponse(DB, value)
-// {
-//     //save the value to the binary response db reutrn 
-//     new DB(value).save(function(error){
-//         if(error){ // if there was an error then return what print out the user, the lecture and the title of the tag
-//             console.log("Error adding Default response for user: " + session.sid + ", lecture: " + lecture + ", value: " + JSON.stringify(value) + ", Error: " + error);
-//         }
-//     });
-// }
-
-// setTimeout(function(){
-//     for(var cnt = 1; cnt <= 40; cnt++)
-//     {
-//         var num = cnt;
-//         if(num <= 9)
-//             num = "0" + num;
-//         // else if(num <= 99)
-//         //     num = "0" + num;
-
-//         var sid = "2000000" + num;
-        
-
-//         AddUser(sid, "demo");
-//     }
-//     Object.keys(lectures).forEach(function(lecture){
-//         var lectureID = lectures[lecture].lectureID;
-//         saveNewResponse(Lecture_ID_Name, {lectureID: lectureID, lecture_title: lecture});
-//     });
-//     AddUser("100539147", "csci1040", true);
-//     AddUser("Matt", "temp", true);
-//     setTimeout(function(){
-//         // UserDB.find().exec(function(err, results){
-//         //     console.log("UserDB:", results);
-//         // })
-
-//         // student_YNRQ_DB.find().exec(function(error, results){
-//         //     console.log("YNRQ DB:", results);
-//         // });
-//         console.log('done');
-//     }, 500);
-// }, 1000);
-
-
+/***************************************
+            Run Server
+****************************************/
 
 //listen for a connection
 http.listen(app.get('port'), function(){
