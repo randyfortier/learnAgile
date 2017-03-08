@@ -1,4 +1,4 @@
-function instructor(){
+function Instructor(){
     if(window.parent)
     {
         var lec_name = undefined;
