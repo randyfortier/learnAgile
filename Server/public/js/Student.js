@@ -1,13 +1,14 @@
-function Student(){
+function setUpStudent(){
     var UNKNOWN_YN_RESPONSE = -1;
     var DONTUNDERSTAND_YN_RESPONSE = 0;
     var UNDERSTAND_YN_RESPONSE = 1;
     var YNRQuestionSidebar = $('<div id="sidebar"></div>');
     var follow_Instructors_Slides = false;
 
-    ActionFunc = function()
+    _studentFollow = function()
     {
         follow_Instructors_Slides = !follow_Instructors_Slides;
+        console.log("Called", follow_Instructors_Slides);
     }
 
     //NOTE: when adding sidebar, height at 100% only matches the height of the text on the screen
@@ -146,7 +147,7 @@ function Student(){
             var wrapper = "<YNRQ>"+xml+"</YNRQ>";
             //for each child in the xml make a YNRQ out of it
             $(wrapper).children().each(function(){
-                var YNRQInfo = getXMLData($(this));
+                var YNRQInfo = getYNRQDataFromXML($(this));
                 if(!YNRQInfo.title || !YNRQInfo.src)
                     return;
                 YNRQs.titles.push(YNRQInfo.title);
@@ -264,12 +265,14 @@ function Student(){
 
 
 
-    /******** Multiple Choice Functionality ********/
+    /**************************************************
+                Multiple Choice Functionality 
+    ***************************************************/
 
     function highlightChoice(answer)
     {
         //can change to be any style
-        $(answer).attr('style', 'text-decoration: underline');
+        $(answer).addClass('choiceAnswer');
     }
 
     //add click functionality to the slide, remove the answer class
@@ -282,14 +285,12 @@ function Student(){
     {
         //get the click object and the class of that object
         var answer = event.target;
-        var answer_class = $(answer).attr('class');
+        var parent = $(answer).parent();
 
         //remove the style from each answer in this question
-        $('.' + answer_class).each(function(){
-            $(this).removeAttr('style');
-        });
+        $(parent).find('.choiceAnswer').removeClass('choiceAnswer');
 
-        //can change to be any style
+        // //can change to be any style
         highlightChoice(answer)
 
         //send result to the server

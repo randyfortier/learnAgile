@@ -1,0 +1,60 @@
+#sidebar {
+	background-color: transparent;
+	color: white;
+	position: fixed;
+	/*position: absolute;*/
+	/*left: 100%;*/
+	right: 0em;
+	border-radius: 5px;
+	display: flex;
+	align-items: center;
+	flex-direction: column;
+	justify-content: center;
+}
+
+.YNRQ{
+	position: relative;
+	background-color: transparent;
+	display:block;
+
+	border-radius: 5px;
+	width: 65px;
+	height: 65px;
+
+	display: flex;
+	align-items: center;
+
+
+	-khtml-user-select: none;
+    -o-user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.clicked {
+}
+
+.unclicked {
+	background-color: red;
+}
+
+#student_chart {
+	width: 400;
+	height: 400;
+	position: fixed;
+	background-color: white;
+	left: 80%;
+}
+
+
+.icon-disabled {
+  -webkit-filter: grayscale(1);
+  filter: grayscale(1);
+}
+
+.choiceAnswer
+{
+	/*text-decoration: underline;*/
+	background-color: yellow;
+}

@@ -1,4 +1,4 @@
-function Instructor(){
+function setUpInstructor(){
     if(window.parent)
     {
         var lec_name = undefined;
@@ -10,15 +10,13 @@ function Instructor(){
             {
                 if(data.method === 'setState')
                 {
-                    if(!sendMultipleChoice(event.source, origin))
-                        sendYNRQs(event.source, origin);
+                    sendDataToNotes(event, origin);
                 }
             }
             else
             {
                 if(data.name){
-                    if(!sendMultipleChoice(event.source, origin))
-                        sendYNRQs(event.source, origin);
+                    sendDataToNotes(event, origin);
                     lec_name = data.name;
                     Reveal.addEventListener( 'slidechanged', function( event ) {
                         //sends a siginal to the server to change the students slides
@@ -28,6 +26,12 @@ function Instructor(){
                 }
             }
         });
+
+        function sendDataToNotes(event, origin)
+        {
+            if(!sendMultipleChoice(event.source, origin))
+                sendYNRQs(event.source, origin);
+        }
 
         function sendMultipleChoice(source, origin)
         {
@@ -45,15 +49,6 @@ function Instructor(){
                 return false;
         }
 
-        function sendYNRQs(source, origin)
-        {
-            var slide = Reveal.getCurrentSlide();
-            var YNRQs = checkNretriveYNRQ(slide, Reveal.getIndices().h);
-            source.postMessage(JSON.stringify({
-                YNRQuestion: YNRQs
-            }), origin); 
-        }
-
         function multiChoice(slide)
         {
             var multi = $(slide).find('multiplechoice');
@@ -69,6 +64,15 @@ function Instructor(){
                 return {title: $(list).attr('title'), length: $(list).children().length};
             }
             return {title: "", length: -1};
+        }
+        
+        function sendYNRQs(source, origin)
+        {
+            var slide = Reveal.getCurrentSlide();
+            var YNRQs = checkNretriveYNRQ(slide, Reveal.getIndices().h);
+            source.postMessage(JSON.stringify({
+                YNRQuestion: YNRQs
+            }), origin); 
         }
         
         function checkNretriveYNRQ(slide, hIndex)
@@ -99,7 +103,7 @@ function Instructor(){
             //for each child in the xml get the title
             $(wrapper).children().each(function(){
                 //push the name in the list
-                var data = getXMLData($(this));
+                var data = getYNRQDataFromXML($(this));
                 if(!data.title || !data.src)
                     return;    
                 list.push(data.title);

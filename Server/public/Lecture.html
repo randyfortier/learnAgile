@@ -19,7 +19,7 @@
 
 		<link rel="stylesheet" href="css/reveal.css" />
 		<link rel="stylesheet" href="css/theme/black.css" id="theme" />
-        <link rel="stylesheet" href="css/tagging.css" />
+        <link rel="stylesheet" href="css/RevealResponse.css" />
 
 		<!-- Printing and PDF exports -->
 		<script>
@@ -752,7 +752,7 @@ $.get('inventory.xml', function(xmlDoc) {
 				</section>
 
                 <section>
-                    <multiplechoice title='test1'>
+                    <multiplechoice title='test1' ca='2'>
                         <question>In the following diagram, which kind of argument passing is being used?  <img src='images/hard.png'/></question>
                         <answer>Pass by value</answer>
                         <answer>Pass by reference</answer>
@@ -762,7 +762,7 @@ $.get('inventory.xml', function(xmlDoc) {
                     </multiplechoice>
                 </section>
                 <section>
-                    <multiplechoice title='test2'>
+                    <multiplechoice title='test2' ca='3'>
                         <question>In the following diagram, which kind of argument passing is being used?  <img src='images/hard.png'/></question>
                         <answer>Pass by value</answer>
                         <answer>Pass by reference</answer>
@@ -829,9 +829,9 @@ $.get('inventory.xml', function(xmlDoc) {
 				    67: function() { RevealChalkboard.toggleNotesCanvas() },	// toggle chalkboard when 'c' is pressed
 				    66: function() { RevealChalkboard.toggleChalkboard() },	// toggle chalkboard when 'b' is pressed
 				    46: function() { RevealChalkboard.clear() },	// clear chalkboard when 'DEL' is pressed
-				     8: function() { RevealChalkboard.reset() },	// reset all chalkboard data when 'BACKSPACE' is pressed
+				    8: function() { RevealChalkboard.reset() },	// reset all chalkboard data when 'BACKSPACE' is pressed
 				    68: function() { RevealChalkboard.download() },	// downlad chalkboard drawing when 'd' is pressed
-                    70: function() { tagAction();}
+                    70: function() { studentFollow();}
 				},
             });
             var LectureID = "747969ea-8d7f-4a0f-807f-a2f8cee86eed";

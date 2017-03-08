@@ -1274,11 +1274,13 @@ io.on('connection', function(socket){
                     if(!results[0].status){
                         SendMutipleChoiceResults(title);
                     }
-                    return;
                 }
-                searchQuery.status = true;
-                searchQuery.answer = request.answer;
-                saveNewResponse(multiple_choice_lecture_statusDB, searchQuery);
+                else
+                {
+                    searchQuery.status = true;
+                    searchQuery.answer = request.answer;
+                    saveNewResponse(multiple_choice_lecture_statusDB, searchQuery);
+                }
             });
         });
 
