@@ -1,0 +1,45 @@
+2017-03-02T19:03:16.691-0500 I CONTROL  [initandlisten] MongoDB starting : pid=23516 port=27018 dbpath=./data/db 64-bit host=UOSL16-R90266H5
+2017-03-02T19:03:16.691-0500 I CONTROL  [initandlisten] targetMinOS: Windows 7/Windows Server 2008 R2
+2017-03-02T19:03:16.691-0500 I CONTROL  [initandlisten] db version v3.2.11
+2017-03-02T19:03:16.691-0500 I CONTROL  [initandlisten] git version: 009580ad490190ba33d1c6253ebd8d91808923e4
+2017-03-02T19:03:16.691-0500 I CONTROL  [initandlisten] OpenSSL version: OpenSSL 1.0.1t-fips  3 May 2016
+2017-03-02T19:03:16.691-0500 I CONTROL  [initandlisten] allocator: tcmalloc
+2017-03-02T19:03:16.691-0500 I CONTROL  [initandlisten] modules: none
+2017-03-02T19:03:16.691-0500 I CONTROL  [initandlisten] build environment:
+2017-03-02T19:03:16.691-0500 I CONTROL  [initandlisten]     distmod: 2008plus-ssl
+2017-03-02T19:03:16.691-0500 I CONTROL  [initandlisten]     distarch: x86_64
+2017-03-02T19:03:16.691-0500 I CONTROL  [initandlisten]     target_arch: x86_64
+2017-03-02T19:03:16.691-0500 I CONTROL  [initandlisten] options: { net: { port: 27018 }, storage: { dbPath: "./data/db", mmapv1: { smallFiles: true } }, systemLog: { destination: "file", path: "./log/mongod.log" } }
+2017-03-02T19:03:16.692-0500 I -        [initandlisten] Detected data files in ./data/db created by the 'mmapv1' storage engine, so setting the active storage engine to 'mmapv1'.
+2017-03-02T19:03:16.705-0500 I JOURNAL  [initandlisten] journal dir=./data/db\journal
+2017-03-02T19:03:16.708-0500 I JOURNAL  [initandlisten] recover : no journal files present, no recovery needed
+2017-03-02T19:03:16.739-0500 I JOURNAL  [durability] Durability thread started
+2017-03-02T19:03:16.755-0500 I JOURNAL  [journal writer] Journal writer thread started
+2017-03-02T19:03:16.905-0500 I NETWORK  [HostnameCanonicalizationWorker] Starting hostname canonicalization worker
+2017-03-02T19:03:16.905-0500 I FTDC     [initandlisten] Initializing full-time diagnostic data capture with directory './data/db/diagnostic.data'
+2017-03-02T19:03:16.908-0500 I NETWORK  [initandlisten] waiting for connections on port 27018
+2017-03-02T19:04:00.126-0500 I NETWORK  [initandlisten] connection accepted from 127.0.0.1:52427 #1 (1 connection now open)
+2017-03-02T19:09:58.806-0500 I NETWORK  [initandlisten] connection accepted from 127.0.0.1:52638 #2 (2 connections now open)
+2017-03-02T20:34:38.422-0500 I NETWORK  [initandlisten] connection accepted from 127.0.0.1:54967 #3 (3 connections now open)
+2017-03-02T22:05:58.242-0500 I NETWORK  [conn1] end connection 127.0.0.1:52427 (2 connections now open)
+2017-03-02T22:05:58.242-0500 I NETWORK  [conn2] end connection 127.0.0.1:52638 (2 connections now open)
+2017-03-02T22:05:58.242-0500 I NETWORK  [conn3] end connection 127.0.0.1:54967 (2 connections now open)
+2017-03-02T22:06:00.791-0500 I CONTROL  [thread1] Ctrl-C signal
+2017-03-02T22:06:00.791-0500 I CONTROL  [consoleTerminate] got CTRL_C_EVENT, will terminate after current cmd ends
+2017-03-02T22:06:00.799-0500 I FTDC     [consoleTerminate] Shutting down full-time diagnostic data capture
+2017-03-02T22:06:00.872-0500 I CONTROL  [consoleTerminate] now exiting
+2017-03-02T22:06:00.872-0500 I NETWORK  [consoleTerminate] shutdown: going to close listening sockets...
+2017-03-02T22:06:00.872-0500 I NETWORK  [consoleTerminate] closing listening socket: 496
+2017-03-02T22:06:00.873-0500 I NETWORK  [consoleTerminate] shutdown: going to flush diaglog...
+2017-03-02T22:06:00.873-0500 I NETWORK  [consoleTerminate] shutdown: going to close sockets...
+2017-03-02T22:06:00.878-0500 I STORAGE  [consoleTerminate] shutdown: waiting for fs preallocator...
+2017-03-02T22:06:00.878-0500 I STORAGE  [consoleTerminate] shutdown: final commit...
+2017-03-02T22:06:00.917-0500 I JOURNAL  [consoleTerminate] journalCleanup...
+2017-03-02T22:06:00.927-0500 I JOURNAL  [consoleTerminate] removeJournalFiles
+2017-03-02T22:06:00.928-0500 I JOURNAL  [consoleTerminate] Terminating durability thread ...
+2017-03-02T22:06:00.980-0500 I JOURNAL  [journal writer] Journal writer thread stopped
+2017-03-02T22:06:00.980-0500 I JOURNAL  [durability] Durability thread stopped
+2017-03-02T22:06:00.980-0500 I STORAGE  [consoleTerminate] shutdown: closing all files...
+2017-03-02T22:06:01.014-0500 I STORAGE  [consoleTerminate] closeAllFiles() finished
+2017-03-02T22:06:01.014-0500 I STORAGE  [consoleTerminate] shutdown: removing fs lock...
+2017-03-02T22:06:01.014-0500 I CONTROL  [consoleTerminate] dbexit:  rc: 12

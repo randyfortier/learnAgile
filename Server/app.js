@@ -1,5 +1,5 @@
 var express = require('express');
-var session = require('express-session');
+var setSession = require('express-session');
 var bodyParser = require("body-parser");
 var uuid = require('node-uuid');
 var app = express();
@@ -30,6 +30,7 @@ var student_YNRQ_schema = new Schema({
 },{collection: 'yesno_response'});
 var student_YNRQ_DB = mongoose.model('yesno_response', student_YNRQ_schema);
 
+
 /**** Lecture ID To Name - Database ****
 * lectureID - the Lecture ID
 * lecture_title - the title of the lecture
@@ -39,6 +40,7 @@ var Lecture_ID_Name_schema = new Schema({
     lecture_title: String
 },{collection: 'lecture_id_to_name'});
 var Lecture_ID_Name = mongoose.model('lecture_id_to_name', Lecture_ID_Name_schema);
+
 
 /**** Multiple Choice Response Question - Response Database ****
 * lecture - the Lecture ID
@@ -54,6 +56,7 @@ var student_multiple_choice_response_schema = new Schema({
 },{collection: 'multiple_choice_response'});
 var student_multiple_choice_ResponseDB = mongoose.model('multiple_choice_response', student_multiple_choice_response_schema);
 
+
 /**** Multiple Choice Response Question - Question Stats Database ****
 * title - title of the MCRQ
 * lecture - the Lecture ID of the MCRQ
@@ -67,6 +70,7 @@ var multiple_choice_lecture_status_schema = new Schema({
     answer: Number
 },{collection: 'multiple_choice_status'});
 var multiple_choice_lecture_statusDB = mongoose.model('multiple_choice_status', multiple_choice_lecture_status_schema);
+
 
 /**** User - Database ****
 * userid - a UUID unique to the the student id
@@ -110,18 +114,23 @@ function isAnInstructor(session)
     return false;
 }
 
+/**
+*A check to see if user can access a given page
+*/
+function CheckSession(session, response)
+{
+    //bug was found when the navgating to a page when not signed in. nothing appear on screen
+    //didn't want the have the bug.
+    //the cookie.log dissappears when login is called
+    //use session.log = 1 to mean after logged out, you can't go to pages like lecture report
 
-
-
-
-app.get('/', function(request, response){
-    // //load the login page
-    if(request.session.userid)
-        response.redirect('/loggedin');
-    else
-        response.redirect('/login');// response.render('login');
-});
-
+    console.log(session);
+    if((session.cookie.log === 1) || (session.log === 1)){
+        response.redirect('/');
+        return false;
+    }
+    return true;
+}
 
 
 
@@ -147,7 +156,7 @@ app.set('views', __dirname + '/views');
 app.set('view engine', 'pug');
 
 //taken from randy's example
-var sessionMiddleware = session({
+var sessionMiddleware = setSession({
     genid: function(request) {
         return uuid.v4();
     },
@@ -155,6 +164,7 @@ var sessionMiddleware = session({
     saveUninitialized: false,  // save even when no data
     // this is used when signing the session cookie
     // cookie: { secure: true }, // encrypted cookies only
+    cookie: {log: 1},
     secret: 'apollo slackware prepositional expectations'
 });
 
@@ -191,12 +201,17 @@ function renderPage(session, response, page, title, params)
 }
 
 
+
 /****************************************
         Sign In Funcitonality
 ****************************************/
 
 //show that your are logged in, can be changed to redirect another site
 app.get('/loggedin', function(request, response){
+    //check to be sure there is a session
+    if(!CheckSession(request.session, response))
+        return;
+
     if(!request.session.userid){
         response.redirect('/');
     }
@@ -206,18 +221,25 @@ app.get('/loggedin', function(request, response){
 });
 
 app.get('/logout', function(request, response){
+    if(!CheckSession(request.session, response))
+        return;
     //delete the userid sid and isInstructor for the session data, redirect to the main page
     var session = request.session;
     delete session.userid;
     delete session.isInstructor;
     delete session.sid;
+    session.log = 1;
     response.redirect('/');
     console.log('User Logged Out');
 });
 
 app.get('/login', function(request, response){
+
     //load the login page
-    renderPage(request.session, response, 'loginPage', 'Login - CSCI 1040u');
+    if(request.session.userid)
+        response.redirect('/loggedin');
+    else
+        renderPage(request.session, response, 'loginPage', 'Login - CSCI 1040u');
 });
 
 app.post('/login', function(request, response){
@@ -248,12 +270,7 @@ function login(session, sid, password, onSuccess, onFail)
         {
             console.log('Successfully Logged in User, ' + sid);
             //successful login, contiune with the login
-            session.userid = results[0].userid;
-            if(results[0].isInstructor === true)
-                session.isInstructor = instructorKey;
-            else
-                session.isInstructor = results[0].isInstructor;
-            session.sid = results[0].sid;
+            setLoggedinSessionValues(session, results[0].userid, results[0].isInstructor, results[0].sid);
             onSuccess();
         }
         else
@@ -264,6 +281,24 @@ function login(session, sid, password, onSuccess, onFail)
         }
     });
 }
+
+
+
+/****************************************
+        Session Login Values
+****************************************/
+
+function setLoggedinSessionValues(session, userid, isInstructor, sid)
+{
+    session.userid = userid;
+    if(isInstructor === true)
+        session.isInstructor = instructorKey;
+    else
+        session.isInstructor = isInstructor;
+    session.sid = sid;
+    session.log = 2;
+}
+
 
 
 /****************************************
@@ -369,12 +404,7 @@ function register(session, sid, password, onSuccess, onFail, isInstructor)
                     console.log("User Added: " + userdata);
 
                     //set user the session variables and call onSuccess()
-                    session.userid = userid;
-                    if(userdata.isInstructor === true)
-                        session.isInstructor = instructorKey;
-                    else
-                        session.isInstructor = userdata.isInstructor;
-                    session.sid = sid;
+                    setLoggedinSessionValues(session, userid, userdata.isInstructor, sid)
                     onSuccess();
                 }
             });
@@ -397,9 +427,11 @@ function registerInstructor(session, sid, password, onSuccess, onFail)
 ****************************************/
 
 app.get('/lecture_notes', function(request, response){
+
     //load the lecture_notes page
     renderPage(request.session, response, 'lecturenotesPage', 'Lecture Notes - CSCI 1040u');
 });
+
 
 
 /******** Report Functionality ********/
@@ -410,6 +442,10 @@ app.get('/lecture_notes', function(request, response){
 ****************************************/
 
 app.get('/course_summary', function(request, response){
+
+    //check to be sure there is a session
+    if(!CheckSession(request.session, response))
+        return;
     //render the Course Overview page
     if(isAnInstructor(request.session))
         renderPage(request.session, response, 'coursesummaryPage', 'Course Summary - CSCI 1040u');
@@ -467,11 +503,15 @@ app.post('/course_summary', function(request, response){
 });
 
 
+
 /***************************************
             Course Report
 ****************************************/
 
 app.get('/course_report', function(request, response){
+    //check to be sure there is a session
+    if(!CheckSession(request.session, response))
+        return;
     //easy access to the session variable
     var session = request.session;
     if(isAnInstructor(session)){
@@ -511,6 +551,10 @@ app.get('/course_report', function(request, response){
 });
 
 app.get('/course_report_list', function(request, response){
+    //check to be sure there is a session
+    if(!CheckSession(request.session, response))
+        return;
+
     console.log('course_report_list');
     //run only if the instructor request the page
     if(isAnInstructor(request.session)){
@@ -601,11 +645,15 @@ function course_report(session, response, studentid, sid)
 }
 
 
+
 /***************************************
             Lecture Summary
 ****************************************/
 
 app.get('/lecture_summary', function(request, response){
+    //check to be sure there is a session
+    if(!CheckSession(request.session, response))
+        return;
     //easy access to the session data
     var session = request.session;
 
@@ -687,6 +735,9 @@ app.get('/lecture_summary', function(request, response){
 });
 
 app.get('/lecture_summary_list', function(request, response){
+    //check to be sure there is a session
+    if(!CheckSession(request.session, response))
+        return;
     console.log('lecture_summary_list');
     //run only if the user is an instructor
     if(isAnInstructor(request.session)){
@@ -723,11 +774,15 @@ app.get('/lecture_summary_list', function(request, response){
 });
 
 
+
 /***************************************
             Lecture Report
 ****************************************/
 
 app.get('/lecture_report', function(request, response){
+    //check to be sure there is a session
+    if(!CheckSession(request.session, response))
+        return;
     //get the lecture from the request
     var session = request.session;
     var lecture = request.query.lecture;
@@ -1280,6 +1335,26 @@ io.on('connection', function(socket){
         });
     });
 });
+
+
+
+
+/***************************************
+            Main Page
+****************************************/
+
+app.get('/', function(request, response){
+    if(!request.session){
+        response.redirect('/login');
+        return;
+    }
+    //load the login page
+    if(request.session.userid)
+        response.redirect('/loggedin');
+    else
+        response.redirect('/login');// response.render('login');
+});
+
 
 
 /***************************************
