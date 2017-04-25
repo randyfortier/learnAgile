@@ -4,7 +4,7 @@ var table_content = '<tr><th>Tag Name</th><th>Overall Yes% (Student/Average)</th
 var overallColspan = 6;
 
 $(document).ready(function(){
-	$.get('/courseReport',function(lec_data){
+	$.get('courseReport',function(lec_data){
 		var data = JSON.parse(lec_data);
 		var lec = data.lectures;
 		var allLec = data.alldata;

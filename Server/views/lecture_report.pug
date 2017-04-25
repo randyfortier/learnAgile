@@ -1,9 +1,9 @@
 extends layout
 block inhead
 	if !error
-		link(rel="stylesheet", href="css/report.css")
+		link(rel="stylesheet", href="/css/report.css")
 		script(src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.6/Chart.js")
-		script(src='js/table_func.js')
+		script(src='/js/table_func.js')
 		script.
 			var lec_stud = !{JSON.stringify(stud_lec)};
 			var studStats = !{JSON.stringify(student_stats)};

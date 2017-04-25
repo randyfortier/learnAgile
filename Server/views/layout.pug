@@ -7,9 +7,9 @@ html
 		meta(name="viewport", content="width=device-width, initial-scale=1, shrink-to-fit=no")
 		meta(http-equiv="x-ua-compatible" content="ie=edge")
 
-		link(href="images/uoit_logo_icon_32.ico", rel="icon", type="image/x-icon")
-		link(href="images/uoit_logo_icon_32.ico", rel="shortcut icon", type="image/x-icon")
-		link(rel="icon", type="image/png", href="images/logo_icon.jpg", alt="icon")
+		link(href="/images/uoit_logo_icon_32.ico", rel="icon", type="image/x-icon")
+		link(href="/images/uoit_logo_icon_32.ico", rel="shortcut icon", type="image/x-icon")
+		link(rel="icon", type="image/png", href="/images/logo_icon.jpg", alt="icon")
 
 		link(href='https://fonts.googleapis.com/css?family=Caveat', rel='stylesheet', type='text/css')
 		link(href='https://fonts.googleapis.com/css?family=Montserrat', rel='stylesheet', type='text/css')
@@ -17,7 +17,7 @@ html
 		link(rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css", integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7", crossorigin="anonymous")
 		link(rel="stylesheet", href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css", integrity="sha384-fLW2N01lMqjakBkx3l/M9EahuwpSfeNvV63J5ezn3uZzapT0u7EYsXMjQV+0En5r", crossorigin="anonymous")
 
-		link(rel="stylesheet", href="styles/primary.css", type="text/css")
+		link(rel="stylesheet", href="/styles/primary.css", type="text/css")
 		script(src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js")
 
 		block inhead
@@ -44,7 +44,7 @@ html
 					id="bs-example-navbar-collapse-1")
 					ul(class="nav navbar-nav")
 						li
-							a(href="/") Home
+							a(href="") Home
 						li(class="dropdown")
 							a(href="#", class="dropdown-toggle", data-toggle="dropdown", role="button", aria-haspopup="true", aria-expanded="false") Course Materials
 								span(class="caret")
@@ -63,22 +63,22 @@ html
 								ul(class="dropdown-menu")
 									if (isInstructor == true)
 										li 
-											a(href="/course_summary") Course Summary
+											a(href="course_summary") Course Summary
 										li
-											a(href="/lecture_summary_list") Lecture Summary
+											a(href="lecture_summary_list") Lecture Summary
 										li
-											a(href="/course_report_list") Course Report
+											a(href="course_report_list") Course Report
 									else
 										li
-											a(href="/course_report") Course Report
+											a(href="course_report") Course Report
 									
 							li
-								a(href="/logout") Logout	
+								a(href="logout") Logout	
 						else	
 							li
-								a(href="/login") Login
+								a(href="login") Login
 							li
-								a(href="/register") Register
+								a(href="register") Register
 
 						
 		div(class="jumbotron")
@@ -102,13 +102,13 @@ html
 				h3 Connect
 				ul
 					li
-						img(title="randy.fortier&#64;uoit.ca", src="images/social/email.png", alt="E-Mail")
+						img(title="randy.fortier&#64;uoit.ca", src="/images/social/email.png", alt="E-Mail")
 					li
 						a(href="https://plus.google.com/+RandyFortier/posts")
-							img(src="images/social/google+.png", alt="Google+")
+							img(src="/images/social/google+.png", alt="Google+")
 					li
 						a(href="https://twitter.com/randy_fortier")
-							img(src="images/social/twitter.png", alt="Twitter")
+							img(src="/images/social/twitter.png", alt="Twitter")
 		footer(class="copyright") &copy; Copyright - Randy J. Fortier - 2016
 
 		script(src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js", integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS", crossorigin="anonymous")

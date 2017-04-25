@@ -1,6 +1,6 @@
 var overallColspan = 10;
 
-$.post('/course_summary', function(report){
+$.post('course_summary', function(report){
 	var studStats = report.studStats;
 	var lecStats = report.lecStats;
 	

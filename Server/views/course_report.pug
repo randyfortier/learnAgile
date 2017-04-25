@@ -3,7 +3,7 @@ block inhead
 	if !error
 		link(rel="stylesheet", href="css/report.css")
 		script(src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.6/Chart.js")
-		script(src='js/table_func.js')
+		script(src='/js/table_func.js')
 		script.
 			var lec = !{JSON.stringify(student)};
 			var allLec = !{JSON.stringify(avgstudents)};
@@ -194,7 +194,7 @@ block inhead
 
 			function addLectureName(lecture)
 			{
-				return '<a href="/lecture_report?lecture='+lecture+((sid)?'&sid='+sid:'')+'">' + lecture + '</a>';
+				return '<a href="lecture_report?lecture='+lecture+((sid)?'&sid='+sid:'')+'">' + lecture + '</a>';
 			}
 
 
