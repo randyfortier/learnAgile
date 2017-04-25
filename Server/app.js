@@ -14,7 +14,7 @@ var bcrypt = require('bcrypt-nodejs');
 ****************************************/
 var Schema = mongoose.Schema;
 
-/**** Yes No Response Question - Response Database ****
+/**** Yes No Response Question - Response Table ****
 * lecture - the Lecture ID
 * studentid - the UUID that of the student that sent the response
 * tag_title - the title of the YNRQ that was sent
@@ -26,23 +26,25 @@ var student_YNRQ_schema = new Schema({
     studentid: String,
     tag_title: String,
     section: String,
-    response: Number
+    response: Number,
+    courseid: String
 },{collection: 'yesno_response'});
 var student_YNRQ_DB = mongoose.model('yesno_response', student_YNRQ_schema);
 
 
-/**** Lecture ID To Name - Database ****
+/**** Lecture ID To Name - Table ****
 * lectureID - the Lecture ID
 * lecture_title - the title of the lecture
 ****************************************/
 var Lecture_ID_Name_schema = new Schema({
     lectureID: String,
-    lecture_title: String
+    lecture_title: String,
+    courseid: String
 },{collection: 'lecture_id_to_name'});
 var Lecture_ID_Name = mongoose.model('lecture_id_to_name', Lecture_ID_Name_schema);
 
 
-/**** Multiple Choice Response Question - Response Database ****
+/**** Multiple Choice Response Question - Response Table ****
 * lecture - the Lecture ID
 * studentid - the UUID that of the student that sent the response
 * multi_title - the title of the MCRQ that was sent
@@ -52,12 +54,13 @@ var student_multiple_choice_response_schema = new Schema({
     lecture: String,
     studentid: String,
     multi_title: String,
-    response: String
+    response: String,
+    courseid: String
 },{collection: 'multiple_choice_response'});
 var student_multiple_choice_ResponseDB = mongoose.model('multiple_choice_response', student_multiple_choice_response_schema);
 
 
-/**** Multiple Choice Response Question - Question Stats Database ****
+/**** Multiple Choice Response Question - Question Stats Table ****
 * title - title of the MCRQ
 * lecture - the Lecture ID of the MCRQ
 * status - true, if the answer is open. false, if the answer is closed.
@@ -67,12 +70,13 @@ var multiple_choice_lecture_status_schema = new Schema({
     title: String,
     lecture: String,
     status: Boolean,
-    answer: Number
+    answer: Number,
+    courseid: String
 },{collection: 'multiple_choice_status'});
 var multiple_choice_lecture_statusDB = mongoose.model('multiple_choice_status', multiple_choice_lecture_status_schema);
 
 
-/**** User - Database ****
+/**** User - Table ****
 * userid - a UUID unique to the the student id
 * sid - the students/instructor ID number
 * hashedPassword - the students password that was Hashed by the bcrypt plugin
@@ -88,6 +92,43 @@ var userSchema = new Schema({
     isInstructor: Boolean
 }, {collection: 'users'});
 var UserDB = mongoose.model('user', userSchema);
+
+
+/****************************************
+            Course Tables
+****************************************/
+var CourseSchema = new Schema({
+
+    courseid: {type: String, 
+              unique: true,
+              index: true},
+    coursename: String
+}, {collection: 'courses'});
+var CourseDB = mongoose.model('course', CourseSchema);
+
+
+
+
+CourseDB.find().exec(function(error, results){
+    //dont set anything up if nothing in the table, or error in the db
+    if(error || results.length > 0){
+        console.log("Error Trying to set up courses. DB Error: " + error + ", results.length: " + results.length);
+        return;
+    }
+
+    results.forEach(function(course){
+        var courseName = course.coursename;
+        var courseID = courseid;
+
+        console.log(courseName, courseID);
+    });
+
+});
+
+
+
+
+
 
 
 
@@ -124,7 +165,6 @@ function CheckSession(session, response)
     //the cookie.log dissappears when login is called
     //use session.log = 1 to mean after logged out, you can't go to pages like lecture report
 
-    console.log(session);
     if((session.cookie.log === 1) || (session.log === 1)){
         response.redirect('/');
         return false;
@@ -184,6 +224,13 @@ io.use(function(socket, next){
         Page Render Functionality
 ****************************************/
 
+
+/**
+* Renders the page with the parameters that are sent to he params variable.
+* Included in the parameters that are sent through, title, is logged in and is an instructor
+* logic are added. this removes the need to add them in each funciton that renders a page.
+*   Params - can be left blank 
+*/
 function renderPage(session, response, page, title, params)
 {
     //if params is empty then make it an empty object,
@@ -220,9 +267,10 @@ app.get('/loggedin', function(request, response){
     response.redirect('/lecture_notes')
 });
 
+//logs out the user adn gets rid of session values
 app.get('/logout', function(request, response){
     if(!CheckSession(request.session, response))
-        return;
+        response.redirect('/');
     //delete the userid sid and isInstructor for the session data, redirect to the main page
     var session = request.session;
     delete session.userid;
@@ -233,6 +281,7 @@ app.get('/logout', function(request, response){
     console.log('User Logged Out');
 });
 
+//renders login page
 app.get('/login', function(request, response){
 
     //load the login page
@@ -242,6 +291,7 @@ app.get('/login', function(request, response){
         renderPage(request.session, response, 'loginPage', 'Login - CSCI 1040u');
 });
 
+//login funcitonality
 app.post('/login', function(request, response){
     //get the sid and password
     var sid = request.body.sid;
@@ -255,13 +305,14 @@ app.post('/login', function(request, response){
     });
 });
 
+//check db to see if login is good
 function login(session, sid, password, onSuccess, onFail)
 {
-    console.log('Logging In User');
     //check of there is user with the sid that was submitted
     UserDB.find({sid: sid}).limit(1).exec(function(error, results){
         if(error)
         {
+            //if there is an error with the db
             console.log("Login Error: " + error, "sid: "+sid +" password:"+ password);
             onFail("Unable to process you request");
             return;
@@ -315,7 +366,7 @@ app.get('/register', function(request, response){
     renderPage(request.session, response, 'registerPage', 'Register - CSCI 1040u');
 });
 
-
+//proccesses register request
 app.post('/register', function(request, response){
     //get the sid and password for the request
     var sid = request.body.sid;
@@ -338,7 +389,8 @@ app.post('/register', function(request, response){
     });
 });
 
-app.post('/registerInstructor', function(request, response){
+//note: added XDAPRTONGTY in the or register for added security of registering a instructor
+app.post('/register_XDAPRTONGTY_Instructor', function(request, response){
     //get the sid and password for the request
     var sid = request.body.username;
     var password = request.body.password;
@@ -358,13 +410,13 @@ app.post('/registerInstructor', function(request, response){
     });
 });
 
-
+//added a new user to the db
 function register(session, sid, password, onSuccess, onFail, isInstructor)
 {
-    console.log('registering User');
     UserDB.find({sid: sid}).limit(1).exec(function(error, results){
         if(error)
         {
+            //if an error occured with the table of db
             console.log("register Error: " + error, "sid: "+sid +" password:"+ password);
             onFail("Unable to Access the database");
             return;
@@ -415,7 +467,6 @@ function register(session, sid, password, onSuccess, onFail, isInstructor)
 //when registering a instructor
 function registerInstructor(session, sid, password, onSuccess, onFail)
 {
-    console.log('registering Instructor');
     //send the isInstrctor to true
     register(session, sid, password, onSuccess, onFail, true);
 }
@@ -427,7 +478,6 @@ function registerInstructor(session, sid, password, onSuccess, onFail)
 ****************************************/
 
 app.get('/lecture_notes', function(request, response){
-
     //load the lecture_notes page
     renderPage(request.session, response, 'lecturenotesPage', 'Lecture Notes - CSCI 1040u');
 });
@@ -435,6 +485,168 @@ app.get('/lecture_notes', function(request, response){
 
 
 /******** Report Functionality ********/
+
+
+
+/***************************************
+        Build JSON Data Structure
+****************************************/
+
+//initalize in a {} 
+// value:{}
+//if the value doen't already exist 
+function initVariable(variable, value)
+{
+    if(!variable[value])
+        variable[value] = {};
+    return variable[value];
+}
+
+//setup for the tag, if it doesn't already exist
+//set it top be an open {} with the values
+//understand - U
+//don't understand - D
+//unknown response - UNK
+//length
+function checkNsetupTag(stats, tag)
+{
+    if(!stats[tag]){
+        stats[tag] = {};
+        stats[tag].U = 0;
+        stats[tag].D = 0;
+        stats[tag].UNK = 0;
+        stats[tag].length = 0;
+    }
+    return stats[tag];
+}
+
+//assigns updates the stats with the response value, at the position of tag_title
+function addResponse(stats, tag_title, response)
+{
+    var sign = ""
+    switch(response)
+    {
+        case 1:
+            sign = "U";
+            break;
+        case 0:
+            sign = "D";
+            break;
+        case -1:
+            sign = "UNK";
+            break;
+
+    }
+    var tag = stats[tag_title];
+    tag[sign] = tag[sign] + 1;
+    tag.length = tag.length + 1;
+}
+
+//creates the data structure for the Course Overview report
+function updateCourseOverviewReportData(stats, type, tag_title, response)
+{
+    //create the variable locaiton for the type (student or lecture)
+    var stype = initVariable(stats, type);
+
+    //check and possible initailze the tag under the (student or lecture) variable
+    checkNsetupTag(stype, tag_title);
+    
+    //update the data struct with the response
+    addResponse(stype, tag_title, response);
+}
+
+//creates the data structure for the Lecture Overview Report and the Lecture Report
+function lectureOverviewReport(stats, selectValue, item)
+{
+    //Initalize the vairble for storage of the response (section or studentID)
+    var select = initVariable(stats, selectValue);
+
+    //check and possible initailze the tag under the (section or studentID) variable
+    checkNsetupTag(select, item.tag_title);
+    
+    //update the data struct with the response
+    addResponse(select, item.tag_title, item.response);
+}
+
+
+function _updateReportData(stats, type, section, tag_title, response)
+{
+    //create the variable locaiton for the type (student or lecture)
+    var secVar = initVariable(stats, type);
+    
+    //create the variable locaiton for the section
+    var stype = initVariable(secVar, section);
+
+    //check and possible initailze the tag under the section variable
+    checkNsetupTag(stype, tag_title);
+
+    //update the data struct with the response
+    addResponse(stype, tag_title, response);
+}
+
+//wrapper Function 
+function updateReportData(stats, type, item)
+{
+    _updateReportData(stats, type, item.section, item.tag_title, item.response);
+}
+
+//change the name of a property in an object
+function _renameProperty(object, oldname, newname)
+{
+    //change the property only if it exits
+    if(object.hasOwnProperty(oldname)){
+        //the the value to the newname and remove the old name
+        object[newname] = object[oldname];
+        delete object[oldname];
+        return true;
+    }
+    return false;
+}
+
+//change the name of a property in an object
+function renameProperty(object, oldname, newname)
+{
+    if(!_renameProperty(object, oldname, newname))
+        object[newname] = 0;
+}
+
+
+/***************************************
+        DB Insert Functionality
+****************************************/
+
+function searchDBForResponse(DB, searchQuery, newResponse)
+{
+    //search to see if there is already an item with the correct id's
+    DB.find(searchQuery).limit(1).exec(function(error, results){
+        //if there is already an item update it
+        if(results.length > 0)
+        {
+            // update the current response
+            DB.update(searchQuery, newResponse, {multi: false}, function(error, numAffected){
+                if(error)
+                {
+                    console.log("Error in updating " + session.sid + "'s account, response was " + response + ", lecture was " + lecture + ", slide number was " + slide_index);
+                }
+            });
+        }
+        else//if there isn't already an item, add the item to the database
+        {
+            saveNewResponse(DB, newResponse);
+        }
+    });
+}
+
+function saveNewResponse(DB, value)
+{
+    //save the value to the binary response db reutrn 
+    new DB(value).save(function(error){
+        if(error){ // if there was an error then return what print out the user, the lecture and the title of the tag
+            console.log("Error adding Default response for user: " + session.sid + ", lecture: " + lecture + ", value: " + JSON.stringify(value) + ", Error: " + error);
+        }
+    });
+}
+
 
 
 /***************************************
@@ -857,166 +1069,6 @@ function lecture_report(session, response, lecture_title, sid, student)
 
 
 /***************************************
-        Build JSON Data Structure
-****************************************/
-
-//initalize in a {} 
-// value:{}
-//if the value doen't already exist 
-function initVariable(variable, value)
-{
-    if(!variable[value])
-        variable[value] = {};
-    return variable[value];
-}
-
-//setup for the tag, if it doesn't already exist
-//set it top be an open {} with the values
-//understand - U
-//don't understand - D
-//unknown response - UNK
-//length
-function checkNsetupTag(stats, tag)
-{
-    if(!stats[tag]){
-        stats[tag] = {};
-        stats[tag].U = 0;
-        stats[tag].D = 0;
-        stats[tag].UNK = 0;
-        stats[tag].length = 0;
-    }
-    return stats[tag];
-}
-
-//assigns updates the stats with the response value, at the position of tag_title
-function addResponse(stats, tag_title, response)
-{
-    var sign = ""
-    switch(response)
-    {
-        case 1:
-            sign = "U";
-            break;
-        case 0:
-            sign = "D";
-            break;
-        case -1:
-            sign = "UNK";
-            break;
-
-    }
-    var tag = stats[tag_title];
-    tag[sign] = tag[sign] + 1;
-    tag.length = tag.length + 1;
-}
-
-//creates the data structure for the Course Overview report
-function updateCourseOverviewReportData(stats, type, tag_title, response)
-{
-    //create the variable locaiton for the type (student or lecture)
-    var stype = initVariable(stats, type);
-
-    //check and possible initailze the tag under the (student or lecture) variable
-    checkNsetupTag(stype, tag_title);
-    
-    //update the data struct with the response
-    addResponse(stype, tag_title, response);
-}
-
-//creates the data structure for the Lecture Overview Report and the Lecture Report
-function lectureOverviewReport(stats, selectValue, item)
-{
-    //Initalize the vairble for storage of the response (section or studentID)
-    var select = initVariable(stats, selectValue);
-
-    //check and possible initailze the tag under the (section or studentID) variable
-    checkNsetupTag(select, item.tag_title);
-    
-    //update the data struct with the response
-    addResponse(select, item.tag_title, item.response);
-}
-
-
-function _updateReportData(stats, type, section, tag_title, response)
-{
-    //create the variable locaiton for the type (student or lecture)
-    var secVar = initVariable(stats, type);
-    
-    //create the variable locaiton for the section
-    var stype = initVariable(secVar, section);
-
-    //check and possible initailze the tag under the section variable
-    checkNsetupTag(stype, tag_title);
-
-    //update the data struct with the response
-    addResponse(stype, tag_title, response);
-}
-
-//wrapper Function 
-function updateReportData(stats, type, item)
-{
-    _updateReportData(stats, type, item.section, item.tag_title, item.response);
-}
-
-//change the name of a property in an object
-function _renameProperty(object, oldname, newname)
-{
-    //change the property only if it exits
-    if(object.hasOwnProperty(oldname)){
-        //the the value to the newname and remove the old name
-        object[newname] = object[oldname];
-        delete object[oldname];
-        return true;
-    }
-    return false;
-}
-
-//change the name of a property in an object
-function renameProperty(object, oldname, newname)
-{
-    if(!_renameProperty(object, oldname, newname))
-        object[newname] = 0;
-}
-
-
-/***************************************
-        DB Insert Functionality
-****************************************/
-
-function searchDBForResponse(DB, searchQuery, newResponse)
-{
-    //search to see if there is already an item with the correct id's
-    DB.find(searchQuery).limit(1).exec(function(error, results){
-        //if there is already an item update it
-        if(results.length > 0)
-        {
-            // update the current response
-            DB.update(searchQuery, newResponse, {multi: false}, function(error, numAffected){
-                if(error)
-                {
-                    console.log("Error in updating " + session.sid + "'s account, response was " + response + ", lecture was " + lecture + ", slide number was " + slide_index);
-                }
-            });
-        }
-        else//if there isn't already an item, add the item to the database
-        {
-            saveNewResponse(DB, newResponse);
-        }
-    });
-}
-
-function saveNewResponse(DB, value)
-{
-    //save the value to the binary response db reutrn 
-    new DB(value).save(function(error){
-        if(error){ // if there was an error then return what print out the user, the lecture and the title of the tag
-            console.log("Error adding Default response for user: " + session.sid + ", lecture: " + lecture + ", value: " + JSON.stringify(value) + ", Error: " + error);
-        }
-    });
-}
-
-
-/***************************************
         Socket.IO Functionality
 ****************************************/
 
@@ -1042,14 +1094,8 @@ io.on('connection', function(socket){
         //setup the functionality of the lecture 
         socket.emit('lecture_client_setup', isAnInstructor(session));
 
-        //use this so the functionality of the instructor is only accessable to the instructor
-        /*NOTE: used isInstructor because if it was the oppsite the else statement would be for
-        * the instructor and if there was no isStudent in the session data it would treat the user
-        * an instructor.
-        */
         if(isAnInstructor(session))
         {
-            //hold the functionality of the instructor head
             //if the instructor move there slide, the send a siginal to the student to have
             //there slide move
             socket.on('instructor-moveslide', function(indexies){
@@ -1121,9 +1167,8 @@ io.on('connection', function(socket){
                 });
             });
         }
-        else
+        else // is a student
         {
-            //holds the functionality that is unique to the student
 
             //when the student sends a response to the server, update/add that data to the code
             socket.on('YNRQ_response', function(response_data){
@@ -1166,11 +1211,14 @@ io.on('connection', function(socket){
                 student_YNRQ_DB.find(searchQuery).select({response: 1, tag_title: 1}).exec(function(err, results){
                     if(results.length > 0)
                     {
+                        //create object with the titles keys for the given responses
                         var dbtags = {};
                         results.forEach(function(tag){
                             dbtags[tag.tag_title] = tag.response;
                         });
 
+                        //for each YNRQ title send over, return their reponse value.
+                        //if not response yet set to -1 in db
                         var tag_responses = [];
                         titles.forEach(function(tag){
                             if(dbtags.hasOwnProperty(tag))
@@ -1190,6 +1238,7 @@ io.on('connection', function(socket){
                     }
                     else
                     {
+                        //if no YNRQ then set values for each YNRQ to -1
                         var tag_responses = [];
                         titles.forEach(function(tag){
                         
@@ -1201,7 +1250,7 @@ io.on('connection', function(socket){
                             saveNewResponse(student_YNRQ_DB, searchQuery);
                        });
                     }   
-
+                    //return the resposes of the YNRQs
                     socket.emit('YNRQs_status', {tag_responses: tag_responses, section: titles_section.section});
                 });        
             });

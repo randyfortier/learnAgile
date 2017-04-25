@@ -4,7 +4,7 @@ var socket = io();
 //store the yn question date and the mc data
 var YNRQuestion_section_default = {};
 var MCRQ_correct_answer = {};
-var MCRQ_title = {};
+var MCRQ_question_status = {};
 
 //have the student lectures follow the teacher lecture
 var _studentFollow = null;
@@ -80,7 +80,7 @@ $('multiplechoice').each(function(index){
     //replace the spaces in title with underscores, and make space for student answer
     //this is to make it work with the id properity in html
     var id = title.replace(/ /g, '_');
-    MCRQ_title[title] = $(multiQuestion).attr('ca');
+    MCRQ_question_status[title] = $(multiQuestion).attr('ca');
 
     //Get the correct answer
     MCRQ_correct_answer[id] = $(multiQuestion).attr('ca');
@@ -122,11 +122,18 @@ function studentFollow()
 
 
 
+
+/*********************************************
+        Socket.IO Functionality
+**********************************************/
+
 //send the user the lecture id
 if(LectureID)
     socket.emit('lecture_server_setup', {title: $('title').text(), lectureID: LectureID});
 
 socket.on('lecture_client_setup', function(isInstuctor){
+   
+    //Set Up Student or Instructor Functionality
     if(isInstuctor){
         setUpInstructor();
     }
@@ -134,33 +141,41 @@ socket.on('lecture_client_setup', function(isInstuctor){
         setUpStudent();
     }
 
+
+    /*********************************************
+            Mutiple Choice Question 
+    **********************************************/
+
     /*
     *Send answer to server, and check if any answers are closed
     */
-    Object.keys(MCRQ_title).forEach(function(item){
-        socket.emit('check_multiple_choice_question', {title:item, answer: MCRQ_title[item]});
-        MCRQ_title[item] = 0;
+    Object.keys(MCRQ_question_status).forEach(function(question){
+        socket.emit('check_multiple_choice_question', {title:question, answer: MCRQ_question_status[question]});
+        MCRQ_question_status[question] = 0;
     });
 
     socket.on('close_multiple_choice_question', function(chart_data){
         
-        if(MCRQ_title[chart_data.title] === 0){
-            MCRQ_title[chart_data.title] = 1;
+        if(MCRQ_question_status[chart_data.title] === 0){
+            MCRQ_question_status[chart_data.title] = 1;//only close the question once
 
-            var title = chart_data.title.replace(/ /g, '_');
+            var question_title = chart_data.title.replace(/ /g, '_');
 
-            var len = $('#'+title).next().children().length;
+            var num_answers = $('#'+question_title).next().children().length;
 
-            $('#'+title).next().css('display', 'none');
+            $('#'+title).next().css('display', 'none');//hide the answers to show the chart
 
-            $('#'+title).after('<canvas id="'+title+'_chart" height="300" width="300" style="padding-left: 0;padding-right: 0;margin-left: auto;margin-right: auto;display: block;"></canvas>');
+            $('#'+title).after('<canvas id="'+question_title+'_chart" height="300" width="300" style="padding-left: 0;padding-right: 0;margin-left: auto;margin-right: auto;display: block;"></canvas>');
 
-            createChart(chart_data, $('#'+title+'_chart'), len);
+            createChart(chart_data, $('#'+question_title+'_chart'), num_answers);
 
         }
     });
 
 
+    /*********************************************
+                Chart Functionality
+    **********************************************/
 
     function createChart(chart_data, canvas, length)
     {
@@ -234,26 +249,5 @@ socket.on('lecture_client_setup', function(isInstuctor){
         });
     }
 
-    function chartFormat(score, length)
-    {
-        return ((length === 0) ? 0 :(score/length) * 100);
-    }
-
-    //return the format of chart.js rgba color
-    function RGBA(rgb, a)
-    {
-        return 'rgba('+rgb.r+','+rgb.g+','+rgb.b+','+a+')';
-    }
-
-    //randomaly generate a color
-    function randRGB()
-    {
-        return {r:rand(255), g:rand(255), b:rand(255)};
-    }
-
-    //random function that get the color from 0 to the max
-    function rand(max)
-    {
-        return Math.floor(Math.random() * max);
-    }
+  
 });

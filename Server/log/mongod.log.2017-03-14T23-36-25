@@ -1,0 +1,153 @@
+2017-03-08T11:39:57.595-0500 [initandlisten] MongoDB starting : pid=6982 port=27018 dbpath=/home/matrim/Work/learnAgile/Server/./data/db 64-bit host=matrim-GA-78LMT-USB3
+2017-03-08T11:39:57.595-0500 [initandlisten] db version v2.6.10
+2017-03-08T11:39:57.595-0500 [initandlisten] git version: nogitversion
+2017-03-08T11:39:57.595-0500 [initandlisten] OpenSSL version: OpenSSL 1.0.2g  1 Mar 2016
+2017-03-08T11:39:57.595-0500 [initandlisten] build info: Linux lgw01-12 3.19.0-25-generic #26~14.04.1-Ubuntu SMP Fri Jul 24 21:16:20 UTC 2015 x86_64 BOOST_LIB_VERSION=1_58
+2017-03-08T11:39:57.595-0500 [initandlisten] allocator: tcmalloc
+2017-03-08T11:39:57.595-0500 [initandlisten] options: { net: { port: 27018 }, processManagement: { fork: true }, storage: { dbPath: "./data/db", smallFiles: true }, systemLog: { destination: "file", path: "./log/mongod.log" } }
+2017-03-08T11:39:57.645-0500 [initandlisten] journal dir=/home/matrim/Work/learnAgile/Server/./data/db/journal
+2017-03-08T11:39:57.646-0500 [initandlisten] recover : no journal files present, no recovery needed
+2017-03-08T11:39:59.712-0500 [initandlisten] preallocateIsFaster=true 24.18
+2017-03-08T11:40:01.820-0500 [initandlisten] preallocateIsFaster=true 23.14
+2017-03-08T11:40:05.197-0500 [initandlisten] preallocateIsFaster=true 28.28
+2017-03-08T11:40:05.197-0500 [initandlisten] preallocateIsFaster check took 7.55 secs
+2017-03-08T11:40:05.197-0500 [initandlisten] preallocating a journal file /home/matrim/Work/learnAgile/Server/./data/db/journal/prealloc.0
+2017-03-08T11:40:06.689-0500 [initandlisten] preallocating a journal file /home/matrim/Work/learnAgile/Server/./data/db/journal/prealloc.1
+2017-03-08T11:40:08.265-0500 [initandlisten] preallocating a journal file /home/matrim/Work/learnAgile/Server/./data/db/journal/prealloc.2
+2017-03-08T11:40:10.135-0500 [initandlisten] waiting for connections on port 27018
+2017-03-08T11:40:16.377-0500 [initandlisten] connection accepted from 127.0.0.1:34490 #1 (1 connection now open)
+2017-03-08T11:41:10.123-0500 [clientcursormon] mem (MB) res:54 virt:445
+2017-03-08T11:41:10.123-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T11:41:10.123-0500 [clientcursormon]  connections:1
+2017-03-08T11:46:10.138-0500 [clientcursormon] mem (MB) res:54 virt:445
+2017-03-08T11:46:10.138-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T11:46:10.138-0500 [clientcursormon]  connections:1
+2017-03-08T11:51:10.153-0500 [clientcursormon] mem (MB) res:54 virt:445
+2017-03-08T11:51:10.153-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T11:51:10.153-0500 [clientcursormon]  connections:1
+2017-03-08T11:56:10.168-0500 [clientcursormon] mem (MB) res:54 virt:445
+2017-03-08T11:56:10.168-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T11:56:10.169-0500 [clientcursormon]  connections:1
+2017-03-08T11:57:37.764-0500 [conn1] end connection 127.0.0.1:34490 (0 connections now open)
+2017-03-08T11:57:38.931-0500 [initandlisten] connection accepted from 127.0.0.1:34800 #2 (1 connection now open)
+2017-03-08T11:57:54.117-0500 [initandlisten] connection accepted from 127.0.0.1:34826 #3 (2 connections now open)
+2017-03-08T12:01:10.183-0500 [clientcursormon] mem (MB) res:56 virt:446
+2017-03-08T12:01:10.183-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T12:01:10.183-0500 [clientcursormon]  connections:2
+2017-03-08T12:06:10.197-0500 [clientcursormon] mem (MB) res:55 virt:446
+2017-03-08T12:06:10.197-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T12:06:10.197-0500 [clientcursormon]  connections:2
+2017-03-08T12:11:10.212-0500 [clientcursormon] mem (MB) res:55 virt:446
+2017-03-08T12:11:10.212-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T12:11:10.212-0500 [clientcursormon]  connections:2
+2017-03-08T12:16:10.227-0500 [clientcursormon] mem (MB) res:55 virt:446
+2017-03-08T12:16:10.227-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T12:16:10.227-0500 [clientcursormon]  connections:2
+2017-03-08T12:21:10.242-0500 [clientcursormon] mem (MB) res:55 virt:446
+2017-03-08T12:21:10.242-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T12:21:10.242-0500 [clientcursormon]  connections:2
+2017-03-08T12:26:10.257-0500 [clientcursormon] mem (MB) res:55 virt:446
+2017-03-08T12:26:10.257-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T12:26:10.257-0500 [clientcursormon]  connections:2
+2017-03-08T12:31:10.272-0500 [clientcursormon] mem (MB) res:55 virt:446
+2017-03-08T12:31:10.272-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T12:31:10.272-0500 [clientcursormon]  connections:2
+2017-03-08T12:36:10.286-0500 [clientcursormon] mem (MB) res:55 virt:446
+2017-03-08T12:36:10.287-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T12:36:10.287-0500 [clientcursormon]  connections:2
+2017-03-08T12:41:10.301-0500 [clientcursormon] mem (MB) res:56 virt:446
+2017-03-08T12:41:10.301-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T12:41:10.301-0500 [clientcursormon]  connections:2
+2017-03-08T12:46:10.316-0500 [clientcursormon] mem (MB) res:56 virt:446
+2017-03-08T12:46:10.316-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T12:46:10.316-0500 [clientcursormon]  connections:2
+2017-03-08T12:51:10.330-0500 [clientcursormon] mem (MB) res:56 virt:446
+2017-03-08T12:51:10.330-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T12:51:10.330-0500 [clientcursormon]  connections:2
+2017-03-08T12:56:10.345-0500 [clientcursormon] mem (MB) res:56 virt:446
+2017-03-08T12:56:10.345-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T12:56:10.345-0500 [clientcursormon]  connections:2
+2017-03-08T13:01:10.359-0500 [clientcursormon] mem (MB) res:56 virt:446
+2017-03-08T13:01:10.359-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T13:01:10.359-0500 [clientcursormon]  connections:2
+2017-03-08T13:06:10.375-0500 [clientcursormon] mem (MB) res:56 virt:446
+2017-03-08T13:06:10.375-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T13:06:10.375-0500 [clientcursormon]  connections:2
+2017-03-08T15:19:45.111-0500 [clientcursormon] mem (MB) res:56 virt:446
+2017-03-08T15:19:45.111-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T15:19:45.111-0500 [clientcursormon]  connections:2
+2017-03-08T15:20:19.716-0500 [conn3] end connection 127.0.0.1:34826 (1 connection now open)
+2017-03-08T15:20:19.716-0500 [conn2] end connection 127.0.0.1:34800 (1 connection now open)
+2017-03-08T15:20:27.316-0500 [initandlisten] connection accepted from 127.0.0.1:36720 #4 (1 connection now open)
+2017-03-08T15:21:12.539-0500 [initandlisten] connection accepted from 127.0.0.1:36790 #5 (2 connections now open)
+2017-03-08T15:24:45.126-0500 [clientcursormon] mem (MB) res:57 virt:446
+2017-03-08T15:24:45.126-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T15:24:45.126-0500 [clientcursormon]  connections:2
+2017-03-08T15:29:45.141-0500 [clientcursormon] mem (MB) res:57 virt:446
+2017-03-08T15:29:45.141-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T15:29:45.141-0500 [clientcursormon]  connections:2
+2017-03-08T15:34:45.156-0500 [clientcursormon] mem (MB) res:57 virt:446
+2017-03-08T15:34:45.156-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T15:34:45.156-0500 [clientcursormon]  connections:2
+2017-03-08T15:39:45.170-0500 [clientcursormon] mem (MB) res:57 virt:446
+2017-03-08T15:39:45.170-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T15:39:45.170-0500 [clientcursormon]  connections:2
+2017-03-08T15:44:45.185-0500 [clientcursormon] mem (MB) res:57 virt:446
+2017-03-08T15:44:45.185-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T15:44:45.185-0500 [clientcursormon]  connections:2
+2017-03-08T15:49:45.199-0500 [clientcursormon] mem (MB) res:56 virt:446
+2017-03-08T15:49:45.199-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T15:49:45.199-0500 [clientcursormon]  connections:2
+2017-03-08T15:54:45.864-0500 [clientcursormon] mem (MB) res:56 virt:446
+2017-03-08T15:54:45.864-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T15:54:45.864-0500 [clientcursormon]  connections:2
+2017-03-08T15:59:45.879-0500 [clientcursormon] mem (MB) res:56 virt:446
+2017-03-08T15:59:45.879-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T15:59:45.879-0500 [clientcursormon]  connections:2
+2017-03-08T16:04:45.894-0500 [clientcursormon] mem (MB) res:56 virt:446
+2017-03-08T16:04:45.894-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T16:04:45.894-0500 [clientcursormon]  connections:2
+2017-03-08T16:09:45.908-0500 [clientcursormon] mem (MB) res:54 virt:446
+2017-03-08T16:09:45.908-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T16:09:45.908-0500 [clientcursormon]  connections:2
+2017-03-08T16:14:45.922-0500 [clientcursormon] mem (MB) res:55 virt:446
+2017-03-08T16:14:45.922-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T16:14:45.923-0500 [clientcursormon]  connections:2
+2017-03-08T16:19:45.937-0500 [clientcursormon] mem (MB) res:38 virt:446
+2017-03-08T16:19:45.937-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T16:19:45.937-0500 [clientcursormon]  connections:2
+2017-03-08T16:24:45.952-0500 [clientcursormon] mem (MB) res:38 virt:446
+2017-03-08T16:24:45.952-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T16:24:45.952-0500 [clientcursormon]  connections:2
+2017-03-08T16:29:45.968-0500 [clientcursormon] mem (MB) res:38 virt:446
+2017-03-08T16:29:45.968-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T16:29:45.968-0500 [clientcursormon]  connections:2
+2017-03-08T16:34:45.983-0500 [clientcursormon] mem (MB) res:38 virt:446
+2017-03-08T16:34:45.983-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T16:34:45.983-0500 [clientcursormon]  connections:2
+2017-03-08T16:39:45.997-0500 [clientcursormon] mem (MB) res:38 virt:446
+2017-03-08T16:39:45.997-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T16:39:45.997-0500 [clientcursormon]  connections:2
+2017-03-08T16:44:46.012-0500 [clientcursormon] mem (MB) res:38 virt:446
+2017-03-08T16:44:46.013-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-08T16:44:46.013-0500 [clientcursormon]  connections:2
+2017-03-08T16:47:39.744-0500 [conn5] end connection 127.0.0.1:36790 (1 connection now open)
+2017-03-08T16:47:39.745-0500 [conn4] end connection 127.0.0.1:36720 (1 connection now open)
+2017-03-08T16:47:44.272-0500 [signalProcessingThread] got signal 15 (Terminated), will terminate after current cmd ends
+2017-03-08T16:47:44.272-0500 [signalProcessingThread] now exiting
+2017-03-08T16:47:44.272-0500 [signalProcessingThread] dbexit: 
+2017-03-08T16:47:44.272-0500 [signalProcessingThread] shutdown: going to close listening sockets...
+2017-03-08T16:47:44.272-0500 [signalProcessingThread] closing listening socket: 8
+2017-03-08T16:47:44.272-0500 [signalProcessingThread] closing listening socket: 9
+2017-03-08T16:47:44.272-0500 [signalProcessingThread] removing socket file: /tmp/mongodb-27018.sock
+2017-03-08T16:47:44.272-0500 [signalProcessingThread] shutdown: going to flush diaglog...
+2017-03-08T16:47:44.272-0500 [signalProcessingThread] shutdown: going to close sockets...
+2017-03-08T16:47:44.272-0500 [signalProcessingThread] shutdown: waiting for fs preallocator...
+2017-03-08T16:47:44.272-0500 [signalProcessingThread] shutdown: lock for final commit...
+2017-03-08T16:47:44.272-0500 [signalProcessingThread] shutdown: final commit...
+2017-03-08T16:47:44.273-0500 [signalProcessingThread] shutdown: closing all files...
+2017-03-08T16:47:44.273-0500 [signalProcessingThread] closeAllFiles() finished
+2017-03-08T16:47:44.273-0500 [signalProcessingThread] journalCleanup...
+2017-03-08T16:47:44.273-0500 [signalProcessingThread] removeJournalFiles
+2017-03-08T16:47:44.319-0500 [signalProcessingThread] shutdown: removing fs lock...
+2017-03-08T16:47:44.319-0500 [signalProcessingThread] dbexit: really exiting now
