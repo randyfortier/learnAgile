@@ -153,7 +153,7 @@ function setUpStudent(){
                 YNRQs.titles.push(YNRQInfo.title);
 
                 //add to the sidebar a icon that has the title of the child title and the image that is the string location of the text in the child
-                $('#sidebar').append(bulidSidebarIcon(YNRQInfo.title + "_" + section.replace(/ /g, '~'), "icon-disabled", YNRQInfo.src, YNRQInfo.tip));
+                $('#sidebar').append(bulidSidebarIcon(YNRQInfo.title.replace(/ /g, '_') + "_" + section.replace(/ /g, '_'), "icon-disabled", YNRQInfo.src, YNRQInfo.tip, section.replace(/ /g, '_'),YNRQInfo.title.replace(/ /g, '_')));
             });
             if(isMobile)
             {
@@ -217,10 +217,9 @@ function setUpStudent(){
         clicked.addClass(added);
 
         //send the tag data
-        var id = clicked.attr('id').split('_');
-        var title = id[0];
-        var section = id[1].replace(/~/g, ' ');
-        
+        var title = clicked.attr('tle').replace(/_/g, ' ');
+        var section = clicked.attr('sec').replace(/_/g, ' ');
+
         sendYNRQResponse(title, section, response); 
     }
 
@@ -229,7 +228,7 @@ function setUpStudent(){
 
         tag_status.tag_responses.forEach(function(tag_data){
             //get the tag by it's name
-            var tag = $('#' + tag_data.title + '_' + tag_status.section.replace(/ /g, '_'));
+            var tag = $('#' + tag_data.title.replace(/ /g, '_') + '_' + tag_status.section.replace(/ /g, '_'));
             //check what state that tag was when you last used it
             switch(tag_data.response)
             {
@@ -253,9 +252,9 @@ function setUpStudent(){
     }
 
     //template for the sidebar's items
-    function bulidSidebarIcon(id, tag_class, src, tip)
+    function bulidSidebarIcon(id, tag_class, src, tip, sec, title)
     {
-        return $('<div id="'+id+'"class="YNRQ '+tag_class+'"> '+ bulidImage(src, tip) +'</div>');
+        return $('<div id="'+id+'" sec="'+sec+'" tle="'+title+'" class="YNRQ '+tag_class+'"> '+ bulidImage(src, tip) +'</div>');
     }
 
     //template for the sidebar image

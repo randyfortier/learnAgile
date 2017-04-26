@@ -620,7 +620,7 @@ CourseDB.find().exec(function(error, results){
 		    if(isAnInstructor(session)){
 		        //if instructor the retrive the sid for the query data.
 		        var sid = request.query.sid;
-		        
+
 		        //find the userid for the sid that was given
 		        UserDB.find({sid: sid, courseid: courseID}).limit(1).select({userid: 1}).exec(function(error, results){
 		            if(error)
@@ -1435,7 +1435,7 @@ io.on('connection', function(socket){
         if(socket.request.session.course)
 		{
         	var session = socket.request.session.course[courseID];
-        	if(!session)
+        	if(!session || !session.userid)
         		return;
         }
         else
