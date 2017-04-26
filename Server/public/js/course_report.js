@@ -16,7 +16,7 @@ $(document).ready(function(){
 		addToTable('avg_table', allLec);
 		
 		$('.lecture').click(function(event){
-			invokePostCall('/lectureReport', 'lecture', $(event.target).text());
+			invokePostCall('lectureReport', 'lecture', $(event.target).text());
 		});
 		addTableColour();
 		console.log("ran");

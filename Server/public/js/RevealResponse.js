@@ -128,11 +128,13 @@ function studentFollow()
 **********************************************/
 
 //send the user the lecture id
-if(LectureID)
-    socket.emit('lecture_server_setup', {title: $('title').text(), lectureID: LectureID});
+if(LectureID && CourseID){
+    socket.emit('lecture_server_setup', {title: $('title').text(), lectureID: LectureID, courseID: CourseID});
+    console.log("Sent");
+}
 
 socket.on('lecture_client_setup', function(isInstuctor){
-   
+    console.log(isInstuctor);
     //Set Up Student or Instructor Functionality
     if(isInstuctor){
         setUpInstructor();

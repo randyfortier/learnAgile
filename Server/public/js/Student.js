@@ -153,7 +153,7 @@ function setUpStudent(){
                 YNRQs.titles.push(YNRQInfo.title);
 
                 //add to the sidebar a icon that has the title of the child title and the image that is the string location of the text in the child
-                $('#sidebar').append(bulidSidebarIcon(YNRQInfo.title + "_" + section.replace(/ /g, '_'), "icon-disabled", YNRQInfo.src, YNRQInfo.tip));
+                $('#sidebar').append(bulidSidebarIcon(YNRQInfo.title + "_" + section.replace(/ /g, '~'), "icon-disabled", YNRQInfo.src, YNRQInfo.tip));
             });
             if(isMobile)
             {
@@ -219,7 +219,8 @@ function setUpStudent(){
         //send the tag data
         var id = clicked.attr('id').split('_');
         var title = id[0];
-        var section = id[1];
+        var section = id[1].replace(/~/g, ' ');
+        
         sendYNRQResponse(title, section, response); 
     }
 

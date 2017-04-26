@@ -199,6 +199,8 @@ function addToTable(tableid, stats, tag_order)
 {
 	addTitletoTable(tableid, tag_order);	
 
+	console.log(stats, '\n', tag_order);
+
 	var avg_tags = [];
 	for(var cnt = 0; cnt < tag_order.length; cnt++)
 		avg_tags.push({U:0,D:0,UNK:0,length:0, avg:0});
