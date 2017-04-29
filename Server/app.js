@@ -278,7 +278,7 @@ CourseDB.find().exec(function(error, results){
 		    // delete session.userid;
 		    // delete session.isInstructor;
 		    // delete session.sid;
-		    session.course[courseID] = {};
+		    delete session.course[courseID];
 		    session.log = 1;
 		    response.redirect('/'+courseName);
 		});
@@ -1111,7 +1111,7 @@ function renameProperty(object, oldname, newname)
         DB Insert Functionality
 ****************************************/
 
-function searchDBForResponse(DB, searchQuery, newResponse)
+function searchDBForResponse(DB, searchQuery, newResponse, status)
 {
     //search to see if there is already an item with the correct id's
     DB.find(searchQuery).limit(1).exec(function(error, results){
@@ -1123,28 +1123,50 @@ function searchDBForResponse(DB, searchQuery, newResponse)
                 if(error)
                 {
                     console.log("Error in updating " + session.sid + "'s account, response was " + response + ", lecture was " + lecture + ", slide number was " + slide_index);
+                    if(status)
+						status(false);
                 }
+                if(status)
+					status(newResponse);
             });
         }
         else//if there isn't already an item, add the item to the database
         {
-            saveNewResponse(DB, newResponse);
+            saveNewResponse(DB, newResponse, status);
         }
     });
 }
 
-function saveNewResponse(DB, value)
+function saveNewResponse(DB, value, status)
 {
     //save the value to the binary response db reutrn 
     new DB(value).save(function(error){
         if(error){ // if there was an error then return what print out the user, the lecture and the title of the tag
             console.log("Error adding Default response for user: " + session.sid + ", lecture: " + lecture + ", value: " + JSON.stringify(value) + ", Error: " + error);
+            if(status)
+				status(false);
         }
+        if(status)
+			status(value);
     });
 }
 
-
-
+function searchDBForResponseNoReplace(DB, searchQuery, newResponse, status)
+{
+    //search to see if there is already an item with the correct id's
+    DB.find(searchQuery).limit(1).exec(function(error, results){
+        //if there is already an item update it
+        if(results.length > 0)
+        {
+         	if(status)
+         		status(results[0]);
+        }
+        else//if there isn't already an item, add the item to the database
+        {
+            saveNewResponse(DB, newResponse, status);
+        }
+    });
+}
 
 function cleanDB()
 {
@@ -1756,88 +1778,82 @@ io.on('connection', function(socket){
         New Course Pages
 ****************************************/
 
-app.get('/new_course', function(request, response){
-
-	var session 
-
-	= request.session;
-
+function new_course_Auth(request, response)
+{
+	//get session and make sure course is initalized
+	var session = request.session;
 	if(!session.course){
+		//send an access denied and exit
 		response.send("Access Denied");
-		return;
+		return false;
 	}
 
-	var isInstructor = false;
+	//go through each course that the user is signed in on
+	//all of the must be sighed in as Instructor to access the new_course page
 	Object.keys(session.course).forEach(function(courseID){
 		if(!session.course[courseID].isInstructor){
-			isInstructor = false;
-			return;
+			response.send("Access Denied");
+			return false;
 		}
-		isInstructor = true;
 	});
 
-	if(!isInstructor){
-		response.send("Access Denied");
-		return;
-	}
+	return true;
+}
 
+app.get('/new_course', function(request, response){
+
+	//check if access is avaiable
+	if(!new_course_Auth(request, response))
+		return;
+	
+	//send newCourse page
 	response.sendFile(__dirname + "/public/newCourse.html");
 });
 
-
 app.post('/new_course', function(request, response){
 
-	var session = request.session;
-
-	if(!session.course){
-		response.send("Access Denied");
+	//check if access is avaiable
+	if(!new_course_Auth(request, response))
 		return;
-	}
 
-	var isInstructor = false;
-	Object.keys(session.course).forEach(function(courseID){
-		if(!session.course[courseID].isInstructor){
-			isInstructor = false;
-			return;
+
+	//create search query
+	var searchQuery = {
+		coursename : request.body.name
+	};
+
+	//create new response for db
+	var newResponse = {
+		coursename : request.body.name,
+		coursedesc : request.body.description,
+		courseid : uuid.v4()
+	};
+
+	//check if the table aready contains the course name
+	searchDBForResponseNoReplace(CourseDB, searchQuery, newResponse, function(status){
+		if(status)
+		{
+			//output what was inserted and a link ot the location.
+			var resp = "";
+			resp += "<h1>Added <a href='/"+ newResponse.coursename.replace(/ /g, "") +"/login'>" + newResponse.coursename + "</a> to the Course Table.</h1>";
+			resp += "<ul>";
+			resp += "<li>Course Name: " + newResponse.coursename + "</li>";
+			resp += "<li>Course Description: " + newResponse.coursedesc + "</li>";
+			resp += "<li>Course ID: " + newResponse.courseid + "</li>";
+			resp += "</ul>"
+			console.log(resp);
+			response.send(resp);
 		}
-		isInstructor = true;
 	});
-
-	if(!isInstructor){
-		response.send("Access Denied");
-		return;
-	}
-
-	response.send("<h1>New Course Added " + JSON.stringify(request.body) + "</h1>")
 });
-
 
 app.get('/course_preview', function(request, response){
 
-	var session = request.session;
-
-	if(!session.course){
-		response.send("Access Denied");
+	//check if access is avaiable
+	if(!new_course_Auth(request, response))
 		return;
-	}
 
-	var isInstructor = false;
-	Object.keys(session.course).forEach(function(courseID){
-		if(!session.course[courseID].isInstructor){
-			isInstructor = false;
-			return;
-		}
-		isInstructor = true;
-	});
-
-	if(!isInstructor){
-		response.send("Access Denied");
-		return;
-	}
-
-
-	console.log(request.query);
-
+	//get and setup the values for the preview page
 	var courseName = request.query.courseName.replace(/ /g, "");
 	var courseFullName = request.query.courseName;
 	var courseDes = request.query.courseDescription;
