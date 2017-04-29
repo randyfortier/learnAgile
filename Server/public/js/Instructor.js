@@ -11,18 +11,22 @@ function setUpInstructor(){
                 if(data.method === 'setState')
                 {
                     sendDataToNotes(event, origin);
+                    console.log(event);
                 }
             }
             else
             {
                 if(data.name){
-                    sendDataToNotes(event, origin);
                     lec_name = data.name;
                     Reveal.addEventListener( 'slidechanged', function( event ) {
                         //sends a siginal to the server to change the students slides
                         socket.emit('instructor-moveslide', [event.indexh,event.indexv]);
                     });
-
+                    event.source.postMessage(JSON.stringify({
+                        courseID: CourseID,
+                        lectureID: LectureID
+                    }), origin);
+					sendDataToNotes(event, origin);
                 }
             }
         });
@@ -39,7 +43,6 @@ function setUpInstructor(){
             var multi = multiChoice(slide);
 
             if(multi.length !== -1){
-                console.log('sendMC, TAGS:', multi);
                 source.postMessage(JSON.stringify({
                     MultipleChoice: multi
                 }), origin);
@@ -52,7 +55,6 @@ function setUpInstructor(){
         function multiChoice(slide)
         {
             var multi = $(slide).find('multiplechoice');
-            console.log(multi);
 
             if(multi.length > 0)
             {

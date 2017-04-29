@@ -8,7 +8,6 @@ function setUpStudent(){
     _studentFollow = function()
     {
         follow_Instructors_Slides = !follow_Instructors_Slides;
-        console.log("Called", follow_Instructors_Slides);
     }
 
     //NOTE: when adding sidebar, height at 100% only matches the height of the text on the screen

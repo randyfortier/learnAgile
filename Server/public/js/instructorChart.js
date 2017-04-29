@@ -26,6 +26,7 @@ $('#speaker-controls').append('<div id="loading-text" style="text-align:center">
 
 
 //code to repeatily look for the iframe that contians the current lecture
+//wait untill the iframes load
 function findLecture()
 {
 	//get iframe of current slide
@@ -60,20 +61,27 @@ function load_Lecture(lecture)
         name: "current"
     }), '*');
     
-    //send the loading text to show that the slide is ready
-    $('#loading-text').text("Ready");
-	$('#speaker-controls').append(ChartHTML);
-	$('#speaker-controls').append('<button style="display:none" id="close_question">Close Question</button>');
-	$('#close_question').click(Button_click);
 	
-	//send the user the lecture id
-	socket.emit('lecture_server_setup', $(lecture).contents().find('title').text());
+}
+
+
+function setup_socketio(data)
+{
+	//setup connection with server
+	data.title = $($('#current-slide').children()[0]).contents().find('title').text();
+	socket.emit('lecture_server_setup', data);
 	
 	//setup the lecture for the instructor, not a client
 	socket.on('lecture_client_setup', function(isInstuctor){
 		IsInstuctor = isInstuctor;
 	    if(isInstuctor)
 	    {
+	    	//send the loading text to show that the slide is ready
+		    $('#loading-text').text("Ready");
+			$('#speaker-controls').append(ChartHTML);
+			$('#speaker-controls').append('<button style="display:none" id="close_question">Close Question</button>');
+			$('#close_question').click(Button_click);
+
 	    	ParseTags(tag_titles, tag_section);
 
 	        socket.on('YNRQ_chart_data', function(chart_data){
@@ -83,6 +91,7 @@ function load_Lecture(lecture)
 	    }
 	});
 }
+
 
 //listen for a message that contains the xml tags,
 window.addEventListener('message',function(event){
@@ -101,6 +110,11 @@ window.addEventListener('message',function(event){
 		stopTimer();
 		ActivateBarChart(data.MultipleChoice.title, data.MultipleChoice.length);
 	}
+	else if(data.courseID && data.lectureID)
+	{
+		setup_socketio(data);
+	}
+	
 });
 
 
