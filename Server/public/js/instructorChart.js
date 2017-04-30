@@ -58,9 +58,9 @@ function load_Lecture(lecture)
 {
 	//send postmessage to curent_slide iframe to have them send binary tag data
 	lecture.contentWindow.postMessage(JSON.stringify({
-        name: "current"
-    }), '*');
-    
+		name: "current"
+	}), '*');
+	
 	
 }
 
@@ -74,21 +74,21 @@ function setup_socketio(data)
 	//setup the lecture for the instructor, not a client
 	socket.on('lecture_client_setup', function(isInstuctor){
 		IsInstuctor = isInstuctor;
-	    if(isInstuctor)
-	    {
-	    	//send the loading text to show that the slide is ready
-		    $('#loading-text').text("Ready");
+		if(isInstuctor)
+		{
+			//send the loading text to show that the slide is ready
+			$('#loading-text').text("Ready");
 			$('#speaker-controls').append(ChartHTML);
 			$('#speaker-controls').append('<button style="display:none" id="close_question">Close Question</button>');
 			$('#close_question').click(Button_click);
 
-	    	ParseTags(tag_titles, tag_section);
+			ParseTags(tag_titles, tag_section);
 
-	        socket.on('YNRQ_chart_data', function(chart_data){
-	            //when the chart data comes in, parse it, and save the data
-	            updateTagChartData(chart_data);
-	        });
-	    }
+			socket.on('YNRQ_chart_data', function(chart_data){
+				//when the chart data comes in, parse it, and save the data
+				updateTagChartData(chart_data);
+			});
+		}
 	});
 }
 
@@ -126,7 +126,7 @@ function ParseTags(tags, section)
 	if(!tags || !section)
 	{
 		tag_section = null;
-	    tag_titles = null;
+		tag_titles = null;
 		//clean chart
 		
 		CleanCharts();
@@ -136,26 +136,26 @@ function ParseTags(tags, section)
 	if(IsInstuctor)
 	{
 	 	//set the current chat data to be a template for data to be inputed
-	    radar_chart_data = {
-	        labels: tags.slice(),//["Yes","No","unknown"],
-	        datasets: [{}]
-	    };
+		radar_chart_data = {
+			labels: tags.slice(),//["Yes","No","unknown"],
+			datasets: [{}]
+		};
 
-	    tag_section = section;
-	    tag_titles = tags.slice();
+		tag_section = section;
+		tag_titles = tags.slice();
 
-	    setupRadarData(tags, section)
+		setupRadarData(tags, section)
 
-	    //update the tag data
-	    updateAllTagChartData(section);
+		//update the tag data
+		updateAllTagChartData(section);
 
-	    timer = setTimeout(function(){Timer();}, timerSpeed/4);
+		timer = setTimeout(function(){Timer();}, timerSpeed/4);
 	}
 	else
 	{
 		tag_section = section;
 
-	    tag_titles = tags.slice();
+		tag_titles = tags.slice();
 	}
 }
 
@@ -163,23 +163,23 @@ function setupRadarData(tags, section)
 {
 	//extra
  	var rgb;
-    if(!tag_color[section])
-        tag_color[section] = randRGB();
-    rgb = tag_color[section];
+	if(!tag_color[section])
+		tag_color[section] = randRGB();
+	rgb = tag_color[section];
 
-    //reset the chart dat and set the chart data, label, and other field
-    radar_chart_data.datasets[0] = {};
-    radar_chart_data.datasets[0].data = tags.slice();
-    radar_chart_data.datasets[0].data.forEach(function(item){ item = 0;});
-    radar_chart_data.datasets[0].pointBorderColor = "#fff";
-    radar_chart_data.datasets[0].pointHoverBackgroundColor = "#fff";
+	//reset the chart dat and set the chart data, label, and other field
+	radar_chart_data.datasets[0] = {};
+	radar_chart_data.datasets[0].data = tags.slice();
+	radar_chart_data.datasets[0].data.forEach(function(item){ item = 0;});
+	radar_chart_data.datasets[0].pointBorderColor = "#fff";
+	radar_chart_data.datasets[0].pointHoverBackgroundColor = "#fff";
 	radar_chart_data.datasets[0].label = 'Tag Status - ' + section;
-    
-    //set the color for chart data
-    radar_chart_data.datasets[0].backgroundColor = RGBA(rgb, '0.2');
-    radar_chart_data.datasets[0].borderColor = RGBA(rgb, '1');
-    radar_chart_data.datasets[0].pointBackgroundColor = RGBA(rgb, '1');
-    radar_chart_data.datasets[0].pointHoverBorderColor = RGBA(rgb, '1');
+	
+	//set the color for chart data
+	radar_chart_data.datasets[0].backgroundColor = RGBA(rgb, '0.2');
+	radar_chart_data.datasets[0].borderColor = RGBA(rgb, '1');
+	radar_chart_data.datasets[0].pointBackgroundColor = RGBA(rgb, '1');
+	radar_chart_data.datasets[0].pointHoverBorderColor = RGBA(rgb, '1');
 }
 
 function updateAllTagChartData(section)
@@ -202,56 +202,56 @@ function updateTagChartData(chart_data)
 //updates the pie chart with the data in the "data" variable
 function updateRadarChart()
 {
-    //if there isn't a pieChart, don't destroy it
-    // if(radarChart !== null)
-    //     if it is not destroyed each time, an error occurs where
-    //     *mutliple graphs are on top of each other, and when moving
-    //     *the mouse over the graph old data will be shown along with new data
-        
-    //     radarChart.destroy();
+	//if there isn't a pieChart, don't destroy it
+	// if(radarChart !== null)
+	//	 if it is not destroyed each time, an error occurs where
+	//	 *mutliple graphs are on top of each other, and when moving
+	//	 *the mouse over the graph old data will be shown along with new data
+		
+	//	 radarChart.destroy();
 	CleanCharts();
 
-    //if ther is property's in the chart data, do nothing
-    if(Object.keys(radar_chart_data).length === 0)
-        return;
+	//if ther is property's in the chart data, do nothing
+	if(Object.keys(radar_chart_data).length === 0)
+		return;
 
-    //generate the chart onto the html, based on the mock data
-    radarChart = new Chart(ChartHTML, {
-        type: 'radar',
-        data: radar_chart_data,
-        options: {
-            responsive: false,//stops the animation, so the update looks better
-            animation: false,
-            scale: {
-            	ticks: {
-            		maxTicksLimit: 4,
-            		stepSize: 0.25,
+	//generate the chart onto the html, based on the mock data
+	radarChart = new Chart(ChartHTML, {
+		type: 'radar',
+		data: radar_chart_data,
+		options: {
+			responsive: false,//stops the animation, so the update looks better
+			animation: false,
+			scale: {
+				ticks: {
+					maxTicksLimit: 4,
+					stepSize: 0.25,
 					max : 1,
 					min : 0
-            		// fontSize: 20            	
-            	}
-            }
-        }
-    });
+					// fontSize: 20				
+				}
+			}
+		}
+	});
 }
 
 
 //return the format of chart.js rgba color
 function RGBA(rgb, a)
 {
-    return 'rgba('+rgb.r+','+rgb.g+','+rgb.b+','+a+')';
+	return 'rgba('+rgb.r+','+rgb.g+','+rgb.b+','+a+')';
 }
 
 //randomaly generate a color
 function randRGB()
 {
-    return {r:rand(255), g:rand(255), b:rand(255)};
+	return {r:rand(255), g:rand(255), b:rand(255)};
 }
 
 //random function that get the color from 0 to the max
 function rand(max)
 {
-    return Math.floor(Math.random() * max);
+	return Math.floor(Math.random() * max);
 }
 
 function stopTimer()
@@ -262,22 +262,22 @@ function stopTimer()
 //timer for constantly updating the graph graph
 function Timer()
 {
-    //a try statement so if there is a problem with the data, the timer doesn't stop
-    try
-    {
-    	if(tag_titles && tag_section && IsInstuctor){
-	        //update the char data, the display the chart
-	        updateAllTagChartData(tag_section);
-	        updateRadarChart();
-    	}
-    }
-    catch(err)
-    {
-        //if there is an error, show it
-        console.log(err)
-    }
-    //start the timer over, waiting a set amount of time
-    timer = setTimeout(function(){Timer();}, timerSpeed);
+	//a try statement so if there is a problem with the data, the timer doesn't stop
+	try
+	{
+		if(tag_titles && tag_section && IsInstuctor){
+			//update the char data, the display the chart
+			updateAllTagChartData(tag_section);
+			updateRadarChart();
+		}
+	}
+	catch(err)
+	{
+		//if there is an error, show it
+		console.log(err)
+	}
+	//start the timer over, waiting a set amount of time
+	timer = setTimeout(function(){Timer();}, timerSpeed);
 }
 
 
@@ -293,22 +293,22 @@ function CleanCharts()
 //timer for constantly updating the graph graph
 function Timer2()
 {
-    //a try statement so if there is a problem with the data, the timer doesn't stop
-    try
-    {
-    	if(multi_title && multi_len !== 0 && IsInstuctor){
-	        //update the char data, the display the chart
+	//a try statement so if there is a problem with the data, the timer doesn't stop
+	try
+	{
+		if(multi_title && multi_len !== 0 && IsInstuctor){
+			//update the char data, the display the chart
 			getBarChartDataFromServer(multi_title);
-	    	renderBarChart();
-    	}
-    }
-    catch(err)
-    {
-        //if there is an error, show it
-        console.log(err)
-    }
-    //start the timer over, waiting a set amount of time
-    timer = setTimeout(function(){Timer2();}, timerSpeed);
+			renderBarChart();
+		}
+	}
+	catch(err)
+	{
+		//if there is an error, show it
+		console.log(err)
+	}
+	//start the timer over, waiting a set amount of time
+	timer = setTimeout(function(){Timer2();}, timerSpeed);
 }
 
 var barData = null
@@ -349,9 +349,9 @@ function ActivateBarChart(title, length)
 		BarChartDataSetup(length);
 
 		getBarChartDataFromServer(title);   
-	    renderBarChart();
+		renderBarChart();
 		ShowButton();
-	    timer = setTimeout(function(){Timer2();}, timerSpeed/4);
+		timer = setTimeout(function(){Timer2();}, timerSpeed/4);
 	}
 
 	multi_title = title;
@@ -414,9 +414,9 @@ function updateBarChartData(chart_data)
 	barData.datasets[0].label = '% of Responses';
 
 	options.title = {
-        display: true,
-        text: "# of Responses Vs. # Active Users: " + activeUsers + ' vs. '+ chart_data.length
-    }
+		display: true,
+		text: "# of Responses Vs. # Active Users: " + activeUsers + ' vs. '+ chart_data.length
+	}
 }
 
 function chartFormat(score, length)

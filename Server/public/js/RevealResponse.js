@@ -155,17 +155,27 @@ socket.on('lecture_client_setup', function(isInstuctor){
     });
 
     socket.on('close_multiple_choice_question', function(chart_data){
-        
+        console.log(chart_data);
+
         if(MCRQ_question_status[chart_data.title] === 0){
             MCRQ_question_status[chart_data.title] = 1;//only close the question once
 
             var question_title = chart_data.title.replace(/ /g, '_');
-
             var num_answers = $('#'+question_title).next().children().length;
-
-            $('#'+title).next().css('display', 'none');//hide the answers to show the chart
-
-            $('#'+title).after('<canvas id="'+question_title+'_chart" height="300" width="300" style="padding-left: 0;padding-right: 0;margin-left: auto;margin-right: auto;display: block;"></canvas>');
+            
+            //hide the answers to show the chart, all but the corrent answer
+            $('#'+question_title).next().children().each(function(val, index){
+                if(index !== parseInt(MCRQ_correct_answer[question_title])){
+                    $(this).css('display', 'none');
+                }
+                else
+                {
+                    $($(this).parent()).attr("start", index+1);
+                }
+                
+            });
+            
+            $('#'+question_title).after('<canvas id="'+question_title+'_chart" height="300" width="300" style="padding-left: 0;padding-right: 0;margin-left: auto;margin-right: auto;display: block;"></canvas>');
 
             createChart(chart_data, $('#'+question_title+'_chart'), num_answers);
 

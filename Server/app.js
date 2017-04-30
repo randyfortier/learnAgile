@@ -1563,7 +1563,6 @@ io.on('connection', function(socket){
                     //if there is a response emit to instructor
                     if(results.length > 0)
                     {
-
                         var answers = {};
                         var inActive = 0;
                         results.forEach(function(item){
@@ -1581,7 +1580,6 @@ io.on('connection', function(socket){
         }
         else // is a student
         {
-
             //when the student sends a response to the server, update/add that data to the code
             socket.on('YNRQ_response', function(response_data){
                 
@@ -1733,6 +1731,7 @@ io.on('connection', function(socket){
                 lecture: lecture,
 				courseid: courseID
             };
+
 
             //search to see if there is already an item with the correct id's
             multiple_choice_lecture_statusDB.find(searchQuery).limit(1).exec(function(error, results){
