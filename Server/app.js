@@ -488,18 +488,47 @@ CourseDB.find().exec(function(error, results){
 		function register(session, sid, password, onSuccess, onFail, isInstructor)
 		{
 		    UserDB.find({sid: sid}).limit(1).exec(function(error, results){
-		        if(error)
-		        {
-		            //if an error occured with the table of db
-		            console.log("register Error: " + error, "sid: "+sid +" password:"+ password);
-		            onFail("Unable to Access the database");
-		            return;
-		        }
+				if(error)
+				{
+					//if an error occured with the table of db
+					console.log("register Error: " + error, "sid: "+sid +" password:"+ password);
+					onFail("Unable to Access the database");
+					return;
+				}
 		        if(results.length > 0)
 		        {
-		            //if there is already a user with the sid regestered
-		            onFail("Error: User Aleady exsits");
-		            console.log('Failed To register User, User Aleady Exisits');
+		    		if(bcrypt.compareSync(password, results[0].hashedPassword))
+		    		{
+			            UserToCourseDB.find({userid: results[0].userid, courseid: courseID}).limit(1).exec(function(error, inCourse){
+							if(error)
+							{
+								//if an error occured with the table of db
+								console.log("register Error: " + error, "sid: "+sid +" password:"+ password);
+								onFail("Unable to Access the database");
+								return;
+							}
+							if(inCourse.length <= 0)
+							{
+
+			            		saveNewResponse(UserToCourseDB, {userid: results[0].userid ,courseid: courseID});
+			            		setLoggedinSessionValues(session, results[0].userid, isInstructor, sid)
+					            onSuccess();
+							}
+							else
+							{
+								//if there is already a user with the sid regestered
+					            onFail("Error: User Aleady exsits");
+					            console.log('Failed To register User, User Aleady Exisits');
+							}
+
+			        	});
+			        }
+			        else
+					{
+						//if there is already a user with the sid regestered
+						onFail("Error: User Aleady exsits");
+						console.log('Failed To register User, User Aleady Exisits');
+					}
 		        }
 		        else
 		        {
@@ -1451,7 +1480,7 @@ io.on('connection', function(socket){
     
     //set up the server connection, by having the lecture id sent to the server
     socket.on('lecture_server_setup', function(lectureDetails){
-    	
+
         var lecture = lectureDetails.lectureID;
         var lecture_title = lectureDetails.title;
         var courseID = lectureDetails.courseID;
