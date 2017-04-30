@@ -89,10 +89,21 @@ var userSchema = new Schema({
     sid: {type: String,
         unique: true},
     hashedPassword: String,
-    isInstructor: Boolean,
-    courseid: String
+    isInstructor: Boolean
 }, {collection: 'users'});
 var UserDB = mongoose.model('user', userSchema);
+
+/**** UserToCourse - Table ****
+* userid - the user in the usertable
+* courseid - the course they are asscoated with
+**************************/
+var usertocourseSchema = new Schema({
+    userid: String,
+    courseid: String
+}, {collection: 'usersToCourses'});
+var UserToCourseDB = mongoose.model('usertocourse', usertocourseSchema);
+
+
 
 
 /****************************************
@@ -287,10 +298,10 @@ CourseDB.find().exec(function(error, results){
 		app.get('/'+courseName+'/login', function(request, response){
 
 			var session = CheckLoggedin(request.session);
-		    if(session)
-		        response.redirect('/'+courseName+'/loggedin');
-		    else
-		        renderPage(session, response, 'loginPage', 'Login - ' + courseFullName);
+			if(session)
+				response.redirect('/'+courseName+'/loggedin');
+			else
+				renderPage(session, response, 'loginPage', 'Login - ' + courseFullName);
 		});
 
 		//login funcitonality
@@ -311,30 +322,51 @@ CourseDB.find().exec(function(error, results){
 		function login(session, sid, password, onSuccess, onFail)
 		{
 		    //check of there is user with the sid that was submitted
-		    UserDB.find({sid: sid, courseid: courseID}).limit(1).exec(function(error, results){
-		        if(error)
-		        {
-		            //if there is an error with the db
-		            console.log("Login Error: " + error, "sid: "+sid +" password:"+ password);
-		            onFail("Unable to process you request");
-		            return;
-		        }
+		    UserDB.find({sid: sid}).limit(1).exec(function(error, results){
+				if(error)
+				{
+					//if there is an error with the db
+					console.log("Login Error: " + error, "sid: "+sid +" password:"+ password);
+					onFail("Unable to process you request");
+					return;
+				}
+
 		        if((results.length > 0) && (bcrypt.compareSync(password, results[0].hashedPassword)))
 		        {
-		            console.log('Successfully Logged in User, ' + sid);
-		            //successful login, contiune with the login
-		            setLoggedinSessionValues(session, results[0].userid, results[0].isInstructor, results[0].sid);
-		            onSuccess();
+		        	UserToCourseDB.find({userid: results[0].userid, courseid: courseID}).limit(1).exec(function(error, inCourse){
+
+		        		if(error)
+						{
+							//if there is an error with the db
+							console.log("Login Error: " + error, "sid: "+sid +" password:"+ password);
+							onFail("Unable to process you request");
+							return;
+						}
+						if(inCourse.length > 0)
+						{
+
+							console.log('Successfully Logged in User, ' + sid);
+				            //successful login, contiune with the login
+				            setLoggedinSessionValues(session, results[0].userid, results[0].isInstructor, results[0].sid);
+				            onSuccess();
+						}
+						else
+						{
+							//incorect password call the on fall method
+							console.log("Login Attempt: " + sid /*+ " Password: " + password*/);
+							onFail("Invalid Student ID or Password");
+						}
+
+		        	});
 		        }
-		        else
-		        {
-		            //incorect password call the on fall method
-		            console.log("Login Attempt: " + sid /*+ " Password: " + password*/);
-		            onFail("Invalid Student ID or Password");
-		        }
+				else
+				{
+					//incorect password call the on fall method
+					console.log("Login Attempt: " + sid /*+ " Password: " + password*/);
+					onFail("Invalid Student ID or Password");
+				}
 		    });
 		}
-
 
 
 		/****************************************
@@ -380,17 +412,30 @@ CourseDB.find().exec(function(error, results){
 		****************************************/
 
 		app.get('/'+courseName+'/registerInstructorForm', function(request, response){
-		    //render the register page
-		    response.render('instructorRegister');
+			//render the register page
+			var session = CheckLoggedin(request.session);
+			if(session)
+				response.redirect('/'+courseName+'/loggedin');
+			else
+				response.render('instructorRegister');
 		});
 
 		app.get('/'+courseName+'/register', function(request, response){
-		    //load the register page
-		    renderPage(request.session, response, 'registerPage', 'Register - ' + courseFullName);
+			//load the register page
+			var session = CheckLoggedin(request.session);
+			if(session)
+				response.redirect('/'+courseName+'/loggedin');
+			else
+				renderPage(request.session, response, 'registerPage', 'Register - ' + courseFullName);
 		});
 
 		//proccesses register request
 		app.post('/'+courseName+'/register', function(request, response){
+		    var session = CheckLoggedin(request.session);
+			if(session){
+				response.redirect('/'+courseName+'/loggedin');
+				return;
+			}
 		    //get the sid and password for the request
 		    var sid = request.body.sid;
 		    var password = request.body.password;
@@ -414,6 +459,12 @@ CourseDB.find().exec(function(error, results){
 
 		//note: added XDAPRTONGTY in the or register for added security of registering a instructor
 		app.post('/'+courseName+'/register_XDAPRTONGTY_Instructor', function(request, response){
+		    var session = CheckLoggedin(request.session);
+			if(session){
+				response.redirect('/'+courseName+'/loggedin');
+				return;
+			}
+
 		    //get the sid and password for the request
 		    var sid = request.body.username;
 		    var password = request.body.password;
@@ -436,7 +487,7 @@ CourseDB.find().exec(function(error, results){
 		//added a new user to the db
 		function register(session, sid, password, onSuccess, onFail, isInstructor)
 		{
-		    UserDB.find({sid: sid,courseid: courseID}).limit(1).exec(function(error, results){
+		    UserDB.find({sid: sid}).limit(1).exec(function(error, results){
 		        if(error)
 		        {
 		            //if an error occured with the table of db
@@ -461,7 +512,6 @@ CourseDB.find().exec(function(error, results){
 		                userid: userid,
 		                sid: sid,
 		                hashedPassword: hash,
-		                courseid: courseID,
 		                isInstructor: isInstructor || false
 		            };           
 
@@ -484,6 +534,9 @@ CourseDB.find().exec(function(error, results){
 		                    onSuccess();
 		                }
 		            });
+
+					saveNewResponse(UserToCourseDB, {userid: userid ,courseid: courseID});
+		            
 		        }
 		    });
 		}
@@ -497,6 +550,9 @@ CourseDB.find().exec(function(error, results){
 
 
 
+
+
+		/****** TO REMOVE: From Here ******/
 		/****************************************
 		    Render Lecture Notes Funcitonality
 		****************************************/
@@ -515,11 +571,10 @@ CourseDB.find().exec(function(error, results){
 		    response.redirect('/'+courseName+'/login');
 		});
 
+		/****** TO REMOVE: To Here ******/
 
 
 		/******** Report Functionality ********/
-
-
 
 		/***************************************
 		            Course Summary
@@ -555,6 +610,7 @@ CourseDB.find().exec(function(error, results){
 		    {
 		        // retrive all the data in the database
 		        student_YNRQ_DB.find({courseid: courseID}).exec(function(error, results){
+		        	console.log(results);
 		            //if there is a response send the data
 		            if(results.length > 0){
 		                //variables for the student stats and the lecture stats
@@ -567,28 +623,42 @@ CourseDB.find().exec(function(error, results){
 		                    updateCourseOverviewReportData(studStats, item.studentid, item.tag_title, item.response);     
 		                });
 		                
-		                //change the userid that are in the data above to be the sid's equivalent
-		                UserDB.find({isInstructor:false, courseid: courseID}).select({userid: 1, sid: 1}).exec(function(error, results){
-		                    if(results.length > 0)
-		                    {
-		                        //rename each userid to be its sid equivalent
-		                        results.forEach(function(item){
-		                            _renameProperty(studStats, item.userid, item.sid);
-		                        });
+		                //get all the students that are in this course
+		                UserToCourseDB.find({courseid: courseID}).exec(function(error, students){
 
-		                        //matches lecture name with lecture id for there to be a right naming on webpage
-		                        Lecture_ID_Name.find({courseid: courseID}).exec(function(error, results){
-		                            if(results.length > 0)
-		                            {
-		                                //rename each lectureID to lecture title
-		                                results.forEach(function(item){
-		                                    _renameProperty(lecStats, item.lectureID, item.lecture_title);
-		                                });
-		                                //send the results to the Instructor
-		                                response.send({studStats: studStats, lecStats: lecStats});        
-		                            }
-		                        });
-		                    }
+							//create an or statment that includes all the students pulled in the UserToCourse Table
+							//NOTE: this will pull the instructors too, but and and statment is added to filiter them out
+							var OrStatement = [];
+							students.forEach(function (student){
+								OrStatement.push({ userid: student.userid })
+							});
+							var query = {$and:  [{ isInstructor:false, $or : OrStatement }] };
+
+							//query the user table for the sid of the students
+		                	UserDB.find(query).select({userid: 1, sid: 1}).exec(function(error, results){
+								if(results.length > 0)
+								{
+									//rename each userid to be its sid equivalent
+									results.forEach(function(item){
+										_renameProperty(studStats, item.userid, item.sid);
+									});
+
+									//matches lecture name with lecture id for there to be a right naming on webpage
+									Lecture_ID_Name.find({courseid: courseID}).exec(function(error, results){
+										console.log(results);
+										if(results.length > 0)
+										{
+											//rename each lectureID to lecture title
+											results.forEach(function(item){
+												_renameProperty(lecStats, item.lectureID, item.lecture_title);
+											});
+											//send the results to the Instructor
+											response.send({studStats: studStats, lecStats: lecStats});        
+										}
+									});
+								}
+		                	});
+
 		                });
 		            }
 		        });
@@ -617,26 +687,44 @@ CourseDB.find().exec(function(error, results){
 		        //if instructor the retrive the sid for the query data.
 		        var sid = request.query.sid;
 
-		        //find the userid for the sid that was given
-		        UserDB.find({sid: sid, courseid: courseID}).limit(1).select({userid: 1}).exec(function(error, results){
-		            if(error)
-		            {
-		                //if error with database register console ther DB error and render the page with an error message
-		                console.log("Course Report, Instructor, find userid for sid, Error: " + error);
-		                renderPage(session, response, 'course_report', "Course Report - " + courseFullName, {error: "Error searching for the Userid in the UserDB Table"});
-		                return;
-		            }
-		            if(results.length > 0)
-		            {
-		                //render the course_report
-		                course_report(session, response, results[0].userid, sid)
-		            }
-		            else
-		            {
-		                //when no student is found, render page with errror message
-		                renderPage(session, response, 'course_report', "Course Report - " + courseFullName, {error: "Unable to find Student"});
-		            }
-		        }); 
+				//find the userid for the sid that was given
+				UserDB.find({sid: sid}).limit(1).select({userid: 1}).exec(function(error, results){
+					if(error)
+					{
+						//if error with database register console ther DB error and render the page with an error message
+						console.log("Course Report, Instructor, find userid for sid, Error: " + error);
+						renderPage(session, response, 'course_report', "Course Report - " + courseFullName, {error: "Error searching for the Userid in the UserDB Table"});
+						return;
+					}
+					if(results.length > 0)
+					{
+						UserToCourseDB.find({userid:results[0].userid, courseid: courseID}).limit(1).exec(function(error, studInCourse){
+							if(error)
+							{
+								//if error with database register console ther DB error and render the page with an error message
+								console.log("Course Report, Instructor, find userid for sid, Error: " + error);
+								renderPage(session, response, 'course_report', "Course Report - " + courseFullName, {error: "Error searching for the Userid in the UserDB Table"});
+								return;
+							}
+
+							if(studInCourse.length > 0)
+							{
+								//render the course_report
+								course_report(session, response, results[0].userid, sid)
+							}
+							else
+							{
+								//when no student is found, render page with errror message
+								renderPage(session, response, 'course_report', "Course Report - " + courseFullName, {error: "Unable to find Student"});
+							}
+						});
+					}
+					else
+					{
+						//when no student is found, render page with errror message
+						renderPage(session, response, 'course_report', "Course Report - " + courseFullName, {error: "Unable to find Student"});
+					}
+				}); 
 		    }
 		    else
 		    {
@@ -661,34 +749,46 @@ CourseDB.find().exec(function(error, results){
 		    }
 		    //run only if the instructor request the page
 		    if(isAnInstructor(session)){
-		        //get all user that are students, retrive only the id's
-		        UserDB.find({isInstructor: false, courseid: courseID}).select({sid:1}).exec(function(error, results){
-		            if(error)
-		            {
-		                //if error with database register console ther DB error and render the page with an error message
-		                console.log("Course Report List, Instructor, find the list of userid's, Error: " + error);
-		                renderPage(session, response, 'course_report', "Course Report - " + courseFullName, {error: "Error searching for the Userid in the UserDB Table"});
-		                return;
-		            }
-		            if(results.length > 0)
-		            {
-		                //array of students
-		                var students = [];
-		                    
-		                //place all student's into the array
-		                results.forEach(function(item){
-		                    students.push(item.sid);
-		                });
+		    	//get all the students that are in this course
+				UserToCourseDB.find({courseid: courseID}).exec(function(error, students){
 
-		                students.sort();
+					//create an or statment that includes all the students pulled in the UserToCourse Table
+					//NOTE: this will pull the instructors too, but and and statment is added to filiter them out
+					var OrStatement = [];
+					students.forEach(function (student){
+						OrStatement.push({ userid: student.userid })
+					});
+					var query = {$and:  [{ isInstructor:false, $or : OrStatement }] };
 
-		                //render the course list page and send the student names there
-		                renderPage(session, response, 'course_report_list', 'Course Report - List of Students - ' + courseFullName,  {students: students});
-		            }
-		            else
-		                //when not responses in the database, send error message
-		                renderPage(session, response, 'course_report_list', 'Course Report - List of Students - ' + courseFullName,  {error: "Unable to find the users in the Database."});
-		        });
+					//get all user that are students, retrive only the id's
+					UserDB.find(query).select({sid:1}).exec(function(error, results){
+						if(error)
+						{
+							//if error with database register console ther DB error and render the page with an error message
+							console.log("Course Report List, Instructor, find the list of userid's, Error: " + error);
+							renderPage(session, response, 'course_report', "Course Report - " + courseFullName, {error: "Error searching for the Userid in the UserDB Table"});
+							return;
+						}
+						if(results.length > 0)
+						{
+							//array of students
+							var students = [];
+
+							//place all student's into the array
+							results.forEach(function(item){
+								students.push(item.sid);
+							});
+
+							students.sort();
+
+							//render the course list page and send the student names there
+							renderPage(session, response, 'course_report_list', 'Course Report - List of Students - ' + courseFullName,  {students: students});
+						}
+						else
+							//when not responses in the database, send error message
+							renderPage(session, response, 'course_report_list', 'Course Report - List of Students - ' + courseFullName,  {error: "Unable to find the users in the Database."});
+					});
+				});
 		    }
 		    else
 		        //send the user back to the main page
@@ -800,31 +900,43 @@ CourseDB.find().exec(function(error, results){
 		                            lectureOverviewReport(studStats, item.studentid, item);
 		                        });
 		                        
-		                        //get all the students in the userDb
-		                        UserDB.find({isInstructor:false, courseid: courseID}).select({userid: 1, sid: 1}).exec(function(error, results){
-		                            if(error)
-		                            {
-		                                //if error accessing DB, console error, and render error message page
-		                                console.log("Lecture Summary, Instructor, error accessing the UserDB database, Error: " + error);
-		                                renderPage(session, response, 'lecture_summary', 'Lecture Summary - ' + lecture + " - " + courseFullName,  {error:"Unable to access database."});
-		                                return;
-		                            }
-		                            if(results.length > 0)
-		                            {
-		                                //replace all userid with the equivalent sid
-		                                results.forEach(function(item){
-		                                    _renameProperty(studStats, item.userid, item.sid);
-		                                });
-		                                
-		                                //render the results
-		                                renderPage(session, response, 'lecture_summary', 'Lecture Summary - ' + lecture + " - " + courseFullName,  {sections: secStats, students: studStats , lecture: lecture_title});
-		                            }
-		                            else
-		                            {
-		                                //when not responses in the database, send error message
-		                                renderPage(session, response, 'lecture_summary', 'Lecture Summary - ' + lecture + " - " + courseFullName,  {error:"Unable to get users from the database."});
-		                            }
-		                        });
+		                        //get all the students that are in this course
+								UserToCourseDB.find({courseid: courseID}).exec(function(error, students){
+
+									//create an or statment that includes all the students pulled in the UserToCourse Table
+									//NOTE: this will pull the instructors too, but and and statment is added to filiter them out
+									var OrStatement = [];
+									students.forEach(function (student){
+										OrStatement.push({ userid: student.userid })
+									});
+									var query = {$and:  [{ isInstructor:false, $or : OrStatement }] };
+
+			                        //get all the students in the userDb
+			                        UserDB.find(query).select({userid: 1, sid: 1}).exec(function(error, results){
+			                            if(error)
+			                            {
+			                                //if error accessing DB, console error, and render error message page
+			                                console.log("Lecture Summary, Instructor, error accessing the UserDB database, Error: " + error);
+			                                renderPage(session, response, 'lecture_summary', 'Lecture Summary - ' + lecture + " - " + courseFullName,  {error:"Unable to access database."});
+			                                return;
+			                            }
+			                            if(results.length > 0)
+			                            {
+			                                //replace all userid with the equivalent sid
+			                                results.forEach(function(item){
+			                                    _renameProperty(studStats, item.userid, item.sid);
+			                                });
+			                                
+			                                //render the results
+			                                renderPage(session, response, 'lecture_summary', 'Lecture Summary - ' + lecture + " - " + courseFullName,  {sections: secStats, students: studStats , lecture: lecture_title});
+			                            }
+			                            else
+			                            {
+			                                //when not responses in the database, send error message
+			                                renderPage(session, response, 'lecture_summary', 'Lecture Summary - ' + lecture + " - " + courseFullName,  {error:"Unable to get users from the database."});
+			                            }
+			                        });
+								});
 		                    }
 		                    else
 		                    {
@@ -907,23 +1019,39 @@ CourseDB.find().exec(function(error, results){
 		    if(isAnInstructor(session)){
 		        sid = request.query.sid;
 		        //find the userid for the sid that was given
-		        UserDB.find({sid: sid, courseid: courseID}).limit(1).select({userid: 1}).exec(function(error, results){
-		            if(error)
-		            {
-		                //if error accessing DB, console error, and render error message page
-		                console.log("Lecture Report, Instructor, error accessing the UserDB database, Error: " + error);
-		                renderPage(session, response, 'lecture_report', 'Lecture Report' + " - " + courseFullName,  {error:"Unable to access database."});
-		                return;
-		            }
+		        UserDB.find({sid: sid}).limit(1).select({userid: 1}).exec(function(error, results){
+					if(error)
+					{
+						//if error accessing DB, console error, and render error message page
+						console.log("Lecture Report, Instructor, error accessing the UserDB database, Error: " + error);
+						renderPage(session, response, 'lecture_report', 'Lecture Report' + " - " + courseFullName,  {error:"Unable to access database."});
+						return;
+					}
 		            // lecture_report(session, response, lecture, sid, );
 		            if(results.length > 0)
 		            {
-		                //render the course_report
-		                lecture_report(session, response, lecture, sid, results[0].userid);
+		            	UserToCourseDB.find({userid:results[0].userid, courseid: courseID}).limit(1).exec(function(error, studInCourse){
+							if(error)
+							{
+								//if error accessing DB, console error, and render error message page
+								console.log("Lecture Report, Instructor, error accessing the UserDB database, Error: " + error);
+								renderPage(session, response, 'lecture_report', 'Lecture Report' + " - " + courseFullName,  {error:"Unable to access database."});
+								return;
+							}
+
+							if(studInCourse.length > 0)
+							{
+								//render the course_report
+								lecture_report(session, response, lecture, sid, results[0].userid);
+		                	}
+							else
+								//no sid in the database, render page with error message
+								renderPage(session, response, 'lecture_report', 'Lecture Report' + " - " + courseFullName,  {error:"Unable to find Student ID in the database"});
+						});
 		            }
-		            else
-		                //no sid in the database, render page with error message
-		                renderPage(session, response, 'lecture_report', 'Lecture Report' + " - " + courseFullName,  {error:"Unable to find Student ID in the database"});
+					else
+						//no sid in the database, render page with error message
+						renderPage(session, response, 'lecture_report', 'Lecture Report' + " - " + courseFullName,  {error:"Unable to find Student ID in the database"});
 		        }); 
 		    }
 		    else{
@@ -973,15 +1101,6 @@ CourseDB.find().exec(function(error, results){
 
 	});
 });
-
-
-
-
-
-
-
-/******** Report Functionality ********/
-
 
 
 /***************************************
@@ -1146,8 +1265,11 @@ function saveNewResponse(DB, value, status)
             if(status)
 				status(false);
         }
-        if(status)
-			status(value);
+        else
+        {
+	        if(status)
+				status(value);
+		}
     });
 }
 
@@ -1168,18 +1290,18 @@ function searchDBForResponseNoReplace(DB, searchQuery, newResponse, status)
     });
 }
 
-function cleanDB()
-{
-    Lecture_ID_Name.remove({}, function(err) { 
-        console.log('collection removed') 
-    });
-    UserDB.remove({}, function(err) { 
-        console.log('collection removed') 
-    });
-    student_YNRQ_DB.remove({}, function(err) { 
-        console.log('collection removed') 
-    });
-}
+// function cleanDB()
+// {
+//     Lecture_ID_Name.remove({}, function(err) { 
+//         console.log('collection removed') 
+//     });
+//     UserDB.remove({}, function(err) { 
+//         console.log('collection removed') 
+//     });
+//     student_YNRQ_DB.remove({}, function(err) { 
+//         console.log('collection removed') 
+//     });
+// }
 
 
 // var YNRQs = ['Difficult', 'Like', 'Study'];
@@ -1200,132 +1322,6 @@ function cleanDB()
 //         'XML' : YNRQs.slice(),
 //         'Open data' : YNRQs.slice()
 //     }
-//     // "AJAX, JSON, and XML - CSCI 3230u2" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // },
-//     // "AJAX, JSON, and XML - CSCI 3230u3" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // },
-//     // "AJAX, JSON, and XML - CSCI 3230u4" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // },
-//     // "AJAX, JSON, and XML - CSCI 3230u5" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // },
-//     // "AJAX, JSON, and XML - CSCI 3230u6" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // },
-//     // "AJAX, JSON, and XML - CSCI 3230u7" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // },
-//     // "AJAX, JSON, and XML - CSCI 3230u8" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // },
-//     // "AJAX, JSON, and XML - CSCI 3230u9" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // },
-//     // "AJAX, JSON, and XML - CSCI 3230u10" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // },
-//     // "AJAX, JSON, and XML - CSCI 3230u11" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // },
-//     // "AJAX, JSON, and XML - CSCI 3230u12" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // },
-//     // "AJAX, JSON, and XML - CSCI 3230u13" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // },
-//     // "AJAX, JSON, and XML - CSCI 3230u14" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // },
-//     // "AJAX, JSON, and XML - CSCI 3230u15" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // },
-//     // "AJAX, JSON, and XML - CSCI 3230u16" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // },
-//     // "AJAX, JSON, and XML - CSCI 3230u17" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // },
-//     // "AJAX, JSON, and XML - CSCI 3230u18" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // },
-//     // "AJAX, JSON, and XML - CSCI 3230u19" : {
-//     //     'Intro' : YNRQs.slice(),
-//     //     'Ajax' : YNRQs.slice(),
-//     //     'JSON' : YNRQs.slice(),
-//     //     'XML' : YNRQs.slice(),
-//     //     'Open data' : YNRQs.slice()
-//     // }
 // };
 
 // cleanDB();
@@ -1342,8 +1338,7 @@ function cleanDB()
 //         userid: userid,
 //         sid: sid,
 //         hashedPassword: hash,
-//         isInstructor: isInstructor || false,
-//         courseid: courseid
+//         isInstructor: isInstructor || false
 //     };           
 
 //     //declare a new user and save the user
@@ -1361,36 +1356,43 @@ function cleanDB()
 //         }
 //     });
 
+//     courseid.forEach(function(course){
+//     	saveNewResponse(UserToCourseDB, {userid: userid, courseid: course});
+//     });
+    
+
 //     if(userdata.isInstructor)
 //         return;
 
-//     Object.keys(lectures).forEach(function(lecture){
-//         var lectureID = lectures[lecture].lectureID;
-//         // saveNewResponse(Lecture_ID_Name, {lectureID: lectureID}, {lecture_ID: lectureID, lecture_title: lecture});
-//         Object.keys(lectures[lecture]).forEach(function(section){
-//             if(section === "lectureID"){
-//                 return;
-//             }
-//             lectures[lecture][section].forEach(function(YNRQ){
-//                 var response = Math.random();
+// 	Object.keys(lectures).forEach(function(lecture){
+// 		var lectureID = lectures[lecture].lectureID;
+// 		// saveNewResponse(Lecture_ID_Name, {lectureID: lectureID}, {lecture_ID: lectureID, lecture_title: lecture});
+// 		Object.keys(lectures[lecture]).forEach(function(section){
+// 			if(section === "lectureID"){
+// 				return;
+// 			}
+// 			lectures[lecture][section].forEach(function(YNRQ){
+// 				courseid.forEach(function(course){
+// 					var response = Math.random();
 
-//                 if(response <= 0.3333)
-//                     response = 1;
-//                 else if(response <= 0.6666)
-//                     response = 0;
-//                 else
-//                     response = -1;
-//                 saveNewResponse(student_YNRQ_DB, {
-//                     lecture: lectureID,
-//                     studentid: userid,
-//                     section: section,
-//                     tag_title: YNRQ,
-//                     response: response,
-//                     courseid: courseid
-//                 });
-//             });
-//         });
-//     });
+// 					if(response <= 0.3333)
+// 						response = 1;
+// 					else if(response <= 0.6666)
+// 						response = 0;
+// 					else
+// 						response = -1;
+// 					saveNewResponse(student_YNRQ_DB, {
+// 						lecture: lectureID,
+// 						studentid: userid,
+// 						section: section,
+// 						tag_title: YNRQ,
+// 						response: response,
+// 						courseid: course
+// 					});
+// 				});
+// 			});
+// 		});
+// 	});
 // }
 
 // function saveNewResponse(DB, value)
@@ -1415,14 +1417,16 @@ function cleanDB()
 //         var sid = "2000000" + num;
         
 
-//         AddUser(sid, "demo","c344aab1-1fe0-4161-b8ff-bec22cecff0c");
+//         AddUser(sid, "demo", ["9cdabd48-c208-4154-a62e-0bf8020739e0", "5f3ea8ac-75aa-426b-8ed1-a98654621834"]);
 //     }
 //     Object.keys(lectures).forEach(function(lecture){
 //         var lectureID = lectures[lecture].lectureID;
-//         saveNewResponse(Lecture_ID_Name, {lectureID: lectureID, lecture_title: lecture, courseid: "c344aab1-1fe0-4161-b8ff-bec22cecff0c"});
+//         saveNewResponse(Lecture_ID_Name, {lectureID: lectureID, lecture_title: lecture, courseid: "9cdabd48-c208-4154-a62e-0bf8020739e0"});
+//         saveNewResponse(Lecture_ID_Name, {lectureID: lectureID, lecture_title: lecture, courseid: "5f3ea8ac-75aa-426b-8ed1-a98654621834"});
+
 //     });
-//     AddUser("100539147", "csci1040","c344aab1-1fe0-4161-b8ff-bec22cecff0c", true);
-//     AddUser("Matt", "temp","c344aab1-1fe0-4161-b8ff-bec22cecff0c", true);
+//     AddUser("100539147", "csci1040",["9cdabd48-c208-4154-a62e-0bf8020739e0", "5f3ea8ac-75aa-426b-8ed1-a98654621834"], true);
+//     AddUser("Matt", "temp",["5f3ea8ac-75aa-426b-8ed1-a98654621834", "9cdabd48-c208-4154-a62e-0bf8020739e0"], true);
 //     setTimeout(function(){
 //         // UserDB.find().exec(function(err, results){
 //         //     console.log("UserDB:", results);
@@ -1431,6 +1435,9 @@ function cleanDB()
 //         // student_YNRQ_DB.find().exec(function(error, results){
 //         //     console.log("YNRQ DB:", results);
 //         // });
+//     	// UserToCourseDB.find().exec(function(error, results){
+//     	// 	console.log(results);
+//     	// })
 //         console.log('done');
 //     }, 500);
 // }, 1000);
@@ -1444,7 +1451,7 @@ io.on('connection', function(socket){
     
     //set up the server connection, by having the lecture id sent to the server
     socket.on('lecture_server_setup', function(lectureDetails){
-
+    	
         var lecture = lectureDetails.lectureID;
         var lecture_title = lectureDetails.title;
         var courseID = lectureDetails.courseID;
