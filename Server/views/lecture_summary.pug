@@ -5,22 +5,27 @@ block inhead
 		script(src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.6/Chart.js")
 		script(src='/js/table_func.js')
 		script.
+			//setup Data from the server
 			var	current_lecture = '#{lecture}';
 			var stud = !{JSON.stringify(students)};
 			var sect = !{JSON.stringify(sections)};
 			
 			$(document).ready(function(){
+				//name of the tables on the screen
 				var secTable = 'section_table';
 				var studTable = 'student_table';
 
+				//add the Data to the tables
 				addToTable(secTable, sect, ['Like', 'Difficult', 'Study']);
 				addToTable(studTable, stud, ['Like', 'Difficult', 'Study']);
 
+				//create graphs
 				addBarChart('section_chart', sect, graph_order_N_color);
 				addBarChart('student_chart', stud, graph_order_N_color);
 				addLineChart('section_chart_2', sect, graph_order_N_color);
 				addLineChart('student_chart_2', stud, graph_order_N_color);
 				
+				//the colour warning to the table
 				addTableColour();
 			});
 		

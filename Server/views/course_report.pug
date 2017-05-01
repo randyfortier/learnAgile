@@ -24,29 +24,35 @@ block inhead
 
 			function pushLecture(labels, lecture)
 			{
+				//if the lecture name is to long, put the first few letter then "..." then the 
+				//last few letters
 				var lec = lecture.slice();
 				if(lecture.length > 9)
 					lec = lec.substring(0, 4) + "..." + lec.substring(lec.length - 5, lec.length);
 				labels.push(lec);
 			}
 
-			function _addBarChart(canvas, stats, tag_names)
+			/*NOTE: same format as other graph function, see addBarChart in table_func.js
+			*	Only differences is the data, that part will be commented, the rest is the same
+			*	as the function in table_func.js
+			*/
+			function _addBarChart(canvas, stats, YNRQ_names)
 			{
 				var data = {};
 				data.labels = [];
 				data.datasets = [];
 
-				tag_names.forEach(function(tag_name, index){
+				YNRQ_names.forEach(function(YNRQ_name, index){
 					data.datasets.push({
-						label : tag_name.name,
+						label : YNRQ_name.name,
 						borderWidth : 1,
 						borderColor : [],
 						backgroundColor : [],
 						data : []
 					});
 					var color;
-					if(tag_name.color)
-						color = tag_name.color;
+					if(YNRQ_name.color)
+						color = YNRQ_name.color;
 					else
 						color = randRGB();
 					for(var cnt = 0; cnt < Object.keys(stats).length; cnt++)
@@ -60,29 +66,28 @@ block inhead
 				var cnt = 0;
 				var avg = 0;
 
-				Object.keys(stats).forEach(function(lecture){//each lecture
+				//for each section in the data
+				Object.keys(stats).forEach(function(lecture){//each section
+					
+					//push the lecure onto the label
 					var lecVar = stats[lecture];
-
 					pushLecture(data.labels, lecture);
 
-					
-					tag_names.forEach(function(tag_name, index){
+					//for each YNRQ, calc the average and add it to the dataset
+					YNRQ_names.forEach(function(YNRQ_name, index){
 						cnt = 0;
 						avg = 0;
 					
 						Object.keys(lecVar).forEach(function(section){//each section
 							var secVar = lecVar[section];
-							var tag = secVar[tag_name.name];
+							var tag = secVar[YNRQ_name.name];
 
 							avg += chartFormat(tag.U, tag.U+tag.D);
 							cnt++;
 						});
-
 						data.datasets[index].data.push(avg/cnt);
 					});
 				});
-
-				console.log(data);
 				
 				var myBarChart = new Chart($('#' + canvas), {
 					type: 'bar',
@@ -104,15 +109,19 @@ block inhead
 				});
 			}			
 			
-			function _addLineChart(canvas, stats, tag_names)
+			/*NOTE: same format as other graph function, see addLineChart in table_func.js
+			*	Only differences is the data, that part will be commented, the rest is the same
+			*	as the function in table_func.js
+			*/
+			function _addLineChart(canvas, stats, YNRQ_names)
 			{
 				var data = {};
 				data.labels = [];
 				data.datasets = [];
 
-				tag_names.forEach(function(tag_name, index){
+				YNRQ_names.forEach(function(YNRQ_name, index){
 					data.datasets.push({
-						label : tag_name.name,
+						label : YNRQ_name.name,
 						fill: true,
 						lineTension: 0,
 						borderCapStyle: 'butt',
@@ -130,8 +139,8 @@ block inhead
 					});
 					
 					var color;
-					if(tag_name.color)
-						color = tag_name.color;
+					if(YNRQ_name.color)
+						color = YNRQ_name.color;
 					else
 						color = randRGB();
 					for(var cnt = 0; cnt < Object.keys(stats).length; cnt++)
@@ -143,17 +152,21 @@ block inhead
 				
 				var cnt = 0;
 				var avg = 0;
+				//for each section in the data
 				Object.keys(stats).forEach(function(lecture){//each section
+					
+					//push the lecure onto the label
 					var lecVar = stats[lecture];
 					pushLecture(data.labels, lecture);
 
-					tag_names.forEach(function(tag_name, index){
+					//for each YNRQ, calc the average and add it to the dataset
+					YNRQ_names.forEach(function(YNRQ_name, index){
 						cnt = 0;
 						avg = 0;
 					
 						Object.keys(lecVar).forEach(function(section){//each section
 							var secVar = lecVar[section];
-							var tag = secVar[tag_name.name];
+							var tag = secVar[YNRQ_name.name];
 
 							avg += chartFormat(tag.U, tag.U+tag.D);
 							cnt++;
@@ -185,6 +198,7 @@ block inhead
 
 			function _addToTable(tableid, stats, tag_order)
 			{
+				//for each lecture add the table then call the addToTable
 				Object.keys(stats).forEach(function(lecture){
 
 					$('#' + tableid).append('<tr><th colspan="'+(1+(3*tag_order.length))+'">'+addLectureName(lecture)+'</th></tr>');
@@ -194,6 +208,7 @@ block inhead
 
 			function addLectureName(lecture)
 			{
+				//create the link for going to a lecture report
 				return '<a href="lecture_report?lecture='+lecture+((sid)?'&sid='+sid:'')+'">' + lecture + '</a>';
 			}
 

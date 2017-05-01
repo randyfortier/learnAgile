@@ -3,7 +3,6 @@ block content
 	div(class="container-fluid col-sm-10 col-sm-offset-1")
 		h2 Lecture Topics
 		ol
-			li
-				a(href="/agile_lecturing.html") Agile Lecturing with Real-time Learning Analytics
-			li
-				a(href="/Lecture.html") AJAX, JSON, and XML - CSCI 3230u
+			each lecture in Lectures
+				li
+					a(href='lectures/' + lecture.location) #{lecture.name}

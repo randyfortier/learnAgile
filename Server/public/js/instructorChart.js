@@ -1,29 +1,62 @@
-var socket = io();//'http://sci54.science.uoit.ca:3000');
+var socket = io();
 
 //set up the canvas, its id and its size
 var ChartHTML = $('<canvas id="student_chart" style="text-align:center; height: 400px; width: 400px" height="400" width="400"></canvas>');
 
+//add item to show when the chart is ready, and add the chart to the screen
+$('#speaker-controls').append('<div id="loading-text" style="text-align:center">Loading</div>');
+
 var IsInstuctor;
 
+
+/**************************
+	   YNRQ Variables
+***************************/
+
 //name of the tag tiles, and the color assigned to each tag
-var tag_color = {};
-var tag_titles = [];
-var tag_section;
+var YNRQ_color = {};
+var YNRQ_titles = [];
+var YNRQ_section;
 
 //speed that the timer ticks
 var timerSpeed = 1000;
-var timer = null;
+var chart_timer = null;
 
 //variable for the radarChart and its data
 var radarChart = null;
 var radar_chart_data = {};
 
-//debug purpose
-var cnt = 0;
 
-//add item to show when the chart is ready, and add the chart to the screen
-$('#speaker-controls').append('<div id="loading-text" style="text-align:center">Loading</div>');
+/**************************
+	   MCRQ Variables
+***************************/
 
+//varables for the MCRQ
+var multi_title = '';
+var multi_len = 0;
+
+//bar chart variables
+var barData = null;
+var barChart = null;
+var barChartOptions = {
+	responsive: false,
+	animation: false,
+	scales: {
+		yAxes:[{
+			ticks: {
+				min : 0,
+				max : 100,
+				maxTicksLimit: 4,
+				stepSize: 25
+			}
+		}]
+	}
+}
+
+
+/****************************************
+		Loading Functionality
+*****************************************/
 
 //code to repeatily look for the iframe that contians the current lecture
 //wait untill the iframes load
@@ -51,7 +84,7 @@ var findLecture_timer = setTimeout(findLecture, 2000);
 
 //setup the info for the current_leccture slide,
 //handles:
-//	have the current lecture send the binary tags, 
+//	have the current lecture send the binary YNRQs, 
 //	get the lecture id
 //	send up conneciton to receive the chart data via socket.io
 function load_Lecture(lecture)
@@ -60,8 +93,6 @@ function load_Lecture(lecture)
 	lecture.contentWindow.postMessage(JSON.stringify({
 		name: "current"
 	}), '*');
-	
-	
 }
 
 
@@ -82,7 +113,7 @@ function setup_socketio(data)
 			$('#speaker-controls').append('<button style="display:none" id="close_question">Close Question</button>');
 			$('#close_question').click(Button_click);
 
-			ParseTags(tag_titles, tag_section);
+			ParseYNRQs(YNRQ_titles, YNRQ_section);
 
 			socket.on('YNRQ_chart_data', function(chart_data){
 				//when the chart data comes in, parse it, and save the data
@@ -93,87 +124,120 @@ function setup_socketio(data)
 }
 
 
-//listen for a message that contains the xml tags,
+//listen for a message that contains the xml YNRQs,
 window.addEventListener('message',function(event){
 	//parse the message data
 	var data = JSON.parse( event.data );
-	//if the Tags field exists
+	//if the YNRQs field exists
 	if(data.YNRQuestion){
 		HideButton();
 		stopTimer();
-		//send the tags to be updated
-		ParseTags(data.YNRQuestion.YNRQs, data.YNRQuestion.section);
+		//send the YNRQs to be updated
+		ParseYNRQs(data.YNRQuestion.YNRQs, data.YNRQuestion.section);
 	}
 	else if (data.MultipleChoice)
 	{
 		HideButton();
 		stopTimer();
+		//show the bar chart and get the values for the server
 		ActivateBarChart(data.MultipleChoice.title, data.MultipleChoice.length);
 	}
 	else if(data.courseID && data.lectureID)
 	{
+		//setup the socket.io functionality with the courseID and the lecrtureID
 		setup_socketio(data);
 	}
-	
 });
 
 
 
-//update the chart info with the tags that where received by the post message
-function ParseTags(tags, section)
+/***************************************
+		YNRQ Functionality
+****************************************/
+
+//update the chart info with the YNRQs that where received by the post message
+function ParseYNRQs(YNRQs, section)
 {
-	//make sure that when there are no tags that nothing updates
-	if(!tags || !section)
+	//make sure that when there are no YNRQs that nothing updates
+	if(!YNRQs || !section)
 	{
-		tag_section = null;
-		tag_titles = null;
-		//clean chart
+		YNRQ_section = null;
+		YNRQ_titles = null;
 		
+		//clean chart
 		CleanCharts();
 		return;
 	}
 
+	//only show the chart user is an instructor
 	if(IsInstuctor)
 	{
 	 	//set the current chat data to be a template for data to be inputed
 		radar_chart_data = {
-			labels: tags.slice(),//["Yes","No","unknown"],
+			labels: YNRQs.slice(),//["Yes","No","unknown"],
 			datasets: [{}]
 		};
 
-		tag_section = section;
-		tag_titles = tags.slice();
+		//set the seciton and and title of the YNRQ
+		YNRQ_section = section;
+		YNRQ_titles = YNRQs.slice();
 
-		setupRadarData(tags, section)
+		setupRadarData(YNRQs, section)
 
 		//update the tag data
-		updateAllTagChartData(section);
+		updateAllYNRQChartData(section);
 
-		timer = setTimeout(function(){Timer();}, timerSpeed/4);
+		chart_timer = setTimeout(function(){YNRQ_Timer();}, timerSpeed/4);
 	}
 	else
 	{
-		tag_section = section;
+		YNRQ_section = section;
 
-		tag_titles = tags.slice();
+		YNRQ_titles = YNRQs.slice();
 	}
 }
 
-function setupRadarData(tags, section)
+//timer for constantly updating the graph graph
+function YNRQ_Timer()
+{
+	//a try statement so if there is a problem with the data, the timer doesn't stop
+	try
+	{
+		if(YNRQ_titles && YNRQ_section && IsInstuctor){
+			//update the char data, the display the chart
+			updateAllYNRQChartData(YNRQ_section);
+			updateRadarChart();
+		}
+	}
+	catch(err)
+	{
+		//if there is an error, show it
+		console.log(err)
+	}
+	//start the timer over, waiting a set amount of time
+	chart_timer = setTimeout(function(){YNRQ_Timer();}, timerSpeed);
+}
+
+
+/***************************************
+		Radar Chart Functionality
+****************************************/
+
+function setupRadarData(YNRQs, section)
 {
 	//extra
  	var rgb;
-	if(!tag_color[section])
-		tag_color[section] = randRGB();
-	rgb = tag_color[section];
+	if(!YNRQ_color[section])
+		YNRQ_color[section] = randRGB();
+	rgb = YNRQ_color[section];
 
 	//reset the chart dat and set the chart data, label, and other field
 	radar_chart_data.datasets[0] = {};
-	radar_chart_data.datasets[0].data = tags.slice();
+	radar_chart_data.datasets[0].data = YNRQs.slice();
 	radar_chart_data.datasets[0].data.forEach(function(item){ item = 0;});
 	radar_chart_data.datasets[0].pointBorderColor = "#fff";
 	radar_chart_data.datasets[0].pointHoverBackgroundColor = "#fff";
-	radar_chart_data.datasets[0].label = 'Tag Status - ' + section;
+	radar_chart_data.datasets[0].label = 'YNRQ Status - ' + section;
 	
 	//set the color for chart data
 	radar_chart_data.datasets[0].backgroundColor = RGBA(rgb, '0.2');
@@ -182,33 +246,30 @@ function setupRadarData(tags, section)
 	radar_chart_data.datasets[0].pointHoverBorderColor = RGBA(rgb, '1');
 }
 
-function updateAllTagChartData(section)
+function updateAllYNRQChartData(section)
 {
-	socket.emit('get_YNRQ_chart_data', {section: section, tags: tag_titles});
+	//send a message to the server to get the YNRQ data for the chart
+	socket.emit('get_YNRQ_chart_data', {section: section, tags: YNRQ_titles});
 }
+
 
 function updateTagChartData(chart_data)
 {
+	//insert into the YNRQ_data the data for the server
 	Object.keys(chart_data).forEach(function(item){
 		var data = chart_data[item];
 		var index = data.index;
 
-		var tag_val = (data.U/(data.U+data.D));
+		var YNRQ_val = (data.U/(data.U+data.D));
 
-		radar_chart_data.datasets[0].data[index] = tag_val;
+		radar_chart_data.datasets[0].data[index] = YNRQ_val;
 	});
 }
 
-//updates the pie chart with the data in the "data" variable
+//updates the radat chart with the data in the "data" variable
 function updateRadarChart()
 {
-	//if there isn't a pieChart, don't destroy it
-	// if(radarChart !== null)
-	//	 if it is not destroyed each time, an error occurs where
-	//	 *mutliple graphs are on top of each other, and when moving
-	//	 *the mouse over the graph old data will be shown along with new data
-		
-	//	 radarChart.destroy();
+	//clear the previous chart
 	CleanCharts();
 
 	//if ther is property's in the chart data, do nothing
@@ -236,6 +297,204 @@ function updateRadarChart()
 }
 
 
+/***************************************
+		Timer Functionality
+****************************************/
+
+function stopTimer()
+{
+	clearTimeout(chart_timer);
+}
+
+
+
+/***************************************
+		MCRQ Functionality
+****************************************/
+
+//timer for constantly updating the graph graph
+function MCRQ_Timer()
+{
+	//a try statement so if there is a problem with the data, the timer doesn't stop
+	try
+	{
+		if(multi_title && multi_len !== 0 && IsInstuctor){
+			//update the char data, the display the chart
+			getBarChartDataFromServer(multi_title);
+			renderBarChart();
+		}
+	}
+	catch(err)
+	{
+		//if there is an error, show it
+		console.log(err)
+	}
+	//start the timer over, waiting a set amount of time
+	chart_timer = setTimeout(function(){MCRQ_Timer();}, timerSpeed);
+}
+
+
+function ActivateBarChart(title, length)
+{
+	//make sure that when there are no tags that nothing updates
+	if(!title || length === 0)
+	{
+		multi_title = '';
+		multi_len = 0;
+		//clean chart
+		CleanCharts();
+		return;
+	}
+
+	//only run if you are instructor
+	if(IsInstuctor)
+	{
+
+		//setup the bar chart and gett the data from the server
+		BarChartDataSetup(length);
+		getBarChartDataFromServer(title);   
+		
+		//show the chart and the button to close the question
+		renderBarChart();
+		ShowButton();
+		
+		//start the timer to update the bar chart
+		chart_timer = setTimeout(function(){MCRQ_Timer();}, timerSpeed/4);
+	}
+
+	//set which mutiple choice question the progrma is on
+	multi_title = title;
+	multi_len = length;
+}
+
+function Button_click()
+{
+	//send the command to close the question
+	socket.emit('close_multiple_choice_question', multi_title);
+}
+
+
+/***************************************
+		Bar Chart Functionality
+****************************************/
+
+function getBarChartDataFromServer(title)
+{
+	//request from the server the current data on a specific mutiple choice question
+	socket.emit('get_chart_multiple_choice_data', {title: title});
+}
+
+//listener for the return of the MCRQ chart data
+socket.on('chart_multiple_choice_update', function(chart_data){
+	updateBarChartData(chart_data);
+});
+
+
+function BarChartDataSetup(length)
+{
+	//setup the data, label and dataset variables
+	var data = {};
+	data.labels = [];
+	data.datasets = [];
+
+
+	//push the default values to the datset
+	data.datasets.push({		
+		borderWidth : 1,
+		borderColor : [],
+		backgroundColor : [],
+		data : []
+	});
+
+	//set the colours for each bar
+	for(var cnt = 0; cnt < length; cnt++){
+		//push the label for the current question
+		data.labels.push('Answer '+ (cnt + 1));
+		data.datasets[0].data.push(0);
+		//set colour to be random
+		var color = randRGB();
+		data.datasets[0].borderColor.push(RGBA(color, 1));
+		data.datasets[0].backgroundColor.push(RGBA(color, 0.2));
+	}
+
+	//set the bar data to be the template data we just created
+	barData = data;
+}
+
+function updateBarChartData(chart_data)
+{
+	//clear the data and set up empty values
+	barData.datasets[0].data = []
+	for(var cnt = 0; cnt < multi_len; cnt++)
+		barData.datasets[0].data.push(0);
+
+	//get active users
+	var activeUsers = chart_data.length - chart_data.inactive;
+
+	//update chart with data for server
+	Object.keys(chart_data.answers).forEach(function(item){
+		var index = parseInt(item.replace('a_', ''));
+		barData.datasets[0].data[index] = chartFormat(chart_data.answers[item], activeUsers);
+	});
+
+	//set the legend for the chart
+	barData.datasets[0].label = '% of Responses';
+
+	//set the title
+	barChartOptions.title = {
+		display: true,
+		text: "# of Responses Vs. # Active Users: " + activeUsers + ' vs. '+ chart_data.length
+	}
+}
+
+function renderBarChart()
+{
+	//clean away the previous chart and display the current Chart
+	CleanCharts();
+	barChart = new Chart(ChartHTML, {
+		type: 'bar',
+		data: barData,
+		options: barChartOptions
+	});
+}
+
+
+
+/****************************************
+		Form Functionality
+*****************************************/
+
+
+function HideButton()
+{
+	$('#close_question').css('display', 'none');
+}
+
+function ShowButton()
+{
+	$('#close_question').css('display', '');
+}
+
+
+/****************************************
+	  Chart Colour & Number Format
+*****************************************/
+
+
+function CleanCharts()
+{
+	//either of the charts are on the screen then delete them
+	if(radarChart !== null)
+		radarChart.destroy();
+	if(barChart !== null)
+		barChart.destroy();
+}
+
+function chartFormat(score, length)
+{
+	return ((length === 0) ? 0 :(score/length) * 100);
+}
+
 //return the format of chart.js rgba color
 function RGBA(rgb, a)
 {
@@ -254,198 +513,3 @@ function rand(max)
 	return Math.floor(Math.random() * max);
 }
 
-function stopTimer()
-{
-	clearTimeout(timer);
-}
-
-//timer for constantly updating the graph graph
-function Timer()
-{
-	//a try statement so if there is a problem with the data, the timer doesn't stop
-	try
-	{
-		if(tag_titles && tag_section && IsInstuctor){
-			//update the char data, the display the chart
-			updateAllTagChartData(tag_section);
-			updateRadarChart();
-		}
-	}
-	catch(err)
-	{
-		//if there is an error, show it
-		console.log(err)
-	}
-	//start the timer over, waiting a set amount of time
-	timer = setTimeout(function(){Timer();}, timerSpeed);
-}
-
-
-function CleanCharts()
-{
-	if(radarChart !== null)
-		radarChart.destroy();
-	if(barChart !== null)
-		barChart.destroy();
-}
-
-
-//timer for constantly updating the graph graph
-function Timer2()
-{
-	//a try statement so if there is a problem with the data, the timer doesn't stop
-	try
-	{
-		if(multi_title && multi_len !== 0 && IsInstuctor){
-			//update the char data, the display the chart
-			getBarChartDataFromServer(multi_title);
-			renderBarChart();
-		}
-	}
-	catch(err)
-	{
-		//if there is an error, show it
-		console.log(err)
-	}
-	//start the timer over, waiting a set amount of time
-	timer = setTimeout(function(){Timer2();}, timerSpeed);
-}
-
-var barData = null
-var multi_title = '';
-var multi_len = 0;
-var barChart = null;
-var options = {
-	responsive: false,
-	animation: false,
-	scales: {
-		yAxes:[{
-			ticks: {
-				min : 0,
-				max : 100,
-				maxTicksLimit: 4,
-				stepSize: 25
-			}
-		}]
-	}
-}
-
-function ActivateBarChart(title, length)
-{
-	//make sure that when there are no tags that nothing updates
-	if(!title || length === 0)
-	{
-		console.log("called1")
-		
-		multi_title = '';
-		multi_len = 0;
-		//clean chart
-		CleanCharts();
-		return;
-	}
-
-	if(IsInstuctor)
-	{
-		BarChartDataSetup(length);
-
-		getBarChartDataFromServer(title);   
-		renderBarChart();
-		ShowButton();
-		timer = setTimeout(function(){Timer2();}, timerSpeed/4);
-	}
-
-	multi_title = title;
-	multi_len = length;
-}
-
-function getBarChartDataFromServer(title)
-{
-	socket.emit('get_chart_multiple_choice_data', {title: title});
-}
-
-socket.on('chart_multiple_choice_update', function(chart_data){
-	updateBarChartData(chart_data);
-});
-
-
-function BarChartDataSetup(length)
-{
-	var data = {};
-	data.labels = [];
-	data.datasets = [];
-
-
-	data.datasets.push({
-		
-		borderWidth : 1,
-		borderColor : [],
-		backgroundColor : [],
-		data : []
-	});
-
-
-	
-	for(var cnt = 0; cnt < length; cnt++){
-		data.labels.push('Answer '+ (cnt + 1));
-		data.datasets[0].data.push(0);
-		var color = randRGB();
-		data.datasets[0].borderColor.push(RGBA(color, 1));
-		data.datasets[0].backgroundColor.push(RGBA(color, 0.2));
-
-	}
-
-	barData = data;
-}
-
-function updateBarChartData(chart_data)
-{
-	barData.datasets[0].data = []
-	for(var cnt = 0; cnt < multi_len; cnt++)
-		barData.datasets[0].data.push(0);
-	//get active users
-	var activeUsers = chart_data.length - chart_data.inactive;
-
-	//update chart with data for server
-	Object.keys(chart_data.answers).forEach(function(item){
-		var index = parseInt(item.replace('a_', ''));
-		barData.datasets[0].data[index] = chartFormat(chart_data.answers[item], activeUsers);
-	});
-
-	barData.datasets[0].label = '% of Responses';
-
-	options.title = {
-		display: true,
-		text: "# of Responses Vs. # Active Users: " + activeUsers + ' vs. '+ chart_data.length
-	}
-}
-
-function chartFormat(score, length)
-{
-	return ((length === 0) ? 0 :(score/length) * 100);
-}
-
-function renderBarChart()
-{
-	CleanCharts();
-	barChart = new Chart(ChartHTML, {
-		type: 'bar',
-		data: barData,
-		options: options
-	});
-}
-
-
-function HideButton()
-{
-	$('#close_question').css('display', 'none');
-}
-
-function ShowButton()
-{
-	$('#close_question').css('display', '');
-}
-
-function Button_click()
-{
-	socket.emit('close_multiple_choice_question', multi_title);
-}

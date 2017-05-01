@@ -10,7 +10,7 @@ $(document).ready(function(){
 		loc = loc.substring(index, loc.indexOf("/", index));
 
 		//output the preview
-	  	$("#preview").text(loc + "/"+ $(this).val().replace(/ /g, "") +"/Lecture.html");
+	  	$("#preview").text(loc + "/"+ $(this).val().replace(/ /g, "").toLowerCase() +"/Lecture.html");
 
 	});
 

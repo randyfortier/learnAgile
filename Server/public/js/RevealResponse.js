@@ -23,9 +23,9 @@ MCRQuestion/MCRQ - Mutiple Choice Response Question
         Yes No Response Question Setup
 **********************************************/
 var standardYNRQuestions = {
-    'like': {title:'Like', src:'images/like.png', tip:'I find this content interesting'},
-    'difficult': {title:'Difficult', src:'images/hard.png', tip:'I find this content difficult'},
-    'study': {title:'Study', src:'images/study.png', tip:'I think I should study this for the test'}
+    'like': {title:'Like', src:'/images/like.png', tip:'I find this content interesting'},
+    'difficult': {title:'Difficult', src:'/images/hard.png', tip:'I find this content difficult'},
+    'study': {title:'Study', src:'/images/study.png', tip:'I think I should study this for the test'}
 };
 
 /**
@@ -150,33 +150,44 @@ socket.on('lecture_client_setup', function(isInstuctor){
     *Send answer to server, and check if any answers are closed
     */
     Object.keys(MCRQ_question_status).forEach(function(question){
+        //send the title of the question and the answer to the question
         socket.emit('check_multiple_choice_question', {title:question, answer: MCRQ_question_status[question]});
+        //set the status of the question to false
         MCRQ_question_status[question] = 0;
     });
 
+    //close a MCRQ
     socket.on('close_multiple_choice_question', function(chart_data){
-        console.log(chart_data);
-
+        
+        //if the status is 0(question open), then close it.
         if(MCRQ_question_status[chart_data.title] === 0){
             MCRQ_question_status[chart_data.title] = 1;//only close the question once
 
+            //setup the question title and the total number of answers
             var question_title = chart_data.title.replace(/ /g, '_');
             var num_answers = $('#'+question_title).next().children().length;
             
+
+            var answer_list = "";
             //hide the answers to show the chart, all but the corrent answer
             $('#'+question_title).next().children().each(function(val, index){
-                if(index !== parseInt(MCRQ_correct_answer[question_title])){
-                    $(this).css('display', 'none');
+                //on the correct answer
+                if(index === (parseInt(MCRQ_correct_answer[question_title]) -1)){
+                    //create a new ol with the answer set up
+                    answer_list = '<ol start="'+ (index + 1) +'"><li>'+$(this).html()+'</li></ol>';
                 }
-                else
-                {
-                    $($(this).parent()).attr("start", index+1);
-                }
-                
             });
-            
+
+            //remove the old ol and and the new ol
+            //NOTE: this is to get ride of the students onclick funtion that is attached to the
+            //old ol's il. tried to get ride of it other ways and was running into trouble
+            $('#'+question_title).next().remove();
+            $('#'+question_title).after(answer_list);
+
+            //add the canvas to the screen above the ol
             $('#'+question_title).after('<canvas id="'+question_title+'_chart" height="300" width="300" style="padding-left: 0;padding-right: 0;margin-left: auto;margin-right: auto;display: block;"></canvas>');
 
+            //create the chart on the canvas
             createChart(chart_data, $('#'+question_title+'_chart'), num_answers);
 
         }
@@ -189,52 +200,65 @@ socket.on('lecture_client_setup', function(isInstuctor){
 
     function createChart(chart_data, canvas, length)
     {
+        //Bar chart API found here : http://www.chartjs.org/docs/#bar-chart
+
+        //setup variables for use
+        //title,the locaiton of the answer in MCRQ_correct_answer
+        //data, the holder of the the chart data
+        //data.labels, label for each of the bar graphs
+        //data.datasets, the locaiton that holds the actual data the colour of the bar
         var title = chart_data.title.replace(/ /g, '_');
         var data = {};
         data.labels = [];
         data.datasets = [];
 
+        //push onto the dataset the default data
         data.datasets.push({
-            
             borderWidth : 1,
             borderColor : [],
             backgroundColor : [],
             data : []
         });
 
+
+        //for each answer in the chart_data({a_\\NUMBER// : # of responses, ...})
+        //add that data with the correct colour to the dataset
         for(var cnt = 0; cnt < length; cnt++){
+            //push the label
             data.labels.push('Answer '+ (cnt + 1));
             data.datasets[0].data.push(0);
             
-            if(MCRQ_correct_answer[title] === ""+(cnt+1))
-            {
-                var color = {r:0,g:255,b:0};
+            //if the correct answer the use the green else black for the colour of the bar
+            var color = {};
+            if(MCRQ_correct_answer[title] === ""+(cnt+1)){
+                color = {r:0,g:255,b:0};
                 data.datasets[0].borderColor.push(RGBA(color, 1));
                 data.datasets[0].backgroundColor.push(RGBA(color, 0.2));
             }
             else{
-                var color = {r:0,g:0,b:0};
+                color = {r:0,g:0,b:0};
                 data.datasets[0].borderColor.push(RGBA(color, 1));
                 data.datasets[0].backgroundColor.push(RGBA(color, 0.2));
             }
         }
 
-        data.datasets[0].data = []
-        for(var cnt = 0; cnt < length; cnt++)
-            data.datasets[0].data.push(0);
         //get active users
         var activeUsers = chart_data.length - chart_data.inactive;
 
         //update chart with data for server
+        //chart_data.answer format ({a_\\NUMBER// : # of responses, ...})
         Object.keys(chart_data.answers).forEach(function(item){
+            // add data to the dataset
+            //remove a_ from the item, its in the format of a_#
             var index = parseInt(item.replace('a_', ''));
             data.datasets[0].data[index] = chartFormat(chart_data.answers[item], activeUsers);
         });
 
+        //set what the label of the bar is
         data.datasets[0].label = "% of Responses: "
 
 
-
+        //add the data and options to the chart, add which canvus to the paint to. 
         var barChart = new Chart(canvas, {
             type: 'bar',
             data: data,
@@ -242,6 +266,8 @@ socket.on('lecture_client_setup', function(isInstuctor){
                 responsive: false,
                 animation: false,
                 scales: {
+                    //set that on the y axes there is a min of 0% max of 100% there is index at
+                    //ever 25% (0,25,50,75,100), and there is a max of 4 ticks for 0% to 100%
                     yAxes:[{
                         ticks: {
                             min : 0,
@@ -251,6 +277,8 @@ socket.on('lecture_client_setup', function(isInstuctor){
                         }
                     }]
                 },
+
+                //set the title of the chart
                 title: {
                     display: true,
                     text: "# of Responses Vs. # Active Users : " + activeUsers + ' vs. '+ chart_data.length

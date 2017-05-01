@@ -5,21 +5,25 @@ block inhead
 		script(src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.6/Chart.js")
 		script(src='/js/table_func.js')
 		script.
+			//setup data from the server
 			var lec_stud = !{JSON.stringify(stud_lec)};
 			var studStats = !{JSON.stringify(student_stats)};
 			var avgStats = !{JSON.stringify(all_stats)};
 			
 			$(document).ready(function(){
-
+				//add Data to the table on the screen
 				addToTable('section_table', studStats, ['Like', 'Difficult', 'Study']);
 				addToTable('avg_table', avgStats, ['Like', 'Difficult', 'Study']);
 
+				//add a bar graphs for the student data and average data
 				addBarChart('avg_chart', avgStats, graph_order_N_color);
 				addBarChart('student_chart', studStats, graph_order_N_color);
 
+				//add a line graph for the student data and the averaged data
 				addAvgLineChart('avg_chart_2', avgStats, graph_order_N_color);
 				addLineChart('student_chart_2', studStats, graph_order_N_color);
 
+				//add warning colour
 				addTableColour();
 			});
 		

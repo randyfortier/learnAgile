@@ -1,26 +1,39 @@
+
+//Colour of each respective YNRQ 
 var graph_order_N_color = [
 	{name:'Difficult', color: {r:255, g:0, b:0}},
 	{name:'Like', color: {r:0, g:0, b:0}},
 	{name:'Study', color: {r:0, g:0, b:255}}
 ];
 
-function addBarChart(canvas, stats, tag_names)
+
+
+/****************************************
+		Chart Functionality
+*****************************************/
+
+//Add a bar graph to the given canvus
+function addBarChart(canvas, stats, YNRQ_names)
 {
+	//setup up the data for the 
 	var data = {};
 	data.labels = [];
 	data.datasets = [];
 
-	tag_names.forEach(function(tag_name, index){
+	//for each YNRQ name sent, setop the colour data and the default data
+	YNRQ_names.forEach(function(YNRQ_name, index){
 		data.datasets.push({
-			label : tag_name.name,
+			label : YNRQ_name.name,
 			borderWidth : 1,
 			borderColor : [],
 			backgroundColor : [],
 			data : []
 		});
+
+		//of colour exists then use it, else chose a random one
 		var color;
-		if(tag_name.color)
-			color = tag_name.color;
+		if(YNRQ_name.color)
+			color = YNRQ_name.color;
 		else
 			color = randRGB();
 		for(var cnt = 0; cnt < Object.keys(stats).length; cnt++)
@@ -28,19 +41,22 @@ function addBarChart(canvas, stats, tag_names)
 			data.datasets[index].borderColor.push(RGBA(color, 1));
 			data.datasets[index].backgroundColor.push(RGBA(color, 0.2));
 		}
+
 	});	
 
+	//for each data point in each setion set the data
 	Object.keys(stats).forEach(function(section){//each section
 		var secVar = stats[section];
-
 		data.labels.push(section);
 
-		tag_names.forEach(function(tag_name, index){
-			var tag = secVar[tag_name.name];
+		//for each tag, calc. the value and set it
+		YNRQ_names.forEach(function(YNRQ_name, index){
+			var tag = secVar[YNRQ_name.name];
 			data.datasets[index].data.push(chartFormat(tag.U, tag.U+tag.D));
 		});
 	});
 	
+	//apply the bar chart to the canvus
 	var myBarChart = new Chart($('#' + canvas), {
 		type: 'bar',
 		data: data,
@@ -61,15 +77,19 @@ function addBarChart(canvas, stats, tag_names)
 	});
 }			
 
-function addLineChart(canvas, stats, tag_names)
+//add a Line graph to the given canvus
+function addLineChart(canvas, stats, YNRQ_names)
 {
+	//setup data, labels, and dataset
 	var data = {};
 	data.labels = [];
 	data.datasets = [];
 
-	tag_names.forEach(function(tag_name, index){
+	//for each YNRQ sent, setup the default value and the colour
+	YNRQ_names.forEach(function(YNRQ_name, index){
+		//default value, for changes check out : http://www.chartjs.org/docs/#line-chart
 		data.datasets.push({
-			label : tag_name.name,
+			label : YNRQ_name.name,
 			fill: true,
 			lineTension: 0,
 			borderCapStyle: 'butt',
@@ -86,9 +106,10 @@ function addLineChart(canvas, stats, tag_names)
 			data : []
 		});
 		
+		//if a colour is given use it, else create a random one.
 		var color;
-		if(tag_name.color)
-			color = tag_name.color;
+		if(YNRQ_name.color)
+			color = YNRQ_name.color;
 		else
 			color = randRGB();
 		for(var cnt = 0; cnt < Object.keys(stats).length; cnt++)
@@ -98,18 +119,21 @@ function addLineChart(canvas, stats, tag_names)
 		}
 	});			
 	
+	//foe each setion of data setup the YNRQ for that setion
 	Object.keys(stats).forEach(function(section){//each section
 		var secVar = stats[section];
 
 		data.labels.push(section);
 
-		tag_names.forEach(function(tag_name, index){
-			var tag = secVar[tag_name.name];
+		//for each YNRQ calc. a value and set it in the dataset
+		YNRQ_names.forEach(function(YNRQ_name, index){
+			var tag = secVar[YNRQ_name.name];
 			data.datasets[index].data.push(chartFormat(tag.U, tag.U+tag.D));
 		});
 	});
 
-	var myBarChart = new Chart($('#' + canvas), {
+	//apply a line graph to the canvaus give
+	var myLinChart = new Chart($('#' + canvas), {
 		type: 'line',
 		data: data,
 		options: {
@@ -129,15 +153,18 @@ function addLineChart(canvas, stats, tag_names)
 	});
 }
 
-function addAvgLineChart(canvas, stats, tag_names)
+//add a average Line graph to the given canvus
+function addAvgLineChart(canvas, stats, YNRQ_names)
 {
+	//setup data, labels, and dataset
 	var data = {};
 	data.labels = [];
 	data.datasets = [];
 
-	tag_names.forEach(function(tag_name, index){
+	//for each YNRQ sent, setup the default value and the colour
+	YNRQ_names.forEach(function(YNRQ_name, index){
 		data.datasets.push({
-			label : tag_name.name,
+			label : YNRQ_name.name,
 			fill: false,
 			lineTension: 0,
 			borderCapStyle: 'butt',
@@ -153,9 +180,10 @@ function addAvgLineChart(canvas, stats, tag_names)
 			data : []
 		});
 		
+		//if a colour is given use it, else create a random one.
 		var color;
-		if(tag_name.color)
-			color = tag_name.color;
+		if(YNRQ_name.color)
+			color = YNRQ_name.color;
 		else
 			color = randRGB();
 		for(var cnt = 0; cnt < Object.keys(stats).length; cnt++)
@@ -164,18 +192,21 @@ function addAvgLineChart(canvas, stats, tag_names)
 		}
 	});			
 	
+	//foe each setion of data setup the YNRQ for that setion
 	Object.keys(stats).forEach(function(section){//each section
 		var secVar = stats[section];
 
 		data.labels.push(section);
 
-		tag_names.forEach(function(tag_name, index){
-			var tag = secVar[tag_name.name];
+		//for each YNRQ calc. a value and set it in the dataset
+		YNRQ_names.forEach(function(YNRQ_name, index){
+			var tag = secVar[YNRQ_name.name];
 			data.datasets[index].data.push(chartFormat(tag.U, tag.U+tag.D));
 		});
 	});
 
-	var myBarChart = new Chart($('#' + canvas), {
+	//apply a line graph to the canvaus give
+	var myLinChart = new Chart($('#' + canvas), {
 		type: 'line',
 		data: data,
 		options: {
@@ -195,69 +226,111 @@ function addAvgLineChart(canvas, stats, tag_names)
 	});
 }	
 
-function addToTable(tableid, stats, tag_order)
+
+
+/****************************************
+		Table Functionality
+*****************************************/
+
+//main function, added the data for the server to the wanted table
+function addToTable(tableid, stats, YNRW_order)
 {
-	addTitletoTable(tableid, tag_order);	
+	//add the titles of the YNRQ to the table
+	addTitletoTable(tableid, YNRW_order);	
 
-	console.log(stats, '\n', tag_order);
 
+	//average out the values of each row
 	var avg_tags = [];
-	for(var cnt = 0; cnt < tag_order.length; cnt++)
-		avg_tags.push({U:0,D:0,UNK:0,length:0, avg:0});
-	Object.keys(stats).forEach(function(select){
-		var tag_values = [];
 
-		tag_order.forEach(function(tag_name, index){
-			tag_values.push(sec_tag_table_entry(stats[select][tag_name]));
-			addtoAvg(avg_tags[index], stats[select][tag_name],getPer(stats[select][tag_name]));
+	//create an empty row for each YNRQ
+	for(var cnt = 0; cnt < YNRW_order.length; cnt++)
+		avg_tags.push({U:0,D:0,UNK:0,length:0, avg:0});
+	
+	//for each Data Entry
+	Object.keys(stats).forEach(function(select){
+		//save the YNRQ values
+		var YNRW_values = [];
+		//for each YNRQ, add the table entrys to the YNRQ_values and add to the average
+		YNRW_order.forEach(function(YNRQ_name, index){
+			YNRW_values.push(sec_YNRQ_table_entry(stats[select][YNRQ_name]));
+			addtoAvg(avg_tags[index], stats[select][YNRQ_name],getPer(stats[select][YNRQ_name]));
 		});
-		addEntryToTable(tableid, select, tag_values);
+		//add the YNRQS values to the table
+		addEntryToTable(tableid, select, YNRW_values);
 	});
 
+	//calcuatle the average values and output it
 	var secLen = Object.keys(stats).length;
 	var avg_values = [];
+
+	//average each tag
 	avg_tags.forEach(function(item){
 		avgOut(item, secLen);
-		avg_values.push(sec_tag_table_entry(item));
+		avg_values.push(sec_YNRQ_table_entry(item));
 	});
 
+	//add average to table
 	addEntryToTable(tableid, "AVERAGE", avg_values);
 }
 
+//give the table entrys for each YNRQ, add the name then the precreate vaules
 function addEntryToTable(tableid, name, tags)
 {
-	var table_Entry = "";
-	table_Entry += "<tr><td>" + name + "</td>";
+	//add the name to the table temp variable
+	var table_Entry = "<tr><td>" + name + "</td>";
+	
+	//for each YNRQ pre compiled table entry add it to the table temp variable
 	tags.forEach(function(item){
 		table_Entry += item;
 	});
+	//end the table row
 	table_Entry += "</tr>";
+	//add the table row to the table
 	$('#'+tableid).append(table_Entry);
 }
 
-function addTitletoTable(tableid, tag_order)
+//add the title of each YNRQ to the table
+function addTitletoTable(tableid, YNRW_order)
 {
+	//add the main topic entry
 	var lineone = '<tr><th rowspan="2">Topic</th>';
 	var linetwo = "<tr>";
 
-	tag_order.forEach(function(item){
+	//for each YNRQ add the title to the first line and the wanted outputs
+	YNRW_order.forEach(function(item){
 		lineone += "<th colspan = '3'>"+item+"</th>";
 		linetwo += "<th># responses</th><th># "+ item +"</th><th>% "+ item +"</th>";
 	});
 
+	//append to the table the two lines that where just created
 	$('#' + tableid).append(lineone + "</tr>");
 	$('#' + tableid).append(linetwo + "</tr>");
 }
 
-function sec_tag_table_entry(item)	
+//Creates the table entry for a given YNRQ
+function sec_YNRQ_table_entry(item)	
 {
-	if(item.avg)
-		return "<td>"+(item.U+item.D).toFixed(2)+"</td><td>"+item.U.toFixed(2)+"</td><td>"+item.avg.toFixed(2)+"%</td>";
-
+	//setup the values
 	var len = item.U+item.D;
-	return "<td>"+len+"</td><td>"+item.U+"</td><td>"+percentFormat(item.U, len)+"</td>"
+	var avg = "";
+	var positve = item.U;
+
+	// if average is already computed, the use that vaule, else computer the average
+	if(item.avg || item.avg === 0){
+		avg = item.avg.toFixed(2) + "%";
+		len = len.toFixed(2);
+		positve = positve.toFixed(2);
+	}
+	else{
+		avg = percentFormat(item.U, len);
+	}
+
+	//return the table entrys for the values
+	return "<td>"+len+"</td><td>"+positve+"</td><td>"+avg+"</td>"
 }
 
+
+//add to the average value
 function addtoAvg(avg, item, per)
 {
 	avg.U += item.U;
@@ -267,25 +340,30 @@ function addtoAvg(avg, item, per)
 	avg.avg += per;
 }
 
-function avgOut(avg,cnt)
+//average the data in the avg vaiable with the amount in amount
+function avgOut(avg, amount)
 {
-	avg.U /= cnt;
-	avg.D /= cnt;
-	avg.UNK /= cnt;
-	avg.length /= cnt;	
-	avg.avg /= cnt;
+	avg.U /= amount;
+	avg.D /= amount;
+	avg.UNK /= amount;
+	avg.length /= amount;	
+	avg.avg /= amount;
 }
 
+//add the classes to the td of each table
 function addTableColour()
 {
+	//for each tablt entry, add the class success, warning or danger based on the precentage
 	$('td').each(function(){
+		//get the text
 		var text = $(this).text();
 
+		//only do thoughs that are a percentage
 		if(text.includes('%'))
 		{
+			//remove the % sign and evaluate the text
 			text = text.substr(0, text.length -1);
 			var percent = Number(text);
-
 			if(percent >= 80)
 				$(this).addClass('success');
 			else if(percent >= 50 && percent < 59)
@@ -295,6 +373,11 @@ function addTableColour()
 		}
 	});
 }
+
+/****************************************
+	  Chart Colour & Number Format
+*****************************************/
+
 
 function getPer(item)
 {
@@ -311,17 +394,21 @@ function percentFormat(score, length)
 	return ((length === 0) ? '0.00' :((score/length) * 100).toFixed(2)) + "%";
 }
 
+//return the format of chart.js rgba color
 function RGBA(rgb, a)
 {
-    return 'rgba('+rgb.r+','+rgb.g+','+rgb.b+','+a+')';
+	return 'rgba('+rgb.r+','+rgb.g+','+rgb.b+','+a+')';
 }
 
+//randomaly generate a color
 function randRGB()
 {
-    return {r:rand(255), g:rand(255), b:rand(255)};
+	return {r:rand(255), g:rand(255), b:rand(255)};
 }
 
+//random function that get the color from 0 to the max
 function rand(max)
 {
-    return Math.floor(Math.random() * max);
+	return Math.floor(Math.random() * max);
 }
+
