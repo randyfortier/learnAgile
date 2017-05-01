@@ -14,19 +14,20 @@ Google a tutorial, and example one for ubuntu is
 https://www.digitalocean.com/community/tutorials/how-to-install-node-js-on-ubuntu-16-04
 
 
-## 2. install the node modules
+## 2. Install the node modules
 
-run the following to install the following
+Run the following to install the following
 
 ```bash
 npm install
 ```
 
-## 3. install mongoDB
+## 3. Install mongoDB
 
 ### Windows
 	
 Go to https://docs.mongodb.com/manual/tutorial/install-mongodb-on-windows
+
 ### Mac
 
 Go to https://docs.mongodb.com/manual/tutorial/install-mongodb-on-os-x
@@ -45,7 +46,7 @@ The Server is almost ready, run the server
 node RevealResponseSystem.js
 ```
 
-after running you should get this error 
+After running you should get this error 
 
 ```
 Server started. Listening at *:3000
@@ -74,7 +75,7 @@ To insert into the mongo database, open a terminal, and write this command
 ```bash
 mongo
 ````
-when in mongo, use the following command to change to the Reveal Response System database
+When in mongo, use the following command to change to the Reveal Response System database
 
 ```
 use Response_System
@@ -113,7 +114,7 @@ This should give you a statement similar to this
 With this confirmed, Exit mongo
 
 
-## 6. make the folder for the course
+## 6. Make a folder for the course
 
 Now we need to make a folder for the new course, go to the public folder that is the same folder as the RevealResponseSystem.js
 
@@ -141,7 +142,7 @@ public (folder)
 node RevealResponseSystem.js
 ```
 
-after running you should get the output:
+After running you should get the output:
 
 ```
 Server started. Listening at *:3000
@@ -150,18 +151,18 @@ csci1040u CSCI 1040u d8085eac-cbfa-49fb-8974-018848065a08
 
 This is to show that the course csci1040u is working, it will output all available courses.
 
-## 8. making a Instructor account
+## 8. Making a Instructor account
 
 Finally navigate to your site
 
  - http://{Server_Location}/csci1040
 
-this will redirect you to the login page. this is good, but not what we want, we want to register an account so, got to the following page
+This will redirect you to the login page. this is good, but not what we want, we want to register an account so, got to the following page
 
 - http://{Server_Location}/csci1040/register_XDAPRTONGTY_InstructorForm
 
 
-fill out a username and password this will insert you as a Instructor
+Fill out a username and password this will insert you as a Instructor
 
 
 And with that you are good to go.
