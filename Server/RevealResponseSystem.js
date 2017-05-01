@@ -127,7 +127,7 @@ var CourseDB = mongoose.model('course', CourseSchema);
 //the change is so if the user found a way to change the isInstructor session variable to
 //a value that woule register as true in the followin statement, then they would be able to easly
 //be able to break in
-// if(request.session.isInstructor) // easly breakable if access to session data
+// if(request.session.isInstructor) // easly breakable if anyone has access to session data
 //the following is a bit harder, they would have to have access to the server variable data
 var instructorKey = uuid.v4();
 function isAnInstructor(session)
@@ -238,11 +238,14 @@ function LoadCourse(course)
 	****************************************/
 	function CheckLoggedin(session)
 	{
+		//if not course already there, make it empty and return null
 		if(!session.course){
 			session.course = {};
 			return null;
 		}
 
+		//if there is a course with the id and there is a userid, return the session data
+		//else return null
 		if(session.course[courseID]){
 			if(session.course[courseID].userid){
 				return session.course[courseID];
@@ -287,9 +290,7 @@ function LoadCourse(course)
 			return;
 		//delete the userid sid and isInstructor for the session data, redirect to the main page
 		var session = request.session;
-		// delete session.userid;
-		// delete session.isInstructor;
-		// delete session.sid;
+
 		delete session.course[courseID];
 		session.log = 1;
 		response.redirect('/'+courseName);
@@ -334,6 +335,7 @@ function LoadCourse(course)
 
 			if((results.length > 0) && (bcrypt.compareSync(password, results[0].hashedPassword)))
 			{
+				//check if in this course
 				UserToCourseDB.find({userid: results[0].userid, courseid: courseID}).limit(1).exec(function(error, inCourse){
 
 					if(error)
@@ -376,10 +378,18 @@ function LoadCourse(course)
 
 	function setLoggedinSessionValues(session, userid, isInstructor, sid)
 	{
+		//creat course if it is not there
 		if(!session.course)
 			session.course = {};
+		//empty out the course at courseID
 		session.course[courseID] = {};
 
+		//set the variable
+		//userid
+		//isInstrcutor
+		//sid
+		//log - used to see if a user has logged in before
+		//courseid
 		session.course[courseID].userid = userid;
 		if(isInstructor === true)
 			session.course[courseID].isInstructor = instructorKey;
@@ -680,7 +690,7 @@ function LoadCourse(course)
 		{
 			// retrive all the data in the database
 			student_YNRQ_DB.find({courseid: courseID}).exec(function(error, results){
-				console.log(results);
+
 				//if there is a response send the data
 				if(results.length > 0){
 					//variables for the student stats and the lecture stats
@@ -715,7 +725,6 @@ function LoadCourse(course)
 
 								//matches lecture name with lecture id for there to be a right naming on webpage
 								Lecture_ID_Name.find({courseid: courseID}).exec(function(error, results){
-									console.log(results);
 									if(results.length > 0)
 									{
 										//rename each lectureID to lecture title
@@ -732,7 +741,6 @@ function LoadCourse(course)
 					});
 				}
 			});
-			console.log('course_summary_report');
 		}
 	});
 
@@ -1049,6 +1057,7 @@ function LoadCourse(course)
 				{
 					var lectures = [];
 
+					//create a list with just the lecture_titles
 					results.forEach(function(item){
 						lectures.push(item.lecture_title);
 					});
@@ -1097,7 +1106,7 @@ function LoadCourse(course)
 					renderPage(session, response, 'lecture_report', 'Lecture Report' + " - " + courseFullName,  {error:"Unable to access database."});
 					return;
 				}
-				// lecture_report(session, response, lecture, sid, );
+
 				if(results.length > 0)
 				{
 					UserToCourseDB.find({userid:results[0].userid, courseid: courseID}).limit(1).exec(function(error, studInCourse){
@@ -1359,158 +1368,6 @@ function searchDBForResponseNoReplace(DB, searchQuery, newResponse, status)
 		}
 	});
 }
-
-// function cleanDB()
-// {
-//	 Lecture_ID_Name.remove({}, function(err) { 
-//		 console.log('collection removed') 
-//	 });
-//	 UserDB.remove({}, function(err) { 
-//		 console.log('collection removed') 
-//	 });
-//	 student_YNRQ_DB.remove({}, function(err) { 
-//		 console.log('collection removed') 
-//	 });
-// }
-
-
-// var YNRQs = ['Difficult', 'Like', 'Study'];
-
-
-// var lectures = {
-//	 "Agile Lecturing with Real-time Learning Analytics" : {
-//		 lectureID: "a163b376-9b64-475e-85a4-dd805243367e",
-//		 'Agile Lecturing' : YNRQs.slice(),
-//		 'Real-time feedback' : YNRQs.slice(),
-//		 'learnAgile' : YNRQs.slice()
-//	 },
-//	 "AJAX, JSON, and XML - CSCI 3230u" : {
-//		 lectureID: "747969ea-8d7f-4a0f-807f-a2f8cee86eed",
-//		 'Intro' : YNRQs.slice(),
-//		 'Ajax' : YNRQs.slice(),
-//		 'JSON' : YNRQs.slice(),
-//		 'XML' : YNRQs.slice(),
-//		 'Open data' : YNRQs.slice()
-//	 }
-// };
-
-// cleanDB();
-
-
-// function AddUser(sid, password, courseid, isInstructor)
-// {
-//	 //generate a uuid for the user and has the password
-//	 var userid = uuid.v4();
-//	 var hash = bcrypt.hashSync(password);
-
-//	 //setup the record for saving the new user
-//	 var userdata = {
-//		 userid: userid,
-//		 sid: sid,
-//		 hashedPassword: hash,
-//		 isInstructor: isInstructor || false
-//	 };		   
-
-//	 //declare a new user and save the user
-//	 var newUser = new UserDB(userdata);
-//	 newUser.save(function(error){
-//		 if(error)
-//		 {
-//			 //if there is a error, log it and call the onFail method
-//			 console.log("Error in Registering, data: " +  JSON.stringify(userdata));
-//		 }
-//		 else
-//		 {
-//			 //if succefully added, log the username
-//			 console.log("User Added: " + JSON.stringify(userdata));
-//		 }
-//	 });
-
-//	 courseid.forEach(function(course){
-//	 	saveNewResponse(UserToCourseDB, {userid: userid, courseid: course});
-//	 });
-	
-
-//	 if(userdata.isInstructor)
-//		 return;
-
-// 	Object.keys(lectures).forEach(function(lecture){
-// 		var lectureID = lectures[lecture].lectureID;
-// 		// saveNewResponse(Lecture_ID_Name, {lectureID: lectureID}, {lecture_ID: lectureID, lecture_title: lecture});
-// 		Object.keys(lectures[lecture]).forEach(function(section){
-// 			if(section === "lectureID"){
-// 				return;
-// 			}
-// 			lectures[lecture][section].forEach(function(YNRQ){
-// 				courseid.forEach(function(course){
-// 					var response = Math.random();
-
-// 					if(response <= 0.3333)
-// 						response = 1;
-// 					else if(response <= 0.6666)
-// 						response = 0;
-// 					else
-// 						response = -1;
-// 					saveNewResponse(student_YNRQ_DB, {
-// 						lecture: lectureID,
-// 						studentid: userid,
-// 						section: section,
-// 						tag_title: YNRQ,
-// 						response: response,
-// 						courseid: course
-// 					});
-// 				});
-// 			});
-// 		});
-// 	});
-// }
-
-// function saveNewResponse(DB, value)
-// {
-//	 //save the value to the binary response db reutrn 
-//	 new DB(value).save(function(error){
-//		 if(error){ // if there was an error then return what print out the user, the lecture and the title of the tag
-//			 console.log("Error adding Default response for user: " + session.sid + ", lecture: " + lecture + ", value: " + JSON.stringify(value) + ", Error: " + error);
-//		 }
-//	 });
-// }
-
-// setTimeout(function(){
-//	 for(var cnt = 1; cnt <= 40; cnt++)
-//	 {
-//		 var num = cnt;
-//		 if(num <= 9)
-//			 num = "0" + num;
-//		 // else if(num <= 99)
-//		 //	 num = "0" + num;
-
-//		 var sid = "2000000" + num;
-		
-
-//		 AddUser(sid, "demo", ["9cdabd48-c208-4154-a62e-0bf8020739e0", "5f3ea8ac-75aa-426b-8ed1-a98654621834"]);
-//	 }
-//	 Object.keys(lectures).forEach(function(lecture){
-//		 var lectureID = lectures[lecture].lectureID;
-//		 saveNewResponse(Lecture_ID_Name, {lectureID: lectureID, lecture_title: lecture, courseid: "9cdabd48-c208-4154-a62e-0bf8020739e0"});
-//		 saveNewResponse(Lecture_ID_Name, {lectureID: lectureID, lecture_title: lecture, courseid: "5f3ea8ac-75aa-426b-8ed1-a98654621834"});
-
-//	 });
-//	 AddUser("100539147", "csci1040",["9cdabd48-c208-4154-a62e-0bf8020739e0", "5f3ea8ac-75aa-426b-8ed1-a98654621834"], true);
-//	 AddUser("Matt", "temp",["5f3ea8ac-75aa-426b-8ed1-a98654621834", "9cdabd48-c208-4154-a62e-0bf8020739e0"], true);
-//	 setTimeout(function(){
-//		 // UserDB.find().exec(function(err, results){
-//		 //	 console.log("UserDB:", results);
-//		 // })
-
-//		 // student_YNRQ_DB.find().exec(function(error, results){
-//		 //	 console.log("YNRQ DB:", results);
-//		 // });
-//	 	// UserToCourseDB.find().exec(function(error, results){
-//	 	// 	console.log(results);
-//	 	// })
-//		 console.log('done');
-//	 }, 500);
-// }, 1000);
 
 
 /***************************************
@@ -1933,12 +1790,15 @@ app.post('/new_course', function(request, response){
 			var course_folder = __dirname + "/public/" + courseName;
 			var lecture_folder = course_folder + "/lectures"; 
 
+			//make the course directory
 			fs.mkdir(course_folder, function(error){
 				if(!error)
 				{
+					//make the lectures directory
 					fs.mkdir(lecture_folder, function(error){
 						if(!error)
 						{
+							//save that this instructor is an instructor for this new course
 							saveNewResponse(UserToCourseDB, {userid: request.session.course[Object.keys(request.session.course)[0]].userid, courseid: status.courseid}, function(isInstructor){
 								if(isInstructor)
 								{
@@ -1950,7 +1810,11 @@ app.post('/new_course', function(request, response){
 									resp += "<li>Course Description: " + status.coursedesc + "</li>";
 									resp += "<li>Course ID: " + status.courseid + "</li>";
 									resp += "</ul>"
+
+									//load the new course that was created
 									LoadCourse(status);
+									//send the data to the instructor
+									
 									response.send(resp);
 								}
 								else

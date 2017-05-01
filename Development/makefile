@@ -1,10 +1,10 @@
 #node
 run:
 	clear
-	node app.js
+	node RevealResponseSystem.js
 
 runServer:
-	node app.js > ./log/node.log &	
+	node RevealResponseSystem.js > ./log/node.log &	
 
 serverSd:
 	kill $$(pidof node)
@@ -23,7 +23,7 @@ dbSd:
 
 #open in Editor
 open:
-	sublime app.js public/js/* views/*
+	sublime RevealResponseSystem.js public/js/* views/*
 
 stop: serverShutdown dbShutdown
 
