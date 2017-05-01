@@ -1,6 +1,0 @@
-<?xml version="1.0" ?>
-<bobs-pc-shack-inventory xmlns="http://www.bobspcshack.simple.com" 
-                         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-                         xsi:noNamespaceSchemaLocation="simple.xsd">
-   <computers>blah blah blah</computers>
-</bobs-pc-shack-inventory>

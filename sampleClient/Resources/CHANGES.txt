@@ -1,5 +1,0 @@
-Changes for CSCI 3230u
-
-- plan the assignment due dates better
-- be more clear about the project's scope
-- make the labs worth marks

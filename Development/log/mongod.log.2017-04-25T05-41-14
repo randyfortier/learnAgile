@@ -1,0 +1,104 @@
+2017-04-25T01:06:32.706-0400 [initandlisten] MongoDB starting : pid=24660 port=27018 dbpath=/home/matrim/Work/learnAgile/Server/./data/db 64-bit host=matrim-GA-78LMT-USB3
+2017-04-25T01:06:32.706-0400 [initandlisten] db version v2.6.10
+2017-04-25T01:06:32.706-0400 [initandlisten] git version: nogitversion
+2017-04-25T01:06:32.706-0400 [initandlisten] OpenSSL version: OpenSSL 1.0.2g  1 Mar 2016
+2017-04-25T01:06:32.706-0400 [initandlisten] build info: Linux lgw01-12 3.19.0-25-generic #26~14.04.1-Ubuntu SMP Fri Jul 24 21:16:20 UTC 2015 x86_64 BOOST_LIB_VERSION=1_58
+2017-04-25T01:06:32.706-0400 [initandlisten] allocator: tcmalloc
+2017-04-25T01:06:32.706-0400 [initandlisten] options: { net: { port: 27018 }, processManagement: { fork: true }, storage: { dbPath: "./data/db", smallFiles: true }, systemLog: { destination: "file", path: "./log/mongod.log" } }
+2017-04-25T01:06:32.753-0400 [initandlisten] journal dir=/home/matrim/Work/learnAgile/Server/./data/db/journal
+2017-04-25T01:06:32.753-0400 [initandlisten] recover : no journal files present, no recovery needed
+2017-04-25T01:06:34.706-0400 [initandlisten] preallocateIsFaster=true 18.1
+2017-04-25T01:06:36.782-0400 [initandlisten] preallocateIsFaster=true 18.08
+2017-04-25T01:06:40.119-0400 [initandlisten] preallocateIsFaster=true 25.28
+2017-04-25T01:06:40.120-0400 [initandlisten] preallocateIsFaster check took 7.366 secs
+2017-04-25T01:06:40.120-0400 [initandlisten] preallocating a journal file /home/matrim/Work/learnAgile/Server/./data/db/journal/prealloc.0
+2017-04-25T01:06:41.836-0400 [initandlisten] preallocating a journal file /home/matrim/Work/learnAgile/Server/./data/db/journal/prealloc.1
+2017-04-25T01:06:43.581-0400 [initandlisten] preallocating a journal file /home/matrim/Work/learnAgile/Server/./data/db/journal/prealloc.2
+2017-04-25T01:06:45.015-0400 [initandlisten] waiting for connections on port 27018
+2017-04-25T01:06:53.603-0400 [initandlisten] connection accepted from 127.0.0.1:52050 #1 (1 connection now open)
+2017-04-25T01:06:53.625-0400 [initandlisten] connection accepted from 127.0.0.1:52052 #2 (2 connections now open)
+2017-04-25T01:07:26.905-0400 [conn2] end connection 127.0.0.1:52052 (1 connection now open)
+2017-04-25T01:07:26.905-0400 [conn1] end connection 127.0.0.1:52050 (1 connection now open)
+2017-04-25T01:07:28.736-0400 [initandlisten] connection accepted from 127.0.0.1:52208 #3 (1 connection now open)
+2017-04-25T01:07:28.757-0400 [initandlisten] connection accepted from 127.0.0.1:52210 #4 (2 connections now open)
+2017-04-25T01:07:44.655-0400 [conn4] end connection 127.0.0.1:52210 (1 connection now open)
+2017-04-25T01:07:44.655-0400 [conn3] end connection 127.0.0.1:52208 (1 connection now open)
+2017-04-25T01:07:45.017-0400 [clientcursormon] mem (MB) res:53 virt:446
+2017-04-25T01:07:45.017-0400 [clientcursormon]  mapped (incl journal view):224
+2017-04-25T01:07:45.017-0400 [clientcursormon]  connections:0
+2017-04-25T01:07:45.573-0400 [initandlisten] connection accepted from 127.0.0.1:52212 #5 (1 connection now open)
+2017-04-25T01:07:45.594-0400 [initandlisten] connection accepted from 127.0.0.1:52214 #6 (2 connections now open)
+2017-04-25T01:07:54.734-0400 [conn6] end connection 127.0.0.1:52214 (1 connection now open)
+2017-04-25T01:07:54.734-0400 [conn5] end connection 127.0.0.1:52212 (1 connection now open)
+2017-04-25T01:07:55.759-0400 [initandlisten] connection accepted from 127.0.0.1:52216 #7 (1 connection now open)
+2017-04-25T01:07:55.781-0400 [initandlisten] connection accepted from 127.0.0.1:52218 #8 (2 connections now open)
+2017-04-25T01:07:58.574-0400 [conn8] end connection 127.0.0.1:52218 (1 connection now open)
+2017-04-25T01:07:58.574-0400 [conn7] end connection 127.0.0.1:52216 (1 connection now open)
+2017-04-25T01:08:07.253-0400 [initandlisten] connection accepted from 127.0.0.1:52220 #9 (1 connection now open)
+2017-04-25T01:08:07.275-0400 [initandlisten] connection accepted from 127.0.0.1:52222 #10 (2 connections now open)
+2017-04-25T01:08:08.094-0400 [conn10] end connection 127.0.0.1:52222 (1 connection now open)
+2017-04-25T01:08:08.094-0400 [conn9] end connection 127.0.0.1:52220 (1 connection now open)
+2017-04-25T01:08:26.712-0400 [initandlisten] connection accepted from 127.0.0.1:52224 #11 (1 connection now open)
+2017-04-25T01:08:26.733-0400 [initandlisten] connection accepted from 127.0.0.1:52226 #12 (2 connections now open)
+2017-04-25T01:09:04.898-0400 [conn12] end connection 127.0.0.1:52226 (1 connection now open)
+2017-04-25T01:09:04.898-0400 [conn11] end connection 127.0.0.1:52224 (1 connection now open)
+2017-04-25T01:09:05.881-0400 [initandlisten] connection accepted from 127.0.0.1:52228 #13 (1 connection now open)
+2017-04-25T01:09:05.903-0400 [initandlisten] connection accepted from 127.0.0.1:52230 #14 (2 connections now open)
+2017-04-25T01:10:30.384-0400 [conn13] end connection 127.0.0.1:52228 (1 connection now open)
+2017-04-25T01:10:30.384-0400 [conn14] end connection 127.0.0.1:52230 (1 connection now open)
+2017-04-25T01:10:31.974-0400 [initandlisten] connection accepted from 127.0.0.1:52236 #15 (1 connection now open)
+2017-04-25T01:10:31.999-0400 [initandlisten] connection accepted from 127.0.0.1:52238 #16 (2 connections now open)
+2017-04-25T01:10:32.001-0400 [initandlisten] connection accepted from 127.0.0.1:52240 #17 (3 connections now open)
+2017-04-25T01:10:32.752-0400 [conn17] end connection 127.0.0.1:52240 (2 connections now open)
+2017-04-25T01:10:32.752-0400 [conn16] end connection 127.0.0.1:52238 (2 connections now open)
+2017-04-25T01:10:32.752-0400 [conn15] end connection 127.0.0.1:52236 (2 connections now open)
+2017-04-25T01:10:40.483-0400 [initandlisten] connection accepted from 127.0.0.1:52242 #18 (1 connection now open)
+2017-04-25T01:10:40.504-0400 [initandlisten] connection accepted from 127.0.0.1:52244 #19 (2 connections now open)
+2017-04-25T01:10:40.518-0400 [conn19] end connection 127.0.0.1:52244 (1 connection now open)
+2017-04-25T01:10:40.518-0400 [conn18] end connection 127.0.0.1:52242 (1 connection now open)
+2017-04-25T01:11:09.779-0400 [initandlisten] connection accepted from 127.0.0.1:52246 #20 (1 connection now open)
+2017-04-25T01:11:09.800-0400 [initandlisten] connection accepted from 127.0.0.1:52248 #21 (2 connections now open)
+2017-04-25T01:12:07.420-0400 [conn21] end connection 127.0.0.1:52248 (1 connection now open)
+2017-04-25T01:12:07.420-0400 [conn20] end connection 127.0.0.1:52246 (1 connection now open)
+2017-04-25T01:12:09.481-0400 [initandlisten] connection accepted from 127.0.0.1:52306 #22 (1 connection now open)
+2017-04-25T01:12:09.507-0400 [initandlisten] connection accepted from 127.0.0.1:52308 #23 (2 connections now open)
+2017-04-25T01:12:09.512-0400 [initandlisten] connection accepted from 127.0.0.1:52310 #24 (3 connections now open)
+2017-04-25T01:12:10.300-0400 [conn24] end connection 127.0.0.1:52310 (2 connections now open)
+2017-04-25T01:12:10.300-0400 [conn22] end connection 127.0.0.1:52306 (2 connections now open)
+2017-04-25T01:12:10.300-0400 [conn23] end connection 127.0.0.1:52308 (2 connections now open)
+2017-04-25T01:12:18.362-0400 [initandlisten] connection accepted from 127.0.0.1:52312 #25 (1 connection now open)
+2017-04-25T01:12:18.383-0400 [initandlisten] connection accepted from 127.0.0.1:52314 #26 (2 connections now open)
+2017-04-25T01:12:45.033-0400 [clientcursormon] mem (MB) res:37 virt:447
+2017-04-25T01:12:45.033-0400 [clientcursormon]  mapped (incl journal view):224
+2017-04-25T01:12:45.033-0400 [clientcursormon]  connections:2
+2017-04-25T01:16:39.793-0400 [conn26] end connection 127.0.0.1:52314 (1 connection now open)
+2017-04-25T01:16:39.793-0400 [conn25] end connection 127.0.0.1:52312 (1 connection now open)
+2017-04-25T01:16:41.521-0400 [initandlisten] connection accepted from 127.0.0.1:52380 #27 (1 connection now open)
+2017-04-25T01:16:41.542-0400 [initandlisten] connection accepted from 127.0.0.1:52382 #28 (2 connections now open)
+2017-04-25T01:17:45.048-0400 [clientcursormon] mem (MB) res:38 virt:447
+2017-04-25T01:17:45.048-0400 [clientcursormon]  mapped (incl journal view):224
+2017-04-25T01:17:45.048-0400 [clientcursormon]  connections:2
+2017-04-25T01:22:26.279-0400 [conn28] end connection 127.0.0.1:52382 (1 connection now open)
+2017-04-25T01:22:26.279-0400 [conn27] end connection 127.0.0.1:52380 (1 connection now open)
+2017-04-25T01:22:28.871-0400 [initandlisten] connection accepted from 127.0.0.1:54964 #29 (1 connection now open)
+2017-04-25T01:22:28.891-0400 [initandlisten] connection accepted from 127.0.0.1:54966 #30 (2 connections now open)
+2017-04-25T01:22:45.063-0400 [clientcursormon] mem (MB) res:38 virt:447
+2017-04-25T01:22:45.063-0400 [clientcursormon]  mapped (incl journal view):224
+2017-04-25T01:22:45.063-0400 [clientcursormon]  connections:2
+2017-04-25T01:27:10.347-0400 [conn30] end connection 127.0.0.1:54966 (1 connection now open)
+2017-04-25T01:27:10.347-0400 [conn29] end connection 127.0.0.1:54964 (1 connection now open)
+2017-04-25T01:27:11.290-0400 [initandlisten] connection accepted from 127.0.0.1:57348 #31 (1 connection now open)
+2017-04-25T01:27:11.311-0400 [initandlisten] connection accepted from 127.0.0.1:57350 #32 (2 connections now open)
+2017-04-25T01:27:45.078-0400 [clientcursormon] mem (MB) res:38 virt:447
+2017-04-25T01:27:45.078-0400 [clientcursormon]  mapped (incl journal view):224
+2017-04-25T01:27:45.078-0400 [clientcursormon]  connections:2
+2017-04-25T01:31:02.569-0400 [conn32] end connection 127.0.0.1:57350 (1 connection now open)
+2017-04-25T01:31:02.569-0400 [conn31] end connection 127.0.0.1:57348 (1 connection now open)
+2017-04-25T01:31:03.655-0400 [initandlisten] connection accepted from 127.0.0.1:58210 #33 (1 connection now open)
+2017-04-25T01:31:03.677-0400 [initandlisten] connection accepted from 127.0.0.1:58212 #34 (2 connections now open)
+2017-04-25T01:32:45.094-0400 [clientcursormon] mem (MB) res:38 virt:447
+2017-04-25T01:32:45.094-0400 [clientcursormon]  mapped (incl journal view):224
+2017-04-25T01:32:45.094-0400 [clientcursormon]  connections:2
+2017-04-25T01:37:45.109-0400 [clientcursormon] mem (MB) res:39 virt:447
+2017-04-25T01:37:45.109-0400 [clientcursormon]  mapped (incl journal view):224
+2017-04-25T01:37:45.109-0400 [clientcursormon]  connections:2

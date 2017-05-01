@@ -1,8 +1,0 @@
-div {
-	border: 1px solid white; /* eliminate slight motion */
-}
-
-.selected {
-	background: lightBlue;
-	border: 1px solid darkBlue;
-}

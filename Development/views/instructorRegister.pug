@@ -1,0 +1,16 @@
+doctype
+html
+	head
+		title Register!
+	body
+		p Welcome, Please enter you Student number and the password you want
+		p (Note: try not to use the same one as blackboard)
+		form(action="registerInstructor", method="post", class="form-horizontal")
+			p Username:
+			input(type="text", id="username", name="username", placeholder="Enter Student ID", class="form-control")
+			p Password:
+			input(type="password", id="password", name="password", placeholder="Enter Password", class="form-control")
+
+			p
+			button(class="form-control") Submit
+		

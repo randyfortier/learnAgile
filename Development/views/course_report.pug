@@ -1,0 +1,235 @@
+extends layout
+block inhead
+	if !error
+		link(rel="stylesheet", href="/css/report.css")
+		script(src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.1.6/Chart.js")
+		script(src='/js/table_func.js')
+		script.
+			var lec = !{JSON.stringify(student)};
+			var allLec = !{JSON.stringify(avgstudents)};
+			var sid = '#{studentid}' || null ;
+			
+			$(document).ready(function(){
+				_addToTable('lecture_table', lec, ['Like', 'Difficult', 'Study']);
+				_addToTable('avg_table', allLec, ['Like', 'Difficult', 'Study']);
+				
+				_addBarChart('lecture_chart_2', lec, graph_order_N_color);
+				_addBarChart('avg_chart_2', allLec, graph_order_N_color);
+
+				_addLineChart('lecture_chart', lec, graph_order_N_color);
+				_addLineChart('avg_chart', allLec, graph_order_N_color);
+
+				addTableColour();
+			});
+
+			function pushLecture(labels, lecture)
+			{
+				//if the lecture name is to long, put the first few letter then "..." then the 
+				//last few letters
+				var lec = lecture.slice();
+				if(lecture.length > 9)
+					lec = lec.substring(0, 4) + "..." + lec.substring(lec.length - 5, lec.length);
+				labels.push(lec);
+			}
+
+			/*NOTE: same format as other graph function, see addBarChart in table_func.js
+			*	Only differences is the data, that part will be commented, the rest is the same
+			*	as the function in table_func.js
+			*/
+			function _addBarChart(canvas, stats, YNRQ_names)
+			{
+				var data = {};
+				data.labels = [];
+				data.datasets = [];
+
+				YNRQ_names.forEach(function(YNRQ_name, index){
+					data.datasets.push({
+						label : YNRQ_name.name,
+						borderWidth : 1,
+						borderColor : [],
+						backgroundColor : [],
+						data : []
+					});
+					var color;
+					if(YNRQ_name.color)
+						color = YNRQ_name.color;
+					else
+						color = randRGB();
+					for(var cnt = 0; cnt < Object.keys(stats).length; cnt++)
+					{
+						data.datasets[index].borderColor.push(RGBA(color, 1));
+						data.datasets[index].backgroundColor.push(RGBA(color, 0.2));
+					}
+				});	
+
+
+				var cnt = 0;
+				var avg = 0;
+
+				//for each section in the data
+				Object.keys(stats).forEach(function(lecture){//each section
+					
+					//push the lecure onto the label
+					var lecVar = stats[lecture];
+					pushLecture(data.labels, lecture);
+
+					//for each YNRQ, calc the average and add it to the dataset
+					YNRQ_names.forEach(function(YNRQ_name, index){
+						cnt = 0;
+						avg = 0;
+					
+						Object.keys(lecVar).forEach(function(section){//each section
+							var secVar = lecVar[section];
+							var tag = secVar[YNRQ_name.name];
+
+							avg += chartFormat(tag.U, tag.U+tag.D);
+							cnt++;
+						});
+						data.datasets[index].data.push(avg/cnt);
+					});
+				});
+				
+				var myBarChart = new Chart($('#' + canvas), {
+					type: 'bar',
+					data: data,
+					options: {
+						responsive: false,
+						animation: false,
+						scales: {
+							yAxes:[{
+								ticks: {
+									min : 0,
+									max : 100,
+									maxTicksLimit: 4,
+									stepSize: 25
+								}
+							}]
+						}
+					}
+				});
+			}			
+			
+			/*NOTE: same format as other graph function, see addLineChart in table_func.js
+			*	Only differences is the data, that part will be commented, the rest is the same
+			*	as the function in table_func.js
+			*/
+			function _addLineChart(canvas, stats, YNRQ_names)
+			{
+				var data = {};
+				data.labels = [];
+				data.datasets = [];
+
+				YNRQ_names.forEach(function(YNRQ_name, index){
+					data.datasets.push({
+						label : YNRQ_name.name,
+						fill: true,
+						lineTension: 0,
+						borderCapStyle: 'butt',
+						borderDash: [],
+						borderDashOffset: 0.0,
+						borderJoinStyle: 'miter',
+						pointBorderWidth: 1,
+						pointHoverRadius: 5,
+						pointHoverBorderWidth: 2,
+						pointRadius: 0,
+						borderWidth : 1,
+						borderColor : [],
+						backgroundColor : [],
+						data : []
+					});
+					
+					var color;
+					if(YNRQ_name.color)
+						color = YNRQ_name.color;
+					else
+						color = randRGB();
+					for(var cnt = 0; cnt < Object.keys(stats).length; cnt++)
+					{
+						data.datasets[index].borderColor.push(RGBA(color, 1));
+						data.datasets[index].backgroundColor.push(RGBA(color, 0.2));
+					}
+				});			
+				
+				var cnt = 0;
+				var avg = 0;
+				//for each section in the data
+				Object.keys(stats).forEach(function(lecture){//each section
+					
+					//push the lecure onto the label
+					var lecVar = stats[lecture];
+					pushLecture(data.labels, lecture);
+
+					//for each YNRQ, calc the average and add it to the dataset
+					YNRQ_names.forEach(function(YNRQ_name, index){
+						cnt = 0;
+						avg = 0;
+					
+						Object.keys(lecVar).forEach(function(section){//each section
+							var secVar = lecVar[section];
+							var tag = secVar[YNRQ_name.name];
+
+							avg += chartFormat(tag.U, tag.U+tag.D);
+							cnt++;
+						});
+
+						data.datasets[index].data.push(avg/cnt);
+					});
+				});
+
+				var myLineChart = new Chart($('#' + canvas), {
+					type: 'line',
+					data: data,
+					options: {
+						responsive: false,
+						animation: false,
+						scales: {
+							yAxes:[{
+								ticks: {
+									min : 0,
+									max : 100,
+									maxTicksLimit: 4,
+									stepSize: 25
+								}
+							}]
+						}
+					}
+				});
+			}	
+
+			function _addToTable(tableid, stats, tag_order)
+			{
+				//for each lecture add the table then call the addToTable
+				Object.keys(stats).forEach(function(lecture){
+
+					$('#' + tableid).append('<tr><th colspan="'+(1+(3*tag_order.length))+'">'+addLectureName(lecture)+'</th></tr>');
+					addToTable(tableid, stats[lecture], tag_order)
+				});
+			}
+
+			function addLectureName(lecture)
+			{
+				//create the link for going to a lecture report
+				return '<a href="lecture_report?lecture='+lecture+((sid)?'&sid='+sid:'')+'">' + lecture + '</a>';
+			}
+
+
+block content
+	if error
+		h3(class="text-center") Unable to generate Course Report
+		h4(class="text-center", style="color:red")=error
+	else
+		div(class="container-fluid col-sm-10 col-sm-offset-1")
+			h2 Course Report
+			if (isInstructor)
+				h3 Student: #{studentid}
+
+			h4(class="underline") Progress from each Lecture
+			table(id="lecture_table", class="table table-striped table-bordered table-condensed")
+			canvas(id="lecture_chart", height="300", style="display:inline")
+			canvas(id="lecture_chart_2", height="300", style="display:inline")
+
+
+			h4(class="underline") Average Over Students
+			table(id="avg_table", class="table table-striped table-bordered table-condensed")
+			canvas(id="avg_chart", height="300", style="display:inline")
+			canvas(id="avg_chart_2", height="300", style="display:inline")

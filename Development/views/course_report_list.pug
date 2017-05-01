@@ -1,0 +1,12 @@
+extends layout
+block content
+	if error
+		h3(class="text-center") Unable to generate Course Report List
+		h4(class="text-center", style="color:red")=error
+	else
+		div(class="container-fluid col-sm-10 col-sm-offset-1")
+			h2 Student List
+			ul
+				each student in students
+					li
+						a(href='course_report?sid=' + student + '') #{student}

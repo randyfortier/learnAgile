@@ -1,0 +1,12 @@
+extends layout
+block content
+	if error
+		h3(class="text-center") Unable to generate Lecture Summary List
+		h4(class="text-center", style="color:red")=error
+	else
+		div(class="container-fluid col-sm-10 col-sm-offset-1")
+			h2 Lecture List
+			ul
+				each lecture in lectures
+					li
+						a(href='lecture_summary?lecture=' + lecture + '') #{lecture}

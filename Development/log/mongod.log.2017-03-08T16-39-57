@@ -1,0 +1,38 @@
+2017-03-07T23:53:19.327-0500 [initandlisten] MongoDB starting : pid=25326 port=27018 dbpath=/home/matrim/Work/learnAgile/Server/./data/db 64-bit host=matrim-GA-78LMT-USB3
+2017-03-07T23:53:19.327-0500 [initandlisten] db version v2.6.10
+2017-03-07T23:53:19.327-0500 [initandlisten] git version: nogitversion
+2017-03-07T23:53:19.327-0500 [initandlisten] OpenSSL version: OpenSSL 1.0.2g  1 Mar 2016
+2017-03-07T23:53:19.327-0500 [initandlisten] build info: Linux lgw01-12 3.19.0-25-generic #26~14.04.1-Ubuntu SMP Fri Jul 24 21:16:20 UTC 2015 x86_64 BOOST_LIB_VERSION=1_58
+2017-03-07T23:53:19.327-0500 [initandlisten] allocator: tcmalloc
+2017-03-07T23:53:19.327-0500 [initandlisten] options: { net: { port: 27018 }, processManagement: { fork: true }, storage: { dbPath: "./data/db", smallFiles: true }, systemLog: { destination: "file", path: "./log/mongod.log" } }
+2017-03-07T23:53:19.368-0500 [initandlisten] journal dir=/home/matrim/Work/learnAgile/Server/./data/db/journal
+2017-03-07T23:53:19.368-0500 [initandlisten] recover : no journal files present, no recovery needed
+2017-03-07T23:53:21.182-0500 [initandlisten] preallocateIsFaster=true 17.12
+2017-03-07T23:53:23.100-0500 [initandlisten] preallocateIsFaster=true 18.98
+2017-03-07T23:53:25.984-0500 [initandlisten] preallocateIsFaster=true 19.36
+2017-03-07T23:53:25.985-0500 [initandlisten] preallocateIsFaster check took 6.616 secs
+2017-03-07T23:53:25.985-0500 [initandlisten] preallocating a journal file /home/matrim/Work/learnAgile/Server/./data/db/journal/prealloc.0
+2017-03-07T23:53:27.569-0500 [initandlisten] preallocating a journal file /home/matrim/Work/learnAgile/Server/./data/db/journal/prealloc.1
+2017-03-07T23:53:29.062-0500 [initandlisten] preallocating a journal file /home/matrim/Work/learnAgile/Server/./data/db/journal/prealloc.2
+2017-03-07T23:53:31.001-0500 [initandlisten] waiting for connections on port 27018
+2017-03-07T23:54:31.002-0500 [clientcursormon] mem (MB) res:55 virt:444
+2017-03-07T23:54:31.002-0500 [clientcursormon]  mapped (incl journal view):224
+2017-03-07T23:54:31.002-0500 [clientcursormon]  connections:0
+2017-03-07T23:54:40.207-0500 [signalProcessingThread] got signal 15 (Terminated), will terminate after current cmd ends
+2017-03-07T23:54:40.207-0500 [signalProcessingThread] now exiting
+2017-03-07T23:54:40.207-0500 [signalProcessingThread] dbexit: 
+2017-03-07T23:54:40.207-0500 [signalProcessingThread] shutdown: going to close listening sockets...
+2017-03-07T23:54:40.207-0500 [signalProcessingThread] closing listening socket: 8
+2017-03-07T23:54:40.207-0500 [signalProcessingThread] closing listening socket: 9
+2017-03-07T23:54:40.207-0500 [signalProcessingThread] removing socket file: /tmp/mongodb-27018.sock
+2017-03-07T23:54:40.207-0500 [signalProcessingThread] shutdown: going to flush diaglog...
+2017-03-07T23:54:40.207-0500 [signalProcessingThread] shutdown: going to close sockets...
+2017-03-07T23:54:40.208-0500 [signalProcessingThread] shutdown: waiting for fs preallocator...
+2017-03-07T23:54:40.208-0500 [signalProcessingThread] shutdown: lock for final commit...
+2017-03-07T23:54:40.208-0500 [signalProcessingThread] shutdown: final commit...
+2017-03-07T23:54:40.208-0500 [signalProcessingThread] shutdown: closing all files...
+2017-03-07T23:54:40.209-0500 [signalProcessingThread] closeAllFiles() finished
+2017-03-07T23:54:40.209-0500 [signalProcessingThread] journalCleanup...
+2017-03-07T23:54:40.209-0500 [signalProcessingThread] removeJournalFiles
+2017-03-07T23:54:40.253-0500 [signalProcessingThread] shutdown: removing fs lock...
+2017-03-07T23:54:40.253-0500 [signalProcessingThread] dbexit: really exiting now

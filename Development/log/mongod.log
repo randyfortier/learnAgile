@@ -1,0 +1,37 @@
+2017-04-30T21:54:57.352-0400 [initandlisten] MongoDB starting : pid=29253 port=27018 dbpath=/home/matrim/Work/learnAgile/Server/./data/db 64-bit host=matrim-GA-78LMT-USB3
+2017-04-30T21:54:57.353-0400 [initandlisten] db version v2.6.10
+2017-04-30T21:54:57.353-0400 [initandlisten] git version: nogitversion
+2017-04-30T21:54:57.353-0400 [initandlisten] OpenSSL version: OpenSSL 1.0.2g  1 Mar 2016
+2017-04-30T21:54:57.353-0400 [initandlisten] build info: Linux lgw01-12 3.19.0-25-generic #26~14.04.1-Ubuntu SMP Fri Jul 24 21:16:20 UTC 2015 x86_64 BOOST_LIB_VERSION=1_58
+2017-04-30T21:54:57.353-0400 [initandlisten] allocator: tcmalloc
+2017-04-30T21:54:57.353-0400 [initandlisten] options: { net: { port: 27018 }, processManagement: { fork: true }, storage: { dbPath: "./data/db", smallFiles: true }, systemLog: { destination: "file", path: "./log/mongod.log" } }
+2017-04-30T21:54:57.398-0400 [initandlisten] journal dir=/home/matrim/Work/learnAgile/Server/./data/db/journal
+2017-04-30T21:54:57.398-0400 [initandlisten] recover : no journal files present, no recovery needed
+2017-04-30T21:54:59.201-0400 [initandlisten] preallocateIsFaster=true 15.92
+2017-04-30T21:55:01.085-0400 [initandlisten] preallocateIsFaster=true 16.88
+2017-04-30T21:55:03.995-0400 [initandlisten] preallocateIsFaster=true 17.26
+2017-04-30T21:55:03.995-0400 [initandlisten] preallocateIsFaster check took 6.596 secs
+2017-04-30T21:55:03.995-0400 [initandlisten] preallocating a journal file /home/matrim/Work/learnAgile/Server/./data/db/journal/prealloc.0
+2017-04-30T21:55:05.543-0400 [initandlisten] preallocating a journal file /home/matrim/Work/learnAgile/Server/./data/db/journal/prealloc.1
+2017-04-30T21:55:07.904-0400 [initandlisten] preallocating a journal file /home/matrim/Work/learnAgile/Server/./data/db/journal/prealloc.2
+2017-04-30T21:55:09.742-0400 [initandlisten] waiting for connections on port 27018
+2017-04-30T21:56:08.742-0400 [initandlisten] connection accepted from 127.0.0.1:47842 #1 (1 connection now open)
+2017-04-30T21:56:08.764-0400 [initandlisten] connection accepted from 127.0.0.1:47844 #2 (2 connections now open)
+2017-04-30T21:56:09.741-0400 [clientcursormon] mem (MB) res:56 virt:446
+2017-04-30T21:56:09.741-0400 [clientcursormon]  mapped (incl journal view):224
+2017-04-30T21:56:09.741-0400 [clientcursormon]  connections:2
+2017-04-30T21:58:58.774-0400 [conn2] end connection 127.0.0.1:47844 (1 connection now open)
+2017-04-30T21:58:58.774-0400 [conn1] end connection 127.0.0.1:47842 (1 connection now open)
+2017-04-30T21:58:59.795-0400 [initandlisten] connection accepted from 127.0.0.1:47904 #3 (1 connection now open)
+2017-04-30T21:58:59.817-0400 [initandlisten] connection accepted from 127.0.0.1:47906 #4 (2 connections now open)
+2017-04-30T22:01:09.755-0400 [clientcursormon] mem (MB) res:57 virt:446
+2017-04-30T22:01:09.755-0400 [clientcursormon]  mapped (incl journal view):224
+2017-04-30T22:01:09.755-0400 [clientcursormon]  connections:2
+2017-04-30T22:06:09.769-0400 [clientcursormon] mem (MB) res:57 virt:446
+2017-04-30T22:06:09.769-0400 [clientcursormon]  mapped (incl journal view):224
+2017-04-30T22:06:09.769-0400 [clientcursormon]  connections:2
+2017-04-30T22:10:23.829-0400 [conn4] end connection 127.0.0.1:47906 (1 connection now open)
+2017-04-30T22:10:23.829-0400 [conn3] end connection 127.0.0.1:47904 (1 connection now open)
+2017-04-30T22:11:09.783-0400 [clientcursormon] mem (MB) res:57 virt:446
+2017-04-30T22:11:09.783-0400 [clientcursormon]  mapped (incl journal view):224
+2017-04-30T22:11:09.783-0400 [clientcursormon]  connections:0
